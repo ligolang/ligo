@@ -1,25 +1,23 @@
-const nCr = (n: int, r: int): int => {
+function nCr (n: int, r: int): int {
     let a = 1, b = 1;
-    for (let i = 0 ; i < r ; i++) {
-        a *= (n - i);
-    }
-    for (let i = 1 ; i <= r ; i++) {
-        b *= i
-    }
+    for (let i = 0 ; i < r ; i++)
+      a *= n - i;
+    for (let i = 1 ; i <= r ; i++)
+      b *= i
     return a/b;
 }
 
-const printSpaces = (n: int): unit => {
-    for (let i = n ; i >= 0 ; i--) Test.print(" ")
+function printSpaces (n: int): unit {
+  for (let i = n ; i >= 0 ; i--) Test.IO.print(" ")
 }
 
 const spaceRequirement = (xs: list<int>): int => List.length(xs) * 4;
-    
-const printNums = (xs: list<int>): unit => {
+
+function printNums (xs: list<int>): unit {
     for (const x of xs) {
-        Test.print(x > 9 ? "  " : "   ");
-        Test.print(Test.to_string(x));
-    }   
+        Test.IO.print(x > 9 ? "  " : "   ");
+        Test.IO.print(Test.String.show(x));
+    }
 }
 
 const printPascalTriangle = (n: int): string => {
@@ -33,11 +31,11 @@ const printPascalTriangle = (n: int): string => {
         let spaces = lineLength - spaceRequirement(nums);
         printSpaces(spaces/2);
         printNums(nums);
-        Test.println("")
+        Test.IO.println("")
     };
     return ""
 }
 
 const test8 = printPascalTriangle(8)
-const testspace = Test.println("")
+const testspace = Test.IO.println("")
 const test10 = printPascalTriangle(9)

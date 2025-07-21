@@ -4,5 +4,5 @@ type storage = int;
 
 type ret = [list<operation>, storage];
 
-@entry
+// @entry
 const main = (_p: param, s: storage): ret => [[], s];

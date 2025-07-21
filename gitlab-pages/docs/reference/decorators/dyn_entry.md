@@ -54,14 +54,14 @@ akin to the amending process of the Tezos protocol itself.
 ```jsligo group=dyn_entry
 type storage = {
   storage: int;
-  dynamic_entrypoints;
+  dynamic_entrypoints: dynamic_entrypoints;
 };
 
-@dyn_entry
+// @dyn_entry
 const one = (_u: unit, _i: int): [list<operation>, int] =>
   [[], 1];
 
-@dyn_entry
+// @dyn_entry
 const tick = (_: ticket<int>, x: [int, int])
   : [list<operation>, [int, int]] =>
   [[], x];

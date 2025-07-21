@@ -97,7 +97,7 @@ You can use the decorator `@layout("comb")` to make this choice explicit, as in 
 
 ```jsligo
 type animal =
-@layout("comb")
+// @layout("comb")
 | ["Elephant"]
 | ["Dog"]
 | ["Cat"];
@@ -135,7 +135,7 @@ The decorator `@layout("comb")` can also be used on record types:
 
 ```jsligo
 type artist =
-@layout("comb")
+// @layout("comb")
 {
   genre : string,
   since : timestamp,
@@ -176,7 +176,7 @@ You can get the equivalent in version 1.0 and later with the decorator `@layout(
 
 ```jsligo group=orig
 type animal =
-@layout("tree")
+// @layout("tree")
 | ["Elephant"]
 | ["Dog"]
 | ["Cat"];
@@ -219,9 +219,12 @@ For example, this variant type has custom annotations on each case:
 
 ```jsligo group=annot
 type animal =
-| @annot("memory") ["Elephant"]
-| @annot("face") ["Dog"]
-| @annot("fish") ["Cat"]
+| // @annot("memory")
+  ["Elephant"]
+| // @annot("face")
+  ["Dog"]
+| // @annot("fish")
+  ["Cat"]
 ```
 
 </Syntax>
@@ -260,9 +263,12 @@ annotations:
 
 ```jsligo group=annot
 type artist = {
-  @annot("style") genre: string,
-  @annot("from") since: timestamp,
-  @annot("performer") name: string
+  // @annot("style")
+  genre: string,
+  // @annot("from")
+  since: timestamp,
+  // @annot("performer")
+  name: string
 }
 ```
 
@@ -348,14 +354,14 @@ let x : z_or = M_right y_1
 <Syntax syntax="jsligo">
 
 ```jsligo
-let z : z_or = M_left(unit);
+const z : z_or = ["M_left" as "M_left"];
 
-let y_1 : y_or = M_left(unit);
-let y : z_or = M_right(y_1);
+const y_1 : y_or = ["M_left" as "M_left"];
+const y : z_or = ["M_right" as "M_right", y_1];
 
-let x_pair = ["foo", [2, 3n]];
-let x_1 : y_or = M_right (x_pair);
-let x : z_or = M_right (y_1);
+const x_pair = ["foo", [2, 3 as nat]];
+const x_1 : y_or = ["M_right" as "M_right", x_pair];
+const x : z_or = ["M_right" as "M_right", y_1];
 ```
 
 </Syntax>
@@ -442,32 +448,39 @@ type test = {
 };
 
 const make_concrete_sum = (r: z_to_v): z_or =>
-  match(r) {
-    when(Z()): M_left(unit);
-    when(Y()): M_right(M_left(unit));
-    when(X()): M_right (M_right (M_left(unit)));
-    when(W()): M_right (M_right (M_right(M_left(unit))));
-    when(V()): M_right (M_right (M_right(M_right(unit))))
-  };
-
+  $match(r, {
+    "Z": () => ["M_left" as "M_left"],
+    "Y": () => ["M_right" as "M_right", ["M_left" as "M_left"]],
+    "X": () => ["M_right" as "M_right", ["M_right" as "M_right",
+                                         ["M_left" as "M_left"]]],
+    "W": () => ["M_right" as "M_right",
+                ["M_right" as "M_right",
+                 ["M_right" as "M_right", ["M_left" as "M_left"]]]],
+    "V": () => ["M_right" as "M_right", ["M_right" as "M_right",
+                                         ["M_right" as "M_right",
+                                          ["M_right" as "M_right"]]]]
+  });
 
 const make_concrete_record = (r: test) =>
   [r.z, r.y, r.x, r.w, r.v];
 
 const make_abstract_sum = (z_or: z_or): z_to_v =>
-  match(z_or) {
-    when(M_left(n)): Z();
-    when(M_right(y_or)): match(y_or) {
-        when(M_left(n)): Y();
-        when(M_right(x_or)): match(x_or) {
-            when(M_left(n)): X();
-            when(M_right(w_or)): match(w_or) {
-                when(M_left(n)): W();
-                when(M_right(n)): V()
-            }
-        }
-    }
-  };
+  $match(z_or, {
+    "M_left": _ => ["Z" as "Z"],
+    "M_right": y_or =>
+      $match(y_or, {
+        "M_left": _ => ["Y" as "Y"],
+        "M_right": x_or =>
+          $match(x_or, {
+            "M_left": _ => ["X" as "X"],
+            "M_right": w_or =>
+              $match(w_or, {
+                "M_left": _ => ["W" as "W"],
+                "M_right": _ => ["V" as "V"]
+              })
+          })
+      })
+  });
 
 const make_abstract_record =
   (z: string, y: int, x: string, w: bool, v: int) => ({z,y,x,w,v});
@@ -499,11 +512,11 @@ let right (i : int) (x : storage) : operation list * storage = [], x + i
 ```jsligo group=entrypoints_and_annotations
 type storage = int
 
-@entry
+// @entry
 const left = (i: int, x: storage) : [list<operation>, storage] =>
   [[], x - i]
 
-@entry
+// @entry
 const right = (i: int, x: storage) : [list<operation>, storage] =>
   [[], x + i]
 ```
@@ -541,13 +554,13 @@ type parameter =
    ["Left", int]
  | ["Right", int];
 
-let main = (p: parameter, x: storage): [list<operation>, storage] =>
-  [list ([]), match(p) {
-    when(Left(i)): x - i;
-    when(Right(i)): x + i
-   }
+const main = (p: parameter, x: storage): [list<operation>, storage] =>
+  [[],
+   $match(p, {
+    "Left": i => x - i,
+    "Right": i => x + i
+   })
   ];
-
 ```
 
 </Syntax>
@@ -558,7 +571,6 @@ This contract can be called by another contract, like this one:
 
 ```cameligo group=get_entrypoint_opt
 type storage = int
-
 type parameter = int
 
 type x = Left of int
@@ -570,7 +582,7 @@ let main (p : parameter) (s : storage): operation list * storage =
     | Some c -> c
     | None -> failwith "contract does not match"
   in
-  [Tezos.transaction (Left 2) 2mutez contract], s
+  [Tezos.Operation.transaction (Left 2) 2mutez contract], s
 ```
 
 </Syntax>
@@ -579,21 +591,19 @@ let main (p : parameter) (s : storage): operation list * storage =
 
 ```jsligo group=get_entrypoint_opt
 type storage = int;
-
 type parameter = int;
 
 type x = | ["Left", int];
 
-@entry
+// @entry
 const main = (p: parameter, s: storage): [list<operation>, storage] => {
-  let contract =
-    match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")) {
-      when(Some(c)): c;
-      when(None()): failwith ("contract does not match")
-    };
-  return [
-    [Tezos.transaction(Left(2), 2mutez, contract)],
-    s];
+  const contract =
+    $match(Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx"), {
+      "Some": c => c,
+      "None": () => failwith ("contract does not match")
+    });
+  return [[Tezos.Operation.transaction(["Left" as "Left", 2],
+                                       2 as mutez, contract)], s];
 };
 ```
 

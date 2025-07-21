@@ -8,8 +8,6 @@ module MyContract = struct
     if abs delta <= 5n then [], storage - delta else failwith "Pass 5 or less"
   [@entry] let reset () (_storage : storage) : result = [], 0
 end
-module Test = Test.Next
-
 let test_failure =
   let initial_storage = 10 in
   let orig = Test.Originate.contract (contract_of MyContract) initial_storage 0tez in

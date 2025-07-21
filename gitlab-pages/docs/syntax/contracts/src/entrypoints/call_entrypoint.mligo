@@ -6,5 +6,5 @@ type return_value = operation list * storage
   let receiver_contract = match Tezos.get_contract_opt(addr) with
     Some contract -> contract
   | None -> failwith "Couldn't find contract" in
-  let operations = [Tezos.Next.Operation.transaction parameter 0tez receiver_contract] in
+  let operations = [Tezos.Operation.transaction parameter 0tez receiver_contract] in
   operations, storage

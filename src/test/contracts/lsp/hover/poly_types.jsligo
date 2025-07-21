@@ -34,9 +34,9 @@ namespace M {
 
 const x = Aaa("aaa")
 
-#import "poly_types_common.mligo" "Common"
+import * as Common from "poly_types_common.mligo"
 
-const foo = Foo(42)
+const foo: Common.foo<int> = Foo(42)
 
 const ok_result : Common.result<int, string> = Ok(42)
 

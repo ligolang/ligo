@@ -49,18 +49,15 @@ let with_code_input
     let options = Compiler_options.set_no_stdlib options true in
     (* Let's build a dependency graph for the given code input.
       It will collect a [(file_name * module_name) list] which we can use
-      to create a module name to file name mapping.*)
+      to create a module name to file name mapping. *)
+    (* NOTE Trace.to_option is used to suppress warnings and errors
+       because due to calling Build.qualified_core* functions they get
+       duplicated. This is left for now. Once code_input will be deleted,
+       module_deps and compiled core should be obtained during one build system
+       invocation. *)
     let module_deps =
-      let module Deps_map = Stdlib__Map.Make (Stdlib__String) in
-      Build.dependency_graph ~raise ~options code_input
-      |> snd
-      |> Deps_map.to_seq
-      |> Seq.fold_left (fun acc (_, (_, _, _, lst)) -> lst :: acc) []
-      |> List.concat
-      |> List.fold_left ~init:String.Map.empty ~f:(fun acc (file_name, mangled_name) ->
-             match Map.add ~key:mangled_name ~data:file_name acc with
-             | `Duplicate -> acc
-             | `Ok added -> added)
+      Option.value ~default:String.Map.empty
+      @@ Trace.to_option ~fast_fail:false (Build.module_deps ~options code_input)
     in
     ( (match code_input with
       | From_file _ | HTTP _ -> Build.qualified_core ~raise ~options code_input

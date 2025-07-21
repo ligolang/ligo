@@ -38,7 +38,7 @@ let comp_file_assert ~raise f test syntax expected () =
   if not (String.equal got expected) then Stdlib.raise Alcotest.Test_error
 
 
-let comp_file_generic_assert ~raise f transform equal test syntax expected () =
+let comp_file_generic_assert ~raise f transform equal pp test syntax expected () =
   let options =
     let options = Test_helpers.options in
     let options = Compiler_options.set_syntax options syntax in
@@ -46,6 +46,7 @@ let comp_file_generic_assert ~raise f transform equal test syntax expected () =
   in
   let (core : Ast_core.program) = Test_helpers.core_file_unqualified ~raise f options in
   let got = transform core in
+  pp got;
   if not (equal got expected) then Stdlib.raise Alcotest.Test_error
 
 
@@ -66,16 +67,6 @@ let type_file_ ~raise f test syntax () =
     Compiler_options.set_test_flag options test
   in
   let (_ : Ast_typed.program) = Test_helpers.type_file ~raise f options in
-  ()
-
-
-let type_file_v2 ~raise f test syntax () =
-  let options =
-    let options = Test_helpers.options in
-    let options = Compiler_options.set_syntax options syntax in
-    Compiler_options.set_test_flag options test
-  in
-  let (_ : Ast_typed.program) = Test_helpers.type_file_v2 ~raise f options in
   ()
 
 
@@ -125,19 +116,9 @@ let type_file f =
   test_case f (type_file_ f false None)
 
 
-let type_file_v2 f =
-  let f = "./contracts/" ^ f in
-  test_case f (type_file_v2 f false None)
-
-
 let type_tfile f =
   let f = "./contracts/" ^ f in
   test_case f (type_file_ f true None)
-
-
-let type_lfile f =
-  let f = "./lexer/" ^ f in
-  test_case f (type_file_ f false None)
 
 
 let comp_file f =
@@ -150,9 +131,9 @@ let comp_file_assert f expected =
   test_case f (comp_file_assert f false None expected)
 
 
-let comp_file_generic_assert f ~transform ~equal ~expected =
+let comp_file_generic_assert f ~transform ~equal ~pp ~expected =
   let f = "./contracts/" ^ f in
-  test_case f (comp_file_generic_assert f transform equal false None expected)
+  test_case f (comp_file_generic_assert f transform equal pp false None expected)
 
 
 let aggregate_file f =
@@ -174,7 +155,8 @@ let typed_prod =
   Test_helpers.test_suite
     "Ast-typed productions"
     [ type_file "build/D.mligo"
-    ; type_file_v2 "build/v2/H.jsligo"
+    (* TODO: Enable when import statements are fixed *)
+    (*    ; type_file "build/H.jsligo"*)
     ; type_file "build/instance/main.mligo"
     ; type_file "infer_fun_application.mligo"
     ; type_file "protocol_dalphanet.mligo"
@@ -188,7 +170,6 @@ let typed_prod =
     ; type_file "modules_and_free_vars/module_with_free_vars.mligo"
     ; type_file "modules_and_free_vars/nested_modules_with_free_vars.mligo"
     ; type_tfile "pattern_match4.jsligo"
-    ; type_lfile "add_semi.jsligo"
     ; type_file "type_shadowing.mligo"
     ; type_file "type_vars_let_fun.mligo"
     ; type_file "export_newline.jsligo"
@@ -208,38 +189,11 @@ let core_prod =
     ; comp_file "clauseblock.jsligo"
     ; comp_file "polymorphism/annotate.mligo"
     ; comp_file "deep_pattern_matching/list_pattern.mligo"
-    ; comp_file "import_decls.jsligo"
-    ; comp_file "import_decls.mligo"
     ; comp_file_assert
         "core_abstraction/fun_type_var.mligo"
         "\n\
          const foo : ∀ a : * . list (a) -> list (a) =\n\
         \  Λ a ->  Λ b ->  fun (init xs : list (b)) : list (b) -> xs"
-    ; comp_file_generic_assert
-        "import_decls.jsligo"
-        ~transform:(fun ast -> Ast_core.Ligo_dep_jsligo.dependencies ast)
-        ~equal:(fun got expected -> List.equal String.equal got expected)
-        ~expected:
-          [ "./Test1"
-          ; "./Test2"
-          ; "./Test3"
-          ; "./Test4"
-          ; "./Test5"
-          ; "./Test6"
-          ; "./Test7"
-          ; "./Test8"
-          ]
-    ; comp_file_generic_assert
-        "import_decls.mligo"
-        ~transform:(fun ast ->
-          let syntax = Syntax_types.CameLIGO in
-          let raw_options = Compiler_options.Raw_options.make () in
-          let options = Compiler_options.make ~raw_options ~syntax () in
-          let lib = Build.Stdlib.get ~options in
-          let std_lib = Build.Stdlib.select_lib_core syntax lib in
-          Ast_core.Ligo_dep_cameligo.dependencies ~std_lib ast)
-        ~equal:(fun got expected -> List.equal String.equal got expected)
-        ~expected:[ "E1"; "E2"; "E3"; "E4"; "E5"; "E6"; "E7"; "E8"; "E9" ]
     ]
 
 

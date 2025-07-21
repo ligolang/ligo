@@ -1,5 +1,5 @@
-[@public] #import "B.mligo" "M"
-[@public] #import "A.mligo" "K"
+[@public] module M = B
+[@public] module K = A
 
 let test = M.C.B.bar
 

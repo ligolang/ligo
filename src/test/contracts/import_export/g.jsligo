@@ -1,1 +1,2 @@
-export #import "f.jsligo" "F"
+// @export
+import * as F from "f.jsligo"

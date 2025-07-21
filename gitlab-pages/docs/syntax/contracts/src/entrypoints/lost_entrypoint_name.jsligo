@@ -2,16 +2,17 @@ namespace OneEntrypoint {
   type storage = int;
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const increment = (_: unit, storage: storage): return_type =>
     [[], storage + 1];
 };
 
-import Test = Test.Next;
-
 const test_one_entrypoint = (() => {
   let initial_storage = 42;
-  let contract = Test.Originate.contract(contract_of(OneEntrypoint), initial_storage, 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("default", contract.taddr), unit, 0tez);
+  let contract =
+    Test.Originate.contract(contract_of(OneEntrypoint),
+                            initial_storage,
+                            0 as tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("default", contract.taddr), unit, 0 as tez);
   return Assert.assert(Test.Typed_address.get_storage(contract.taddr) == initial_storage + 1);
-}) ();
+})();

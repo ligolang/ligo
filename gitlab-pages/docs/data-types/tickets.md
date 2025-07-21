@@ -17,29 +17,37 @@ A ticket of type `ticket` has three elements:
 
 A ticket's ticketer and contents cannot be changed.
 
-Tickets themselves cannot be duplicated, but you can split one ticket into multiple tickets by creating duplicate tickets each with a portion of the original ticket's amount.
-The new tickets have the same ticketer and contents, and the sum of their amounts is always the amount of the original ticket.
-Similarly, you can join tickets with matching ticketers and contents into a single ticket with the sum of the joined tickets' amounts.
+Tickets themselves cannot be duplicated, but you can split one ticket
+into multiple tickets by creating duplicate tickets each with a
+portion of the original ticket's amount.  The new tickets have the
+same ticketer and contents, and the sum of their amounts is always the
+amount of the original ticket.  Similarly, you can join tickets with
+matching ticketers and contents into a single ticket with the sum of
+the joined tickets' amounts.
 
 ## Creating tickets
 
-To create a ticket, pass the contents and the amount to `Tezos.create_ticket` function.
-The function returns an option that contains the ticket or `None` if the amount of the ticket is zero.
-The contract's address automatically becomes the ticketer value.
+To create a ticket, pass the contents and the amount to
+`Tezos.Ticket.create` function.  The function returns an
+option that contains the ticket or `None` if the amount of the ticket
+is zero.  The contract's address automatically becomes the ticketer
+value.
 
 <SyntaxTitle syntax="cameligo">
-val Tezos.create_ticket : 'value -> nat -> ('value ticket) option
+val create : 'value -> nat -> ('value ticket) option
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let Tezos.create_ticket: 'value => nat => option&lt;ticket&lt;'value&gt;&gt;
+create: 'value => nat => option&lt;ticket&lt;'value&gt;&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=manip_ticket
-let my_ticket1 = Option.unopt (Tezos.create_ticket 1 10n)
-let my_ticket2 = Option.unopt (Tezos.create_ticket "one" 10n)
+module Ticket = Tezos.Ticket
+
+let my_ticket1 = Option.value_with_error "ticket1 failed" (Ticket.create 1 10n)
+let my_ticket2 = Option.value_with_error "ticket2 failed" (Ticket.create "one" 10n)
 ```
 
 </Syntax>
@@ -47,26 +55,34 @@ let my_ticket2 = Option.unopt (Tezos.create_ticket "one" 10n)
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket
-const my_ticket1 = Option.unopt(Tezos.create_ticket(1, 10n));
-const my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10n));
+import Ticket = Tezos.Ticket;
+
+const my_ticket1 =
+  Option.value_with_error("ticket1 failed", Ticket.create(1, 10 as nat));
+const my_ticket2 =
+  Option.value_with_error("ticket2 failed", Ticket.create("one", 10 as nat));
 ```
 
 </Syntax>
 
 ## Reading tickets
 
-You cannot read the contents of a ticket directly; you must use the `Tezos.read_ticket` function to access it.
-This function destroys the ticket and returns the ticketer, contents, amount, and a copy of the original ticket.
+You cannot read the contents of a ticket directly; you must use the
+`Tezos.Ticket.read` function to access it.  This function
+destroys the ticket and returns the ticketer, contents, amount, and a
+copy of the original ticket.
 
-Note that reading a ticket with the `Tezos.read_ticket` function consumes it, destroying the original ticket.
-To preserve the ticket, you must use the copy that the function returns, or else the ticket is destroyed.
+Note that reading a ticket with the `Tezos.Ticket.read`
+function consumes it, destroying the original ticket.  To preserve the
+ticket, you must use the copy that the function returns, or else the
+ticket is destroyed.
 
 <SyntaxTitle syntax="cameligo">
-val Tezos.read_ticket : 'value ticket -> (address * ('value * nat)) * 'value ticket
+val read : 'value ticket -> (address * ('value * nat)) * 'value ticket
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let Tezos.read_ticket: ticket&lt;'value&gt; => &lt;&lt;address, &lt;'value , nat&gt;&gt; , ticket&lt;'value&gt;&gt;
+read: ticket&lt;'value&gt; => &lt;&lt;address, &lt;'value , nat&gt;&gt; , ticket&lt;'value&gt;&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
@@ -76,7 +92,7 @@ destructuring or pattern matching:
 
 ```cameligo group=manip_ticket
 let v =
-  let (_addr, (payload, _amt)), _ticket = Tezos.read_ticket my_ticket1
+  let (_addr, (payload, _amt)), _ticket = Ticket.read my_ticket1
   in payload
 ```
 
@@ -87,36 +103,39 @@ let v =
 To read the content of a ticket, you need to use tuple destructuring:
 
 ```jsligo group=manip_ticket
-const v2 = do {
-  let [[_addr, [payload, _amt]], _ticket] = Tezos.read_ticket (my_ticket2);
+const v2 = (() => {
+  let [[_addr, [payload, _amt]], _ticket] = Ticket.read(my_ticket2);
   return payload;
-}
+})()
 ```
 
 </Syntax>
 
 ## Splitting tickets
 
-Splitting a ticket creates two tickets that have the same ticketer and contents as the original and have amounts that add up to the amount of the original
-To split a ticket, pass the ticket and two nats to the `Tezos.split_ticket` function.
-It returns an option that is `None` if the sum of the two nats does not equal the amount of the original ticket.
-If the sum is equal, it returns `Some` with two tickets with the two nats as their amounts.
+Splitting a ticket creates two tickets that have the same ticketer and
+contents as the original and have amounts that add up to the amount of
+the original To split a ticket, pass the ticket and two nats to the
+`Tezos.Ticket.split` function.  It returns an option that is
+`None` if the sum of the two nats does not equal the amount of the
+original ticket.  If the sum is equal, it returns `Some` with two
+tickets with the two nats as their amounts.
 
 You can split tickets to divide a ticket to send to multiple sources or to consume only part of a ticket's amount.
 
 <SyntaxTitle syntax="cameligo">
-val Tezos.split_ticket : 'value ticket -> nat * nat -> ('value ticket * 'value ticket) option
+val split : 'value ticket -> nat * nat -> ('value ticket * 'value ticket) option
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let Tezos.split_ticket: ticket&lt;'value&gt; => &lt;nat , nat&gt; => option &lt;&lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt;&gt;
+split : ticket&lt;'value&gt; => &lt;nat , nat&gt; => option &lt;&lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt;&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=manip_ticket
 let ta, tb =
-  match Tezos.split_ticket my_ticket1 (6n, 4n) with
+  match Ticket.split my_ticket1 (6n, 4n) with
     None -> failwith "amt_a + amt_v <> amt"
   | Some split_tickets -> split_tickets
 ```
@@ -127,35 +146,39 @@ let ta, tb =
 
 ```jsligo group=manip_ticket
 const [ta, tb] =
-  match(Tezos.split_ticket(my_ticket1, [6n, 4n])) {
-    when(None()): failwith("amt_a + amt_v != amt");
-    when(Some(split_tickets)): split_tickets
-  };
+  $match(Ticket.split(my_ticket1, [6 as nat, 4 as nat]), {
+    "None": () => failwith("amt_a + amt_v != amt"),
+    "Some": split_tickets => split_tickets
+  });
 ```
 
 </Syntax>
 
 ## Joining tickets
 
-You can join tickets that have identical ticketers and contents.
-The `Tezos.join_tickets` function joins tickets and returns an option with `Some` with a single ticket that has an amount that equals the sum of the amounts of the original tickets.
-If the ticketer or contents don't match, it returns `None`.
+You can join tickets that have identical ticketers and contents.  The
+`Tezos.Ticket.join` function joins tickets and returns an
+option with `Some` with a single ticket that has an amount that equals
+the sum of the amounts of the original tickets.  If the ticketer or
+contents don't match, it returns `None`.
 
 <SyntaxTitle syntax="cameligo">
-val Tezos.join_tickets : 'value ticket * 'value ticket -> ('value ticket) option
+val join : 'value ticket * 'value ticket -> ('value ticket) option
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let Tezos.join_tickets = &lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt; => option &lt;ticket&lt;'value&gt;&gt;
+join : &lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt; => option &lt;ticket&lt;'value&gt;&gt;
 </SyntaxTitle>
 
 <Syntax syntax="cameligo">
 
-```cameligo group=manip_ticket
+```cameligo group=manip_ticket2
+module Ticket = Tezos.Ticket
+
 let tc : int ticket option =
-  let ta = Option.unopt (Tezos.create_ticket 1 10n) in
-  let tb = Option.unopt (Tezos.create_ticket 1 5n) in
-  Tezos.join_tickets (ta, tb)
+  let ta = Option.value_with_error "ta failed" (Ticket.create 1 10n) in
+  let tb = Option.value_with_error "tb failed" (Ticket.create 1 5n) in
+  Ticket.join (ta, tb)
 ```
 
 </Syntax>
@@ -163,15 +186,21 @@ let tc : int ticket option =
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket2
-const ta = Option.unopt(Tezos.create_ticket(1, 10n));
-const tb = Option.unopt(Tezos.create_ticket(1, 5n));
-const tc = Tezos.join_tickets([ta, tb]);
+import Ticket = Tezos.Ticket;
+
+const ta = Option.value_with_error("ta failed",
+                                   Ticket.create(1, 10 as nat));
+const tb = Option.value_with_error("tb failed",
+                                   Ticket.create(1, 5 as nat));
+const tc = Ticket.join([ta, tb]);
 ```
 
 </Syntax>
 
 ## Transferring tickets
 
-You can send tickets to other contracts by passing them with the `Tezos.transaction` function, just like passing any other value to a contract.
+You can send tickets to other contracts by passing them with the
+`Tezos.Operation.transaction` function, just like passing any other
+value to a contract.
 
 <!-- updated use of entry -->

@@ -1,5 +1,0 @@
-let weird_length = (v : list<int>) : int =>
-  match(v) {
-    when([]): -1;
-    when([hd, ...tl]): 1 + int(List.length(tl))
-  };

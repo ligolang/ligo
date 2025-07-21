@@ -1,3 +1,0 @@
-const white = 0xffff;
-const black = 0x0000;
-const pixels = Bytes.concat(white, black); // 0xffff0000

@@ -3,11 +3,11 @@ type planetType =
 
 type planet = {
   name: string;
-  planetType;
+  planetType: planetType;
   lord: option<address>
 };
 
-@entry
+// @entry
 const main = (p: planet, _: int): [list<operation>, int] => {
   let state = 0;
   let planetType = p.planetType;
@@ -23,4 +23,4 @@ const main = (p: planet, _: int): [list<operation>, int] => {
       break;
   };
   return [[], state]
-};
+}

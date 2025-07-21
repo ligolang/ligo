@@ -34,20 +34,21 @@ type storage = string
 type ret = operation list * storage
 
 [@entry]
-let main (word : string) (storage : storage) : ret
-  = [] , storage ^ " " ^ word
+let main (word : string) (storage : storage) : ret =
+  [] , storage ^ " " ^ word
 
 (* This view returns the storage *)
-[@view] let view1 (() : unit) (storage : storage) : storage
-  = storage
+[@view]
+let view1 (() : unit) (storage : storage) : storage = storage
 
 (* This view returns true if the storage has a given length *)
-[@view] let view2 (expected_length : nat) (storage : storage) : bool
-  = (String.length storage = expected_length)
+[@view]
+let view2 (expected_length : nat) (storage : storage) : bool =
+  String.length storage = expected_length
 
 (* This view does not use the parameters or storage and returns a constant int *)
-[@view] let view3 (() : unit) (_ : storage) : int
-  = 42
+[@view]
+let view3 (() : unit) (_ : storage) : int = 42
 ```
 
 </Syntax>
@@ -60,24 +61,22 @@ To define an on-chain view, use the `@view` decorator.
 type storage = string
 type ret = [list<operation>, storage];
 
-@entry
+// @entry
 const main = (word : string, storage : storage) : ret
   => [[] , storage + " " + word]
 
 // This view returns the storage
-@view
-const view1 = (_arg : unit, storage : storage) : storage
-  => storage;
+// @view
+const view1 = (_arg : unit, storage : storage) : storage => storage;
 
 // This view returns true if the storage has a given length
-@view
+// @view
 const view2 = (expected_length : nat , storage : storage) : bool
   => (String.length (storage) == expected_length);
 
 // This view does not use the parameters or storage and returns a constant int
-@view
-const view3 = (_arg : unit , _s : storage) : int
-  => 42;
+// @view
+const view3 = (_arg : unit , _s : storage) : int => 42;
 ```
 
 </Syntax>
@@ -112,10 +111,10 @@ end
 namespace C {
   type storage = string
 
-  @entry
+  // @entry
   const append = (a: string, s: storage) : [list<operation> , storage] => [[], s + a];
 
-  @entry
+  // @entry
   const clear = (_p: unit, _s: storage) : [list<operation>, storage] => [[], ""];
 
   export const v = (expected_length: nat, s: storage) : bool => (String.length (s) == expected_length);
@@ -153,14 +152,15 @@ Note that the function is not annotated as an entrypoint or on-chain view; it is
 
 ## Calling views
 
-Contracts can call on-chain and off-chain views with the `Tezos.call_view` function and use the result immediately.
+Contracts can call on-chain and off-chain views with the
+`Tezos.View.call` function and use the result immediately.
 
 <SyntaxTitle syntax="cameligo">
-val call_view : string -> 'arg -> address -> 'ret option
+val call : string -> 'arg -> address -> 'ret option
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-const call_view : string => 'arg => address => option &lt;'ret&gt;
+call: string => 'arg => address => option &lt;'ret&gt;
 </SyntaxTitle>
 
 The function accepts these parameters:
@@ -183,7 +183,6 @@ module ContractWithView = struct
 
   [@view] let multiply (param : int) (storage : storage) : int =
     param * storage
-
 end
 ```
 
@@ -196,7 +195,7 @@ module CallView = struct
 
   [@entry] let callView (param : int) (storage : storage) : return_type =
     let (targetAddress, _s) = storage in
-    let resultOpt : int option = Tezos.call_view "multiply" param targetAddress in
+    let resultOpt : int option = Tezos.View.call "multiply" param targetAddress in
     match resultOpt with
       Some newValue -> [], (targetAddress, newValue)
     | None -> failwith("Something went wrong")
@@ -207,18 +206,17 @@ This test deploys both contracts, calls the contract that calls the view, and ve
 
 ```cameligo group=callonchainview
 let test =
-
   // Originate ContractWithView
-  let contract1 = Test.Next.Originate.contract (contract_of ContractWithView) 5 0tez in
-  let addr1 = Test.Next.Typed_address.to_address contract1.taddr in
+  let contract1 = Test.Originate.contract (contract_of ContractWithView) 5 0tez in
+  let addr1 = Test.Typed_address.to_address contract1.taddr in
 
   // Originate CallView with address of ContractWithView in storage
   let initial_storage = (addr1, 0) in
-  let contract2 = Test.Next.Originate.contract (contract_of CallView) initial_storage 0tez in
+  let contract2 = Test.Originate.contract (contract_of CallView) initial_storage 0tez in
 
   // Call callView
-  let _ : nat = Test.Next.Contract.transfer_exn (Test.Next.Typed_address.get_entrypoint "default" contract2.taddr) 12 0tez in
-  let (_address, integer) = Test.Next.Typed_address.get_storage contract2.taddr in
+  let _ : nat = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "default" contract2.taddr) 12 0tez in
+  let _address, integer = Test.Typed_address.get_storage contract2.taddr in
   Assert.assert(integer = 60)
 ```
 
@@ -233,11 +231,11 @@ namespace ContractWithView {
   type storage = int;
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const main = (param: int, _storage: storage): return_type =>
     [[], param];
 
-  @view
+  // @view
   const multiply = (param: int, storage: storage): int =>
     param * storage;
 }
@@ -250,20 +248,18 @@ namespace CallView {
   type storage = [address, int];
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const callView = (param: int, storage: storage): return_type => {
     const [targetAddress, _s] = storage;
-    const resultOpt: option<int> = Tezos.call_view(
+    const resultOpt: option<int> = Tezos.View.call(
       "multiply",
       param,
       targetAddress
     );
-    return match(resultOpt) {
-      when (None):
-        failwith("Something went wrong");
-      when (Some(newValue)):
-        [[], [targetAddress, newValue]];
-    }
+    return $match(resultOpt, {
+             "None": () => failwith("Something went wrong"),
+             "Some": newValue => [[], [targetAddress, newValue]]
+    })
   }
 }
 ```
@@ -272,18 +268,22 @@ This test deploys both contracts, calls the contract that calls the view, and ve
 
 ```jsligo group=callonchainview
 const test = (() => {
-
   // Originate ContractWithView
-  const contract1 = Test.Next.Originate.contract(contract_of(ContractWithView), 5, 0tez);
-  const addr1 = Test.Next.Typed_address.to_address(contract1.taddr);
+  const contract1 = Test.Originate.contract(contract_of(ContractWithView), 5, 0 as tez);
+  const addr1 = Test.Typed_address.to_address(contract1.taddr);
 
   // Originate CallView with address of ContractWithView in storage
   const initial_storage = [addr1, 0 as int];
-  const contract2 = Test.Next.Originate.contract(contract_of(CallView), initial_storage, 0tez);
+  const contract2 =
+  Test.Originate.contract(contract_of(CallView), initial_storage,
+                               0 as tez);
 
   // Call callView
-  Test.Next.Contract.transfer_exn(Test.Next.Typed_address.get_entrypoint("default", contract2.taddr), 12, 0tez);
-  const [_address, integer] = Test.Next.Typed_address.get_storage(contract2.taddr);
+  Test.Contract.transfer_exn(
+    Test.Typed_address.get_entrypoint("default", contract2.taddr),
+    12,
+    0 as tez);
+  const [_address, integer] = Test.Typed_address.get_storage(contract2.taddr);
   Assert.assert(integer == 60);
 }) ()
 ```
@@ -291,5 +291,7 @@ const test = (() => {
 </Syntax>
 
 To call views directly in tests, see [Testing views](../../testing#testing-views).
+
+To compile parameters to pass to views, see [Compiling expressions](../../compiling#compiling-expressions).
 
 <!-- updated use of entry -->

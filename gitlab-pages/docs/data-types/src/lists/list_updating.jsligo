@@ -1,6 +1,7 @@
-const nats : list<int> = [0, 1, 2, 3, 4];
+const nats: list<int> = [0, 1, 2, 3, 4];
+const evens_zeroed = List.update_with(x => x % 2 == (0 as nat), 0, nats);
 // evens_zeroed == [0, 1, 0, 3, 0]
-const evens_zeroed = List.update_with(x => x % 2 == 0n, 0, nats);
-const f = x => x % 2 == 0n ? None() : Some(x*x);
-// odds == [0, 1, 2, 9, 4]
+const f = x =>
+  x % 2 == (0 as nat) ? ["None" as "None"] : ["Some" as "Some", x*x];
 const odds_squared = List.update(f, nats);
+// odds_squared == [0, 1, 2, 9, 4]

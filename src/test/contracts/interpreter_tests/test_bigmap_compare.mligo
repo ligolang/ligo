@@ -1,11 +1,9 @@
 let assert = Assert.assert
 
-module Test = Test.Next
-
 module C = struct
   [@entry]
   let main ((a, n) : address * nat) (s : ((address * nat), nat) big_map) : operation list * ((address * nat), nat) big_map =
-    ([] : operation list), Big_map.add (a, 1n) n s
+    [], Big_map.add (a, 1n) n s
 end
 
 let test =

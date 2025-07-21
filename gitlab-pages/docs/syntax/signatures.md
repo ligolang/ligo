@@ -48,42 +48,43 @@ The module must instantiate any abstract type in the signature, as this module d
 
 <Syntax syntax="jsligo">
 
-An interface is a list of types and values that you can apply to a namespace.
-When you apply an interface to a namespace, that namespace must have all of the types and values in the interface.
-The namespace can also have additional definitions that are not in the interface.
-The LIGO compiler warns you of any mismatches between the interface and the namespace.
+An interface is a list properties that you can apply to a class.  When
+you apply an interface to a class, that class must have all of the
+properties declared in the interface.  The class can also have
+additional definitions that are not in the interface.  The LIGO
+compiler warns you of any mismatches between the interface and the
+class.
 
-For example, the following interface specifies that a namespace must have these contents:
+For example, the following interface specifies that a class must have these contents:
 
-- A type named `t`, although the data type of that type is not specified, which makes it an *abstract type*
-- A function named `add`, which accepts two values of type `t` and returns a value of type `t`
-- Values `one` and `two`, which are of the type `t`
+- A property named `add`, which accepts two values of type `nat` and returns a value of type `nat`
+- Values `one` and `two`, which are of the type `nat`
 
 ```jsligo group=intf_declaring
 interface Euro_INTF {
-  type t;
-  const add: (a: t, b: t) => t;
-  const one: t;
-  const two: t;
+  add: (a: nat, b: nat) => nat;
+  one: nat;
+  two: nat;
 };
 ```
 
-To apply an interface to a namespace, put the name of the interface after the keyword `implements` and the namespace name, as in the following example.
-It's said that the namespace *implements* the interface.
-This namespace defines the type `t` as a nat and defines the `add` function and the `one` and `two` values.
-It also adds a function named `multiply` that is not specified in the interface:
+To apply an interface to a class, put the name of the interface after
+the keyword `implements` and the class name, as in the following
+example.  We say that the class *implements* the interface.  This
+class defines the properties `add`, `one` and `two`.  It also adds a
+property named `multiply` that is not specified in the interface:
 
 ```jsligo group=intf_declaring
-namespace Euro implements Euro_INTF {
-  export type t = nat; // No more abstract
-  export const add = (a: t, b: t): t => a + b;
-  export const one: t = 1n;
-  export const two: t = 2n;
-  export const multiply = (a: t, b: t): t=> a * b;
+class Euro implements Euro_INTF {
+  static add = (a: nat, b: nat): nat => a + b;
+  static one = 1 as nat;
+  static two : nat = 2 as nat;
+  multiply = (a: nat, b: nat): nat => a * b;
 };
 ```
 
-The namespace must instantiate any abstract type in the interface, as this namespace defines the abstract type `t` as a nat.
+Note how properties from the interface must be defined as `static` in
+the class.
 
 </Syntax>
 
@@ -122,54 +123,53 @@ Interfaces can be extended by inheritance with the `extends` keyword, as in this
 
 ```jsligo group=intf_extending
 interface Euro_INTF {
-  type t;
-  const add: (a: t, b: t) => t;
-  const one: t;
-  const two: t;
+  add: (a: nat, b: nat) => nat;
+  one: nat;
+  two: nat;
 };
 
 interface WithTenEuro_INTF extends Euro_INTF {
-  const ten: t;
+  ten: nat;
 };
 
 interface WithFiftyEuro_INTF extends Euro_INTF {
-  const fifty: t;
+  fifty: nat;
 };
 ```
 
-Note that the type `t` remains abstract in all of the interfaces.
-Namespaces that use any of these interfaces must instantiate the type.
-
-Interfaces can extend more than one interface, which can lead to an interface that extends a base interface more than once, known as *diamond inheritance*.
-For example, the following interface extends two interfaces from the previous example.
-Because both of these interfaces extend the same base interface, it is as if the interface extends the base interface twice.
-Diamond inheritance doesn't cause any problems for the interface.
+Interfaces can extend more than one interface, which can lead to an
+interface that extends a base interface more than once, known as
+*diamond inheritance*.  For example, the following interface extends
+two interfaces from the previous example.  Because both of these
+interfaces extend the same base interface, it is as if the interface
+extends the base interface twice.  Diamond inheritance doesn't cause
+any problems for the interface.
 
 ```jsligo group=intf_extending
 interface NewEuro_INTF
   extends WithTenEuro_INTF, WithFiftyEuro_INTF {
-  const hundred: t;
-  const five_hundred?: t;
+  hundred: nat;
+  five_hundred?: nat;
 };
 ```
 
-Interfaces can have optional types and values indicated with a question mark `?`.
-In the previous example, the interface `NewEuro_INTF` has an optional value `five_hundred`.
-This namespace defines this optional value and adds a value named `twenty` that is not defined in the `NewEuro_INTF` interface:
+Interfaces can have optional types and values indicated with a
+question mark `?`.  In the previous example, the interface
+`NewEuro_INTF` has an optional property `five_hundred`.  This class
+defines this optional value and adds a property named `twenty` that is
+not defined in the `NewEuro_INTF` interface:
 
 ```jsligo group=intf_extending
-namespace NewEuro implements NewEuro_INTF {
-  export type t = int;
+class NewEuro implements NewEuro_INTF {
+  static add = (a: nat, b: nat) => a + b;
 
-  export const add = (a: t, b: t) => a + b;
-
-  export const one: t = 1;
-  export const two: t = 2;
-  export const ten: t = 10;
-  export const fifty: t = 50;
-  export const hundred: t = 100;
-  export const five_hundred: t = 500; // Could be omitted
-  const twenty: t = 20; // Extra new constant
+  static one: nat = 1;
+  static two: nat = 2;
+  static ten: nat = 10;
+  static fifty: nat = 50;
+  static hundred: nat = 100;
+  static five_hundred: nat = 500; // Could be omitted
+  static twenty: nat = 20; // Extra new constant
 }
 ```
 

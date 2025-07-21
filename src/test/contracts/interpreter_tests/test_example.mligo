@@ -1,8 +1,6 @@
-#import "./contract_under_test/contract_create.mligo" "C"
+module C = Contract_under_test.Contract_create
 
-module Test = Test.Next
 let assert = Test.Assert.assert
-
 
 let check_new_origination (src :address) : address =
   let last_origs = Test.State.last_originations () in

@@ -1,20 +1,16 @@
-type color = 
+type color =
   { kind: "red" }
 | { kind: "white" }
 | { kind: "blue" };
 
-type bar = {
-  color: color
-}
+type bar = { color: color }
 
-type foo = {
-  bar: bar
-}
+type foo = { bar: bar }
 
-const x = ({bar: {color}}:foo) => {
+function x ({bar: {color}}: foo) {
   let a = 0;
   switch(color.kind) {
-    case "red": 
+    case "red":
       a = 1;
       break;
     case "white":

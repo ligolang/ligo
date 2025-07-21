@@ -1,2 +1,0 @@
-const increment = (b) => ((a) => a + 1) (b);
-const a = increment(1); // a == 2

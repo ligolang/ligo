@@ -1,4 +1,4 @@
-#import "module_access.mligo" "Import"
+module Import = Module_access
 
 module M = Import.M
 

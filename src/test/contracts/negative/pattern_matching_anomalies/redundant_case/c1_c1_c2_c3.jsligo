@@ -1,9 +1,9 @@
 type t = ["One", int] | ["Two", nat] | ["Three"]
 
-let s = (x : t) : unit => 
-  match(x) {
-    when(One(a)): unit;
-    when(One(b)): unit;
-    when(Two(c)): unit;
-    when(Three()): unit
-  }
+const s = (x : t) : unit =>
+  $match(x, {
+    "One": (a) => unit,
+    "One": (b) => unit,
+    "Two": (c) => unit,
+    "Three": () => unit
+  })

@@ -8,5 +8,6 @@ let main (() : unit) (s : int) : int return = ([] : operation list), s
 
 [@view]
 let ok_view (() : unit) (_ : int) : int -> operation * address =
-  let f (s : int) = Tezos.create_contract main (None : key_hash option) 0mutez s in
-  f
+  let f (s : int) =
+    Tezos.Operation.create_contract main (None : key_hash option) 0mutez s
+  in f

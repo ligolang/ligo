@@ -1,3 +1,3 @@
 [@entry]
 let main (p : int * int) (_ : unit) : operation list * unit =
-  [Tezos.emit "%foo" p; Tezos.emit "%bar" p.0], ()
+  [Tezos.Operation.emit "%foo" p; Tezos.Operation.emit "%bar" p.0], ()

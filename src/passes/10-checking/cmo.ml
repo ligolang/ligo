@@ -1,6 +1,5 @@
 type t =
-  { path : Filename.t
-  ; impl : Ast_typed.module_
+  { impl : Ast_typed.module_
   }
 [@@deriving bin_io]
 
@@ -13,7 +12,26 @@ module Serialized = struct
   [@@deriving bin_io]
 
   let magic_number = Bytes.of_string "LIGOCMO"
+
   let compute_crc t = t |> Bin_prot.Writer.to_bytes bin_writer_t |> Md5.digest_bytes
+
+
+  let is_cmo path =
+    let suffix = Filename.check_suffix path ".cmo" in
+    let magic_bytes =
+      In_channel.with_file path ~f:(fun handle ->
+          let read_bytes = Bytes.create 8 in
+          let expected_bytes =
+            let init = Bytes.create 8 in
+            Bytes.set init 0 '\x07';
+            Bytes.blit ~dst:init ~src:magic_number ~src_pos:0 ~dst_pos:1 ~len:7;
+            init
+          in
+          ignore (In_channel.really_input handle ~buf:read_bytes ~pos:0 ~len:8);
+          Bytes.equal read_bytes expected_bytes)
+    in
+    suffix && magic_bytes
+
 
   let to_serialized t =
     let magic = magic_number in
@@ -22,17 +40,16 @@ module Serialized = struct
     { magic; cmo; crc }
 
 
-  let make_path p =
+  let of_file_name p =
     let open Filename in
     let dir = dirname p in
     let base = chop_extension (basename p) ^ ".cmo" in
     concat dir base
 
 
-  let output t =
+  let output t cmo_path =
     let open Out_channel in
     let serialized = to_serialized t in
-    let cmo_path = make_path t.path in
     try
       with_file ~binary:true cmo_path ~f:(fun oc ->
           serialized |> Bin_prot.Writer.to_bytes bin_writer_serialized |> output_bytes oc)
@@ -43,8 +60,7 @@ module Serialized = struct
 
 
   module Of_serialized = struct
-    let read_file path =
-      let cmi_path = make_path path in
+    let read_file cmi_path =
       try
         In_channel.with_file ~binary:true cmi_path ~f:(fun ic ->
             let%bind.Option file_len = In_channel.length ic |> Int.of_int64 in

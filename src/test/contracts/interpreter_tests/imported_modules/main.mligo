@@ -1,6 +1,3 @@
-#import "a.mligo" "A"
-#import "b.mligo" "B"
-
 type action = unit
 
 [@entry]

@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 type parameter = One | Two
 
 type some_record = { a : int ; b : nat ; c : string }

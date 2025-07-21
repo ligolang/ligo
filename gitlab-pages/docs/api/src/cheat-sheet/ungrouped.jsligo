@@ -1,7 +1,7 @@
 const name: string = "Tezos";
 const t: string = "t";
 const i: int = 42;
-const n: nat = 7n;
+const n: nat = 7 as nat;
 const u: unit = unit;
 const has_drivers_license: bool = false
 const adult: bool = true
@@ -10,19 +10,19 @@ const booleanLogic: bool =
     false ==
     (false && true) ==
     (false || false)
-const tez_amount: tez = 42tez
-const tez_amount2: tez = tez_amount + 7mutez // == 42000007mutez
+const tez_amount: tez = 42 as tez
+const tez_amount2: tez = tez_amount + (7 as mutez) // == (42000007 as mutez)
 const tz1address: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 const kt1address: address = "KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD";
 const my_str : string = "Hello World!";
 const verbatim_str : string = `verbatim string`;
 const add_int: int = 3 + 4;
-const add_nat: nat = 3n + 4n;
+const add_nat: nat = (3 as nat) + (4 as nat);
 const mul_int: int = 3 * 4;
-const mul_nat: nat = 3n * 4n;
+const mul_nat: nat = (3 as nat) * (4 as nat);
 
 const div_int: int = 10 / 5;
-const div_nat: nat = 10n / 5n; // can fail (division by zero), check your inputs first.
+const div_nat: nat = (10 as nat) / (5 as nat);
 const mod_nat: nat = 10 % 3; // can fail (division by zero), check your inputs first.
 type name = [string, string];
 
@@ -33,11 +33,11 @@ const lastName: string = winner[1];
 const add = (a: int, b: int): int =>
   a + b;
 function if_statement (age : nat): string {
-  if (age >= 16n) return "yes" else return "no"
+  if (age >= (16 as nat)) return "yes"; else return "no";
 }
 type middle_name = option<string>;
-const a_middle_name : middle_name = Some("Foo");
-const no_middle_name : middle_name = None();
+const a_middle_name : middle_name = ["Some" as "Some", "Foo"];
+const no_middle_name : middle_name = ["None" as "None"];
 const age: int = 5
 const someAddress: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 type person = {
@@ -54,41 +54,48 @@ const name_: string = john.name
 type prices = map<nat, tez>;
 
 const prices: prices = Map.literal([
-  [10n, 60mutez],
-  [50n, 30mutez],
-  [100n, 10mutez]
+  [10 as nat, 60 as mutez],
+  [50 as nat, 30 as mutez],
+  [100 as nat, 10 as mutez]
 ]);
 
-const price: option<tez> = Map.find_opt(50n, prices)
+const price: option<tez> = Map.find_opt(50 as nat, prices)
 
-const prices2: prices = Map.update(200n, Some (5mutez), prices)
+const prices2: prices =
+  Map.update(200 as nat, ["Some" as "Some", 5 as mutez], prices)
 const fail = (u: unit) : unit =>
   failwith("a failure message")
 type animal =
-@layout("comb")
+// @layout("comb")
 | ["Elephant"]
 | ["Dog"]
 | ["Cat"];
 type animal =
-@layout("tree")
+// @layout("tree")
 | ["Elephant"]
 | ["Dog"]
 | ["Cat"];
 namespace FA0_inferred {
   type storage = int;
-  @entry const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
-  @entry const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
+  // @entry
+  const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
+  // @entry
+  const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }
+type storage = int;
+
 interface FA0_INTF {
-  type storage;
-  @entry const add : (s : int, k : storage) => [list<operation>, storage];
+  //@entry
+  add : (s : int, k : storage) => [list<operation>, storage];
 }
 interface FA0_EXT_INTF extends FA0_INTF {
-  type storage;
-  @entry const add : (s : int, k : storage) => [list<operation>, storage];
+  // @entry
+  add : (s : int, k : storage) => [list<operation>, storage];
 }
-namespace FA0 implements FA0_INTF {
-  export type storage = int;
-  @entry const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
-  @entry const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
+class FA0 implements FA0_INTF {
+  @entry
+  add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
+
+  @entry
+  extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }

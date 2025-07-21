@@ -5,7 +5,7 @@ let main (_ : string) (storage : string) : return =
   let entrypoint (_ : nat) (storage : string) =
     (([] : operation list), storage) in
   let op, _addr : operation * address =
-    Tezos.Next.Operation.create_contract
+    Tezos.Operation.create_contract
       entrypoint
       (None : key_hash option)
       300000000mutez

@@ -36,15 +36,6 @@ JsLIGO multi-line comments work in a way similar to JavaScript comments:
 */
 ```
 
-Unlike in JavaScript, JsLIGO comments can be nested as long as each comment is properly closed.
-Nesting comments like this allows you to comment out a large piece of code that may include other comments.
-
-```jsligo group=comments
-/* This is a multi-line comment.
-  /* This is a "nested" comment. */
-*/
-```
-
 </Syntax>
 
 Both LIGO syntaxes also use single-line comments like JavaScript.

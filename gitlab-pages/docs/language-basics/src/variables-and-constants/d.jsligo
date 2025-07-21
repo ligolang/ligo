@@ -1,7 +1,0 @@
-const x = () => {
-  const _age = 25;
-  {
-    const _age = 3; // does not give an error
-    return _age;
-  }
-};

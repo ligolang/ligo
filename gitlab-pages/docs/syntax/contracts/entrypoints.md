@@ -42,19 +42,19 @@ export namespace IncDec {
 
   // Four entrypoints
 
-  @entry
+  // @entry
   const increment = (delta: int, storage: storage): result =>
     [[], storage + delta];
 
-  @entry
-  const @default = (_u: unit, storage: storage): result =>
+  // @entry
+  const default = (_u: unit, storage: storage): result =>
     increment(1, storage)
 
-  @entry
+  // @entry
   const decrement = (delta: int, storage: storage): result =>
     [[], storage - delta];
 
-  @entry
+  // @entry
   const reset = (_p: unit, _s: storage): result =>
     [[], 0];
 };
@@ -62,22 +62,40 @@ export namespace IncDec {
 
 </Syntax>
 
+<Syntax syntax="cameligo">
+
 To call an entrypoint, pass the name of the entrypoint with an initial capital and the parameter.
 For example, this `run dry-run` command calls the `increment` entrypoint in the previous contract:
-
-<Syntax syntax="cameligo">
 
 ```bash
 ligo run dry-run -m IncDec gitlab-pages/docs/syntax/contracts/src/entrypoints/incdec.mligo 'Increment(5)' '4'
 ```
 
+:::note
+
+The entrypoint name in the `dry-run` command always starts with a capital letter, even if the entrypoint name in the source code starts with a lower case letter.
+
+:::
+
 </Syntax>
 
 <Syntax syntax="jsligo">
 
+To call an entrypoint, you can use the `run dry-run` command, as in this example, which calls the `increment` entrypoint in the previous contract:
+
 ```bash
-ligo run dry-run -m IncDec gitlab-pages/docs/syntax/contracts/src/entrypoints/incdec.jsligo 'Increment(5)' '4'
+ligo run dry-run -m IncDec gitlab-pages/docs/syntax/contracts/src/entrypoints/incdec.jsligo '["Increment" as "Increment", 5]' '4'
 ```
+
+:::note
+
+The parameter is a [variant](../../data-types/variants) type where the constructor is the name of the entrypoint with the first letter capitalized and the value is the parameter to pass to the entrypoint.
+The `ligo run dry-run` command uses this format because Tezos smart contracts don't actually have multiple entrypoints; they are compiled to run code based on the parameter that callers pass.
+The LIGO compiler compiles the contract to include a parameter that runs the code that corresponds to the entrypoint.
+
+For more information about this internal behaviour, see [Implementation details: the default entrypoint](https://docs.tezos.com/smart-contracts/entrypoints#implementation-details-the-default-entrypoint) on docs.tezos.com.
+
+:::
 
 </Syntax>
 
@@ -86,8 +104,6 @@ The response shows an empty list of transactions to run next and the new state o
 ```
 ( LIST_EMPTY() , 9 )
 ```
-
-Note that even though the entrypoint name starts with a lower-case letter, the `run dry-run` command uses an initial upper-case letter to call it.
 
 ## Parameters
 
@@ -128,21 +144,15 @@ type return_type = operation list * storage
 <Syntax syntax="jsligo">
 
 ```jsligo group=complex_param
-type complexParam = [
-  int,
-  string,
-  bool,
-];
+type complexParam = [ int, string, bool ];
 
 type storage = [int, string];
 type return_type = [list<operation>, storage];
 
-@entry
+// @entry
 const dosomething = (param: complexParam, storage: storage): return_type => {
   const [intParam, stringParam, boolParam] = param;
-  if (boolParam) {
-    return [[], [intParam, stringParam]];
-  }
+  if (boolParam) return [[], [intParam, stringParam]];
   return [[], storage];
 }
 ```
@@ -209,19 +219,19 @@ type parameter = unit;
 type storage = unit;
 type result = [list<operation>, storage];
 
-@entry
+// @entry
 const no_tokens = (action: parameter, storage: storage): result => {
-  if (Tezos.get_amount() > 0tez) {
+  if (Tezos.get_amount() > (0 as tez))
     return failwith("This contract does not accept tokens.");
-  } else {
-    return [[], storage];
-  };
+  return [[], storage];
 };
 ```
 
 </Syntax>
 
-To send tez, create a transaction with `Tezos.transaction` and return it in the list of operations at the end of the entrypoint, as in this example:
+To send tez, create a transaction with `Tezos.Operarion.transaction`
+and return it in the list of operations at the end of the entrypoint,
+as in this example:
 
 <Syntax syntax="cameligo">
 
@@ -229,12 +239,13 @@ To send tez, create a transaction with `Tezos.transaction` and return it in the 
 type storage = unit
 type return_value = operation list * storage
 
-[@entry] let give5tez (_ : unit) (storage : storage) : return_value =
+[@entry]
+let give5tez (_ : unit) (storage : storage) : return_value =
   if Tezos.get_balance () >= 5tez then
     let receiver_contract = match Tezos.get_contract_opt (Tezos.get_sender ()) with
       Some contract -> contract
     | None -> failwith "Couldn't find account" in
-    let operation = Tezos.Next.Operation.transaction unit 5tez receiver_contract in
+    let operation = Tezos.Operation.transaction unit 5tez receiver_contract in
     [operation], storage
   else
     [], storage
@@ -248,15 +259,17 @@ type return_value = operation list * storage
 type storage = unit;
 type return_value = [list<operation>, storage];
 
-@entry
+// @entry
 const give5tez = (_: unit, storage: storage): return_value => {
   let operations: list<operation> = [];
-  if (Tezos.get_balance() >= 5tez) {
-    const receiver_contract = match(Tezos.get_contract_opt(Tezos.get_sender())) {
-      when(Some(contract)): contract;
-      when(None): failwith("Couldn't find account");
-    };
-    operations = [Tezos.Next.Operation.transaction(unit, 5tez, receiver_contract)];
+  if (Tezos.get_balance() >= (5 as tez)) {
+    const receiver_contract =
+      $match(Tezos.get_contract_opt(Tezos.get_sender()), {
+        "Some": contract => contract,
+        "None": () => failwith("Couldn't find account")
+      });
+    operations =
+     [Tezos.Operation.transaction(unit, 5 as tez, receiver_contract)]
   }
   return [operations, storage];
 }
@@ -287,10 +300,10 @@ let owner_only (action : parameter) (storage: storage) : result =
 ```jsligo group=c
 const owner: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
-@entry
+// @entry
 const owner_only = (action: parameter, storage: storage): result => {
-  if (Tezos.get_sender() != owner) { return failwith("Access denied."); }
-  else { return [[], storage]; };
+  if (Tezos.get_sender() != owner) return failwith("Access denied.");
+  return [[], storage];
 };
 ```
 
@@ -321,7 +334,7 @@ type return_value = operation list * storage
   let receiver_contract = match Tezos.get_contract_opt(addr) with
     Some contract -> contract
   | None -> failwith "Couldn't find contract" in
-  let operations = [Tezos.Next.Operation.transaction parameter 0tez receiver_contract] in
+  let operations = [Tezos.Operation.transaction parameter 0tez receiver_contract] in
   operations, storage
 ```
 
@@ -333,14 +346,16 @@ type return_value = operation list * storage
 type storage = unit;
 type return_value = [list<operation>, storage];
 
-@entry
+// @entry
 const callContract = (param: [address, string], storage: storage): return_value => {
   const [addr, parameter] = param;
-  const receiver_contract = match(Tezos.get_contract_opt(addr)) {
-    when(Some(contract)): contract;
-    when(None): failwith("Couldn't find contract");
-  }
-  const operations = [Tezos.Next.Operation.transaction(parameter, 0tez, receiver_contract)];
+  const receiver_contract =
+    $match(Tezos.get_contract_opt(addr), {
+      "Some": contract => contract,
+      "None": () => failwith("Couldn't find contract")
+    });
+  const operations =
+    [Tezos.Operation.transaction(parameter, 0 as tez, receiver_contract)]
   return [operations, storage];
 }
 ```
@@ -399,13 +414,13 @@ namespace ContractA {
   type storage_type = int;
   type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const increment = (delta: int, storage: storage_type): return_type => [[], storage + delta];
 
-  @entry
+  // @entry
   const decrement = (delta: int, storage: storage_type): return_type => [[], storage - delta];
 
-  @entry
+  // @entry
   const reset = (_: unit, _s: storage_type): return_type => [[], 0];
 }
 
@@ -413,9 +428,10 @@ namespace ContractB {
   type storage_type = int;
   export type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const add = ContractA.increment;
-  @entry
+
+  // @entry
   const sub = ContractA.decrement;
 }
 ```
@@ -426,7 +442,6 @@ namespace ContractB {
 
 The name `default` has a special meaning for a Tezos entrypoint.
 It denotes the default entrypoint that is called unless another is specified.
-Because `default` is a reserved keyword in JsLIGO, if you want to create an entrypoint named `default`, you must escape its name as `@default`.
 
 For more information about the default entrypoint and its internal behavior, see [Implementation details: the default entrypoint](https://docs.tezos.com/smart-contracts/entrypoints#implementation-details-the-default-entrypoint) on docs.tezos.com.
 
@@ -447,8 +462,6 @@ module OneEntrypoint = struct
 
 end
 
-module Test = Test.Next
-
 let test_one_entrypoint =
   let initial_storage = 42 in
   let contract = Test.Originate.contract (contract_of OneEntrypoint) initial_storage 0tez in
@@ -465,19 +478,20 @@ namespace OneEntrypoint {
   type storage = int;
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const increment = (_: unit, storage: storage): return_type =>
     [[], storage + 1];
 };
 
-import Test = Test.Next;
-
 const test_one_entrypoint = (() => {
   let initial_storage = 42;
-  let contract = Test.Originate.contract(contract_of(OneEntrypoint), initial_storage, 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("default", contract.taddr), unit, 0tez);
+  let contract =
+    Test.Originate.contract(contract_of(OneEntrypoint),
+                            initial_storage,
+                            0 as tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("default", contract.taddr), unit, 0 as tez);
   return Assert.assert(Test.Typed_address.get_storage(contract.taddr) == initial_storage + 1);
-}) ();
+})();
 ```
 
 </Syntax>
@@ -543,12 +557,12 @@ const entry_A = (n: nat, store: storage): result =>
 const entry_B = (s: string, store: storage): result =>
   [[], {...store, name: s}];
 
-@entry
+// @entry
 const main = (action: parameter, store: storage): result =>
-  match(action) {
-    when(Action_A(n)): entry_A(n, store);
-    when(Action_B(s)): entry_B(s, store)
-  };
+  $match(action, {
+    "Action_A": n => entry_A(n, store),
+    "Action_B": s => entry_B(s, store)
+  });
 ```
 
 </Syntax>
@@ -567,7 +581,7 @@ ligo run dry-run gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_mai
 <Syntax syntax="jsligo">
 
 ```bash
-ligo run dry-run gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo 'Action_A(5n)' '[5n, "hello"]'
+ligo run dry-run gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo '["Action_A" as "Action_A", 5 as nat]' '[5n, "hello"]'
 ```
 
 </Syntax>
@@ -586,21 +600,19 @@ proxy file which declares a single entry point and calls the existing
 <Syntax syntax="cameligo">
 
 ```cameligo group=contract_main_proxy
-#import "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.mligo" "C"
+module C = Gitlab_pages.Docs.Syntax.Contracts.Src.Entrypoints.Contract_main
 
 module Proxy = struct
-
   [@entry]
   let proxy (p : C.parameter) (s : C.storage) : operation list * C.storage =
     C.main p s
-
 end
 ```
 
 The contract can then be compiled using the following command:
 
 ```shell
-ligo compile contract --library . -m Proxy gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo
+ligo compile contract --library . -m Proxy gitlab-pages/docs/syntax/contracts/src/entrypoints-contracts/contract_main_proxy.mligo
 ```
 
 </Syntax>
@@ -608,12 +620,11 @@ ligo compile contract --library . -m Proxy gitlab-pages/docs/advanced/src/entryp
 <Syntax syntax="jsligo">
 
 ```jsligo group=contract_main_proxy
-#import "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo" "C"
+import * as C from "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo";
 
 namespace Proxy {
-  @entry
-  const proxy =
-    (p: C.parameter, s: C.storage): [list<operation>, C.storage] =>
+  // @entry
+  const proxy = (p: C.parameter, s: C.storage): [list<operation>, C.storage] =>
     C.main(p, s)
 }
 ```
@@ -621,30 +632,24 @@ namespace Proxy {
 The contract can then be compiled using the following command:
 
 ```shell
-ligo compile contract --library . \
-  -m Proxy \
-  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.jsligo
+ligo compile contract --library . -m Proxy \ gitlab-pages/docs/syntax/contracts/src/entrypoints-contracts/contract_main_proxy.jsligo
 ```
 
 </Syntax>
 
 Notice that to compile a parameter for this contract, now we need to
-pass the either `-e proxy` or construct a value using the `Proxy`
+pass either `-e proxy` or construct a value using the `Proxy`
 constructor:
 
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile parameter --library . \
-  -m Proxy -e proxy \
-  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo \
+ligo compile parameter --library . -m Proxy -e proxy \ gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo \
   "Action_A(42n)"
 ```
 
 ```shell
-ligo compile parameter --library . \
-  -m Proxy \
-  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo \
+ligo compile parameter --library . -m Proxy \ gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo \
   "Proxy(Action_A(42n))"
 ```
 
@@ -653,19 +658,13 @@ ligo compile parameter --library . \
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile parameter --library . \
-  -m Proxy -e proxy \
-  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.jsligo \
-  "Action_A(42n)"
+ligo compile parameter --library . -m Proxy -e proxy \ gitlab-pages/docs/syntax/contracts/src/entrypoints-contracts/contract_main_proxy.jsligo \
+  "["Action_A" as "Action_A", 42 as nat]"
 ```
 
 ```shell
-ligo compile parameter --library . \
-  -m Proxy \
-  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.jsligo \
-  "Proxy(Action_A(42n))"
+ligo compile parameter --library . -m Proxy \ gitlab-pages/docs/syntax/contracts/src/entrypoints-contracts/contract_main_proxy.jsligo \
+  "["Proxy" as "Proxy", ["Action_A" as "Action_A", 42 as nat]]"
 ```
 
 </Syntax>
-
-<!-- updated use of entry -->

@@ -11,9 +11,13 @@ numbers.
     languages, for example, `10`, `-6` and `0`, but there is only one
     canonical zero: `0` (so, for instance, `-0` and `00` are invalid).
 
+<Syntax syntax="cameligo">
+
   * Natural numbers are written as digits followed by the suffix `n`,
     like so: `12n`, `0n`, and the same restriction on zero as integers
     applies: `0n` is the only way to specify the natural zero.
+
+</Syntax>
 
 Contrary to integral numbers in other programming languages, numbers
 in LIGO have arbitrary-precision, that is, they do not overflow or
@@ -71,9 +75,9 @@ const zero : int = 0
 const million : int = 1_000_000
 const baekman : int = 100_0000
 
-const zero_nat : nat = 0n
-const million_nat : nat = 1_000_000n
-const baekman_nat : nat = 100_0000n
+const zero_nat : nat = 0 as nat
+const million_nat : nat = 1_000_000 as nat
+const baekman_nat : nat = 100_0000 as nat
 ```
 
 </Syntax>
@@ -105,7 +109,7 @@ let two : nat = abs 2  // Explicit cast from int to nat
 <Syntax syntax="jsligo">
 
 ```jsligo group=casting
-const one : int = int(1n); // Explicit cast from nat to int
+const one : int = int(1 as nat); // Explicit cast from nat to int
 const two : nat = abs(2);  // Explicit cast from int to nat
 ```
 </Syntax>
@@ -121,7 +125,7 @@ natural number for all inputs.
 
 <Syntax syntax="cameligo">
 
-```cameligo group=additing
+```cameligo group=adding
 let a : int = 5 + 10    // int + int yields int
 let b : nat = 5n + 10n  // nat + nat yields nat
 let c : int = 5n + 10   // nat + int yields int
@@ -133,12 +137,12 @@ let d : int = 10 + 5n   // int + nat yields int
 
 <Syntax syntax="jsligo">
 
-```jsligo group=additing
+```jsligo group=adding
 const a : int = 5 + 10;    // int + int yields int
-const b : nat = 5n + 10n;  // nat + nat yields nat
-const c : int = 5n + 10;   // nat + int yields int
-const d : int = 10 + 5n;   // int + nat yields int
-// const error : nat = 5n + 10;
+const b : nat = (5 as nat) + (10 as nat);  // nat + nat yields nat
+const c : int = (5 as nat) + 10;   // nat + int yields int
+const d : int = 10 + (5 as nat);   // int + nat yields int
+// const error : nat = (5 as nat) + 10;
 ```
 
 </Syntax>
@@ -168,10 +172,10 @@ let d : int = 5 - 10n  // int - nat yields int
 
 ```jsligo group=subtracting
 const a : int = 5 - 10;   // int - int yields int
-const b : int = 5n - 2n;  // nat - nat yields int
-const c : int = 10n - 5;  // nat - int yields int
-const d : int = 5 - 10n;  // int - nat yields int
-// const error : nat = 5n - 2n;
+const b : int = (5 as nat) - (2 as nat);  // nat - nat yields int
+const c : int = (10 as nat) - 5;  // nat - int yields int
+const d : int = 5 - (10 as nat);  // int - nat yields int
+// const error : nat = (5 as nat) - (2 as nat);
 ```
 
 </Syntax>
@@ -195,8 +199,8 @@ let b : int = -5n // - nat yields int
 
 ```jsligo group=negating
 const a : int = -5;  // - int yields int
-const b : int = -5n; // - nat yields int
-// const error : nat = -5n;
+const b : int = -(5 as nat); // - nat yields int
+// const error : nat = -(5 as nat);
 ```
 </Syntax>
 
@@ -222,9 +226,9 @@ let d : int = 5 * 10n  // int * nat yields int
 
 ```jsligo group=multiplying
 const a : int = 5 * 10;   // int * int yields int
-const b : nat = 5n * 2n;  // nat * nat yields nat
-const c : int = 10n * 5;  // nat * int yields int
-const d : int = 5 * 10n;  // int * nat yields int
+const b : nat = (5 as nat) * (2 as nat);  // nat * nat yields nat
+const c : int = (10 as nat) * 5;  // nat * int yields int
+const d : int = 5 * (10 as nat);  // int * nat yields int
 ```
 
 </Syntax>
@@ -254,9 +258,9 @@ let d : int = 10 / 3n   // int / nat yields int
 
 ```jsligo group=dividing
 const a : int = 10 / 3;    // int / int yields int
-const b : nat = 10n / 3n;  // nat / nat yields nat
-const c : int = 10n / 3;   // nat / int yields int
-const d : int = 10 / 3n;   // int / nat yields int
+const b : nat = (10 as nat) / (3 as nat);  // nat / nat yields nat
+const c : int = (10 as nat) / 3;   // nat / int yields int
+const d : int = 10 / (3 as nat);   // int / nat yields int
 ```
 
 </Syntax>
@@ -284,19 +288,141 @@ let c : nat = 120  mod 9n // int mod nat yields nat
 The binary operator `%` returns the <em>positive modulo</em> of the
 Euclidean division, that is, the following holds:
 
-> (n*(a/n)+(a%n) == a) && (0n <= a % n) && (a % n < abs(n))
+> (n*(a/n)+(a%n) == a) && ((0 as nat) <= a % n) && (a % n < abs(n))
 
 It is overloaded as the Euclidean division `/` to allow for all four
 combinations of natural numbers and integers.
 
 ```jsligo group=mod
-const a : nat = 120  % 9;  // int % int yields nat
-const b : nat = 120n % 9;  // nat % int yields nat
-const c : nat = 120n % 9n; // nat % nat yields nat
-const d : nat = 120  % 9n; // int % nat yields nat
+const a : nat = 120 % 9;  // int % int yields nat
+const b : nat = (120 as nat) % 9;  // nat % int yields nat
+const c : nat = (120 as nat) % (9 as nat); // nat % nat yields nat
+const d : nat = 120 % (9 as nat); // int % nat yields nat
 ```
 
 </Syntax>
 
-> It is possible to obtain both the quotient and remainder together, by
-> means of the predefined function `ediv`: See [Euclidean division](./variants#euclidean-division).
+<Syntax syntax="cameligo">
+
+For cases when you need both the quotient and the remainder, LIGO
+provides the `ediv` operation. `ediv x y` returns `Some (quotient,
+remainder)`, unless `y` is zero, in which case it returns `None`. The
+function `ediv` is overloaded to accept all the combinations (4) of
+natural and integer numbers:
+
+```cameligo group=euclidean
+// All below equal Some (7,2)
+let ediv1 : (int * nat) option = ediv 37  5
+let ediv2 : (int * nat) option = ediv 37n 5
+let ediv3 : (nat * nat) option = ediv 37n 5n
+let ediv4 : (int * nat) option = ediv 37  5n
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+For cases when you need both the quotient and the remainder, LIGO
+provides the `ediv` operation. `ediv(x,y)` returns `Some (quotient,
+remainder)`, unless `y` is zero, in which case it returns `None`. The
+function `ediv` is overloaded to accept all the combinations (4) of
+natural and integer numbers:
+
+```jsligo group=euclidean
+// All below equal Some (7,2)
+const ediv1: option<[int, nat]> = ediv(37, 5);
+const ediv2: option<[int, nat]> = ediv(37 as nat, 5);
+const ediv3: option<[nat, nat]> = ediv(37 as nat, 5 as nat);
+const ediv4: option<[int, nat]> = ediv(37, 5 as nat);
+```
+
+</Syntax>
+
+The `ediv` operation returns an option type which is `Some` if the result is defined and `None` if it is not, as when you try to divide by zero.
+To handle option types, see [Matching](./variants#matching).
+
+## Checking positivity
+
+You can check if a value is a natural number (`nat`) by using a
+predefined cast function which accepts an integer (`int`) and returns
+an optional natural number (`nat`): if the result is `None`, then the
+given integer was positive, otherwise the corresponding natural number
+`n` is given with `Some(n)`.
+
+<Syntax syntax="cameligo">
+
+```cameligo group=positive
+let one_is_nat : nat option = is_nat (1)
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=positive
+const one_is_nat: option<nat> = is_nat(1);
+```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+## Bitwise operations
+
+You can perform bitwise operations with numbers in these cases:
+
+```cameligo group=bitwise
+// Bitwise and (first operand can be int or nat)
+let four : nat = 4n land 4n // 4
+// Other bitwise operations require two nats
+let four_ : nat = 7 land 4n // 4
+// Bitwise or
+let seven : nat = 7n lor 4n // 7
+// Bitwise xor
+let three : nat = 7n lxor 4n // 3
+// Bitwise shift left
+let fourteen : nat = 7n lsl 1n // 14
+// Bitwise shift right
+let seven_ : nat = 14n land 1n // 7
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+## Increment and decrement operators
+
+The increment operator (`++`) adds one to a number, and the decrement operator (`--`) subtracts one from a number.
+
+You can use these operators as independent statements, as in these examples:
+
+```jsligo test-ligo group=increment_ops
+const testIncDecIndependent = (() => {
+  let value = 0;
+  value++;
+  Assert.assert(value == 1);
+  value--;
+  Assert.assert(value == 0);
+})();
+```
+
+You can also use these operators in expressions that do other things.
+The order of operations for the expressions depends on whether the operator is before or after the value:
+
+- In the **prefix** position (`++p`) the operator increments the value and returns the updated value for use in the current expression.
+
+- In the **postfix** position (`p++`) the operator increments the value but returns the old value before the increment for use in the current expression.
+
+```jsligo test-ligo group=increment_ops
+const testIncEmbedded = (() => {
+  let value = 0;
+  // Prefix increment operator adds one immediately
+  Assert.assert(++value == 1);
+  Assert.assert(value   == 1);
+  // Postfix increment operator adds one after the expression is evaluated
+  Assert.assert(value++ == 1);
+  Assert.assert(value   == 2);
+})();
+```
+
+</Syntax>

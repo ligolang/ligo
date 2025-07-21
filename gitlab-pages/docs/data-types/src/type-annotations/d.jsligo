@@ -1,0 +1,27 @@
+type parameter =
+  ["Back"]
+| ["Claim"]
+| ["Withdraw"];
+
+type storage = {
+  owner    : address,
+  goal     : tez,
+  deadline : timestamp,
+  backers  : map<address, tez>,
+  funded   : bool
+};
+
+// @entry
+function back (_param: unit, store: storage): [list<operation>, storage] {
+  if (Tezos.get_now() > store.deadline)
+    return failwith ("Deadline passed.");
+  return $match(Map.find_opt (Tezos.get_sender(), store.backers), {
+           "None": () =>
+              (() => { const backers =
+                         Map.update(Tezos.get_sender(),
+                                    ["Some" as "Some", Tezos.get_amount()],
+                                    store.backers);
+                       return [list([]), {...store, backers: backers}]})(),
+           "Some": _x => [[], store]
+    })
+};

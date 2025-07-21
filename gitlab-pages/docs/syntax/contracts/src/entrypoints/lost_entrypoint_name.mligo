@@ -8,8 +8,6 @@ module OneEntrypoint = struct
 
 end
 
-module Test = Test.Next
-
 let test_one_entrypoint =
   let initial_storage = 42 in
   let contract = Test.Originate.contract (contract_of OneEntrypoint) initial_storage 0tez in

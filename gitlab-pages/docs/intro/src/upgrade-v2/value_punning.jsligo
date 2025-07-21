@@ -1,0 +1,5 @@
+type object_type = { x: int, y: int, z: int };
+const x = 5;
+const y = 6;
+const z = 7;
+const newObject: object_type = { x, y, z };

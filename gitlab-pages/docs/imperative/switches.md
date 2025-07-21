@@ -23,13 +23,13 @@ conditional statements.
 function hello (day: nat) : string {
   let greeting = "Hello";
   switch (day) {
-    case 1n: greeting += " Monday!"; break;
-    case 2n: greeting += " Tuesday!"; break;
-    case 3n: greeting += " Wednesday!"; break;
-    case 4n: greeting += " Thursday!"; break;
-    case 5n: greeting += " Friday!"; break;
-    case 6n: greeting += " Saturday!"; break;
-    case 7n: greeting += " Sunday!"; break;
+    case (1 as nat): greeting += " Monday!"; break;
+    case (2 as nat): greeting += " Tuesday!"; break;
+    case (3 as nat): greeting += " Wednesday!"; break;
+    case (4 as nat): greeting += " Thursday!"; break;
+    case (5 as nat): greeting += " Friday!"; break;
+    case (6 as nat): greeting += " Saturday!"; break;
+    case (7 as nat): greeting += " Sunday!"; break;
     default: greeting += "!"; break;
   };
   return greeting;

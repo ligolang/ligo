@@ -36,7 +36,7 @@ let sum : tez = 5mutez + 0.000_010tez
 <Syntax syntax="jsligo">
 
 ```jsligo group=add
-const sum: tez = 5mutez + 1tez;
+const sum: tez = (5 as mutez) + (1 as tez);
 ```
 
 </Syntax>
@@ -59,8 +59,10 @@ let negative : tez option = 1mutez - 5mutez (* None *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=subtract
-const amount: option<tez> = 5mutez - 1mutez; /* Some (4mutez) */
-const negative: option<tez> = 1mutez - 5mutez; /* None */
+// ["Some" as "Some", 4 as mutez]
+const amount: option<tez> = (5 as mutez) - (1 as mutez);
+// ["None" as "None"]
+const negative: option<tez> = (1 as mutez) - (5 as mutez);
 ```
 
 </Syntax>
@@ -80,7 +82,7 @@ let mult : tez = 5n * 5mutez
 <Syntax syntax="jsligo">
 
 ```jsligo group=multiply
-const mult: tez = 5n * 5mutez;
+const mult: tez = (5 as nat) * (5 as mutez);
 ```
 
 </Syntax>
@@ -102,7 +104,7 @@ let div : nat = 10mutez / 3mutez
 <Syntax syntax="jsligo">
 
 ```jsligo group=divide
-const div: nat = 10mutez / 3mutez;
+const div: nat = (10 as mutez) / (3 as mutez);
 ```
 
 </Syntax>
@@ -136,11 +138,11 @@ function `ediv` is overloaded to accept tez, beyond all the
 combinations of natural and integer numbers:
 
 ```jsligo group=tez_euclidean
-// Some (7, 2mutez)
-const ediv1: option<[nat, tez]> = ediv(37mutez, 5mutez);
+// ["Some" as "Some", [7, (2 as mutez)]]
+const ediv1: option<[nat, tez]> = ediv(37 as mutez, 5 as mutez);
 
-// Some (7mutez, 2mutez)
-const ediv2: option<[tez, tez]> = ediv(37mutez, 5n);
+// ["Some" as "Some", [7 as mutez, 2 as mutez]]
+const ediv2: option<[tez, tez]> = ediv(37 as mutez, 5 as nat);
 ```
 
 </Syntax>

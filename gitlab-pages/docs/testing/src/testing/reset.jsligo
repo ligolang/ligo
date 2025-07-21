@@ -1,15 +1,13 @@
-import Test = Test.Next;
-
 const test_accounts = () => {
-  Test.State.reset(3n, [] as list <tez>);
-  const admin_account = Test.Account.address(0n);
-  const user_account1 = Test.Account.address(1n);
-  const user_account2 = Test.Account.address(2n);
+  Test.State.reset(3 as nat, [] as list<tez>);
+  const admin_account = Test.Account.address(0 as nat);
+  const user_account1 = Test.Account.address(1 as nat);
+  const user_account2 = Test.Account.address(2 as nat);
 
   Test.IO.log(Test.Address.get_balance(admin_account));
-  // 3800000000000mutez
+  // 3800000000000 as mutez
   Test.IO.log(Test.Address.get_balance(user_account1));
-  // 3800000000000mutez
+  // 3800000000000 as mutez
   Test.IO.log(Test.Address.get_balance(user_account2));
-  // 3800000000000mutez
+  // 3800000000000 as mutez
 }

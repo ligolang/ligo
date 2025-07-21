@@ -1,7 +1,6 @@
-module Test = Test.Next
-
 module C = struct
-  [@entry] let main (p : int) (s : int) : operation list * int = ([] : operation list), p + s
+  [@entry]
+  let main (p : int) (s : int) : operation list * int = [], p + s
 end
 
 let test =

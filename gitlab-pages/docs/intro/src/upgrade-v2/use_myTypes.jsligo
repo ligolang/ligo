@@ -1,0 +1,13 @@
+import * as myTypes from "./gitlab-pages/docs/intro/src/upgrade-v2/myTypes.jsligo";
+type storage_type = myTypes.storage_type;
+type return_type = myTypes.return_type;
+
+class Counter {
+  @entry
+  add = (value: int, storage: storage_type): return_type =>
+    [[], storage + value];
+
+  @entry
+  sub = (value: int, storage: storage_type): return_type =>
+    [[], storage - value];
+}

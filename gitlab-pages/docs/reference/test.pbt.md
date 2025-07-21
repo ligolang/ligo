@@ -3,35 +3,34 @@ id: test.pbt-reference
 title: pbt
 hide_table_of_contents: true
 ---
+
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-
-
 <SyntaxTitle syntax="cameligo">
-val gen : &#39;a.&#39;a pbt&#95;gen
+val gen : &#39;a.&#39;a pbt_gen
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let gen: &lt;a&gt;pbt&#95;gen&lt;a&gt;
+gen: &lt;a&gt;pbt_gen&lt;a&gt;
 </SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
-val gen&#95;small : &#39;a.&#39;a pbt&#95;gen
+val gen_small : &#39;a.&#39;a pbt_gen
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let gen&#95;small: &lt;a&gt;pbt&#95;gen&lt;a&gt;
+gen_small: &lt;a&gt;pbt_gen&lt;a&gt;
 </SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
-val make&#95;test : &#39;a.&#39;a pbt&#95;gen -&gt; (&#39;a -&gt; bool) -&gt; &#39;a pbt&#95;test
+val make_test : &#39;a.&#39;a pbt_gen -&gt; (&#39;a -&gt; bool) -&gt; &#39;a pbt_test
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let make&#95;test: &lt;a&gt;(&#95;: pbt&#95;gen&lt;a&gt;) =&gt; (&#95;: (&#95;: a) =&gt; bool) =&gt; pbt&#95;test&lt;a&gt;
+make_test: &lt;a&gt;(_: pbt_gen&lt;a&gt;, predicate: (_: a) =&gt; bool) =&gt; pbt_test&lt;a&gt;
 </SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
-val run : &#39;a.&#39;a pbt&#95;test -&gt; nat -&gt; &#39;a pbt&#95;result
+val run : &#39;a.&#39;a pbt_test -&gt; nat -&gt; &#39;a pbt_result
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let run: &lt;a&gt;(&#95;: pbt&#95;test&lt;a&gt;) =&gt; (&#95;: nat) =&gt; pbt&#95;result&lt;a&gt;
+run: &lt;a&gt;(_: pbt_test&lt;a&gt;, _: nat) =&gt; pbt_result&lt;a&gt;
 </SyntaxTitle>

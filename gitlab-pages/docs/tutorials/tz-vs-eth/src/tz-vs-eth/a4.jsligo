@@ -1,8 +1,8 @@
 type storage = int;
 type result = [list<operation>, int]
 
-@entry
+// @entry
 const add = (i : int, s : storage) : result => [[], s + i]
 
-@entry
+// @entry
 const subtract = (i : int, s : storage) : result => [[], s - i]

@@ -28,14 +28,10 @@ let%expect_test _ =
   run_ligo_good [ "print"; "dependency-graph"; contract "D.mligo" ];
   [%expect
     {|
-    `-- 7 -- ../../test/contracts/build/D.mligo
-        |-- 5 -- ../../test/contracts/build/C.mligo
-        |   |-- 1 -- ../../test/contracts/build/A.mligo
-        |   `-- 2 -- ../../test/contracts/build/B.mligo
-        |       `-- 1 -- ../../test/contracts/build/A.mligo
-        `-- 6 -- ../../test/contracts/build/E.mligo
-            |-- 3 -- ../../test/contracts/build/F.mligo
-            `-- 4 -- ../../test/contracts/build/G.mligo |}]
+    `-- 4 -- ../../test/contracts/build/D.mligo
+        |-- 1 -- ../../test/contracts/build/A.mligo
+        |-- 2 -- ../../test/contracts/build/E.mligo
+        `-- 3 -- ../../test/contracts/build/F.mligo |}]
 
 let%expect_test _ =
   run_ligo_good [ "print"; "dependency-graph"; contract "D.mligo"; "--format"; "json" ];
@@ -45,7 +41,7 @@ let%expect_test _ =
       "status": "error",
       "stage": "build system",
       "content": {
-        "message": "`-- 7 -- ../../test/contracts/build/D.mligo\n    |-- 5 -- ../../test/contracts/build/C.mligo\n    |   |-- 1 -- ../../test/contracts/build/A.mligo\n    |   `-- 2 -- ../../test/contracts/build/B.mligo\n    |       `-- 1 -- ../../test/contracts/build/A.mligo\n    `-- 6 -- ../../test/contracts/build/E.mligo\n        |-- 3 -- ../../test/contracts/build/F.mligo\n        `-- 4 -- ../../test/contracts/build/G.mligo\n"
+        "message": "`-- 4 -- ../../test/contracts/build/D.mligo\n    |-- 1 -- ../../test/contracts/build/A.mligo\n    |-- 2 -- ../../test/contracts/build/E.mligo\n    `-- 3 -- ../../test/contracts/build/F.mligo\n"
       }
     } |}]
 
@@ -168,14 +164,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "C1.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/build/C1.mligo", line 3, characters 11-17:
-      2 |
-      3 | let test = assert (b = c)
-                     ^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -183,14 +171,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "C_test.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/build/C_test.mligo", line 7, characters 11-17:
-      6 |
-      7 | let test = assert (tata = 44)
-                     ^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test exited with value (). |}]
 

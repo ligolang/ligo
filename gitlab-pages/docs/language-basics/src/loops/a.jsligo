@@ -1,9 +1,0 @@
-const getChar = (s: string, idx: nat): string => String.sub(idx, 1n, s);
-
-function isPalindrome (s: string): bool {
-  let p = "";
-  let length = String.length(s);
-  for (let i = length - 1 ; i >= 0 ; i--)
-    p += getChar(s, abs(i));
-  return p == s;
-};

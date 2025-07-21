@@ -57,9 +57,11 @@ For example, this code assigns annotations to the fields in a record:
 
 ```jsligo group=annot
 type transfer =
-  @layout("comb")
-  { @annot("from") address_from: address;
-    @annot("to") address_to: address;
+  // @layout("comb")
+  { // @annot("from")
+    address_from: address;
+    // @annot("to")
+    address_to: address;
     value: nat }
 ```
 

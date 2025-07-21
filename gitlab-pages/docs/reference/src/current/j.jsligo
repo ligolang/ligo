@@ -1,1 +1,1 @@
-let check = (p : unit) => Tezos.get_source();
+const check = (p : unit) => Tezos.get_source();

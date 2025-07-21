@@ -49,7 +49,7 @@ namespace M {
     };
 }
 
-const make_r = () => ({
+const make_r = () => {
         x1 : 5,
         x  : {
             y1 : 6,
@@ -58,17 +58,15 @@ const make_r = () => ({
                 z1 : 8
             }
         }
-    });
+    };
 
-const make_s = () => ({ a : { b : { c : 9 } } });
+const make_s = () => { a : { b : { c : 9 } } };
 
-const test_simple_record_assign = ((() => {
+const test_simple_record_assign = (() => {
     let r = make_r();
-
     r.x1 = 6;
     assert(r.x1 == 6);
-
-})());
+})();
 
 const test_nested_record_assign_level1 = ((() => {
     let r = make_r();

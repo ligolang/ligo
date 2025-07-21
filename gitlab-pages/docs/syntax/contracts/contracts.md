@@ -10,6 +10,12 @@ For an overview of how smart contracts work on Tezos, see [An introduction to sm
 
 For the data type that represents a contract, see [Contracts](../../data-types/contracts-type).
 
+<Syntax syntax="jsligo">
+
+You can define contracts in [classes](../classes), in [namespaces](../modules), or at the top level of a file.
+
+</Syntax>
+
 ## Example contract
 
 This example contract stores an integer and provides two entrypoints that allow callers to add to that integer or subtract from that integer.
@@ -18,24 +24,20 @@ The code includes automated tests for the contract that are not part of the cont
 <Syntax syntax="cameligo">
 
 ```cameligo group=starter_counter
-module Test = Test.Next
-
 module Counter = struct
   type storage_type = int
   type return_type = operation list * storage_type
 
   [@entry]
-  let add (value : int) ( store: storage_type) : return_type =
+  let add (value : int) (store : storage_type) : return_type =
     [], store + value
 
   [@entry]
-  let sub (value : int) ( store: storage_type) : return_type =
+  let sub (value : int) (store : storage_type) : return_type =
     [], store - value
-
 end
 
 let test =
-
   let contract = Test.Originate.contract (contract_of Counter) 0 0tez in
   let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "add" contract.taddr) 5 0tez in
   let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "sub" contract.taddr) 2 0tez in
@@ -47,29 +49,27 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo group=starter_counter
-import Test = Test.Next;
-
 namespace Counter {
   type storage_type = int;
   type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const add = (value: int, store: storage_type): return_type =>
     [[], store + value];
 
-  @entry
+  // @entry
   const sub = (value: int, store: storage_type): return_type =>
     [[], store - value];
-
 }
 
 const test = (() => {
-
-  const contract = Test.Originate.contract(contract_of(Counter), 0, 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add", contract.taddr), 5, 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("sub", contract.taddr), 2, 0tez);
+  const contract =
+  Test.Originate.contract(contract_of(Counter), 0, 0 as tez);
+  Test.Contract.transfer_exn(
+    Test.Typed_address.get_entrypoint("add", contract.taddr), 5, 0 as tez);
+  Test.Contract.transfer_exn(
+    Test.Typed_address.get_entrypoint("sub", contract.taddr), 2, 0 as tez);
   Assert.assert(Test.Typed_address.get_storage(contract.taddr) == 3);
-
 })();
 ```
 

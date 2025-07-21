@@ -187,7 +187,6 @@ type typer_error =
   | `Typer_bad_key of string * Location.t
   | `Typer_bad_timestamp of string * Location.t
   | `Typer_bad_conversion_bytes of Location.t
-  | `Typer_unsupported_import_decl of Location.t
   ]
 [@@deriving poly_constructor { prefix = "typer_" }]
 
@@ -377,7 +376,7 @@ let rec extract_loc_and_message
     let type_ = type_improve type_ in
     ( loc
     , Format.asprintf
-        "@[<hv>Expected collection of type \"%a\", but recieved collection of type \
+        "@[<hv>Expected collection of type \"%a\", but received collection of type \
          \"%a\".%a@]"
         For_each_loop.pp_collect_type
         collection_type
@@ -385,13 +384,13 @@ let rec extract_loc_and_message
         type_
         (pp_texists_hint ~requires_annotations:true ())
         [ type_ ] )
-  | `Typer_mismatching_for_each_binder_arity (expected_arity, recieved_arity, loc) ->
+  | `Typer_mismatching_for_each_binder_arity (expected_arity, received_arity, loc) ->
     ( loc
     , Format.asprintf
         "@[<hv>Expected for each loop to bind %d variables, but loop binds %d \
          variables.@]"
         expected_arity
-        recieved_arity )
+        received_arity )
   | `Typer_unbound_constructor (c, loc) ->
     loc, Format.asprintf "@[<hv>Constructor \"%a\" not found. @]" Label.pp c
   | `Typer_type_app_wrong_arity (op_opt, e, a, loc) ->
@@ -641,8 +640,6 @@ let rec extract_loc_and_message
     , Format.asprintf
         "@[<hv>Ill-formed bytes literal.@.Example of a valid bytes literal: \
          \"ff7a7aff\". @]" )
-  | `Typer_unsupported_import_decl loc ->
-    loc, Format.asprintf "@[<hv>LIGO doesn't support import declarations yet. @]"
 
 
 let error_ppformat

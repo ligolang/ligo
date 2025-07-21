@@ -32,6 +32,7 @@ type 'payload wrap = <
   comments     : comment list;
   line_comment : string Region.reg option;
 
+  set_payload      : 'payload          -> 'payload wrap;
   set_attributes   : attributes        -> 'payload wrap;
   add_attribute    : attribute         -> 'payload wrap;
   add_comment      : comment           -> 'payload wrap;
@@ -43,12 +44,13 @@ type 'a t = 'a wrap
 type 'a ctor =
   ?attributes:attributes ->
   ?directive:Directive.t ->
-  ?comment:comment ->
+  ?comments:comment list ->
   ?line_com:string Region.reg ->
   'a -> Region.t -> 'a wrap
 
-let wrap ?(attributes=[]) ?directive ?comment ?line_com payload region =
+let wrap ?(attributes=[]) ?directive ?comments ?line_com payload region =
   object
+    val payload         = payload
     method payload      = payload
 
     val    attributes   = attributes
@@ -59,12 +61,13 @@ let wrap ?(attributes=[]) ?directive ?comment ?line_com payload region =
     val    directives   = Option.to_list directive
     method directives   = directives
 
-    val comments        = Option.to_list comment
+    val comments        = match comments with None -> [] | Some list -> list
     method comments     = comments
 
     val line_comment    = line_com
     method line_comment = line_comment
 
+    method set_payload    v    = {< payload = v >}
     method set_attributes attr = {< attributes = attr >}
     method add_attribute  attr = {< attributes = attr :: attributes >}
     method add_comment    com  = {< comments = com :: comments >}
@@ -84,3 +87,5 @@ let yojson_of_wrap f (wrapped : 'a wrap) : json =
           ("region", Region.to_yojson wrapped#region)]
 
 let yojson_of_t = yojson_of_wrap
+
+let to_region w = Region.{value = w#payload; region = w#region}

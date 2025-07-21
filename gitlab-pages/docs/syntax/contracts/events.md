@@ -9,9 +9,10 @@ Events are a type of internal operation on Tezos.
 Smart contracts emit events and off-chain applications can listen for events to know when things happen.
 Smart contracts cannot respond to events.
 
-To create an event, call `Tezos.Next.Operation.Emit` and pass a tag for the event and the information payload for the event.
-This function returns the event operation.
-Then, emit the event by including it in the list of operations in the return value of the entrypoint.
+To create an event, call `Tezos.Operation.emit` and pass a tag for the
+event and the information payload for the event.  This function
+returns the event operation.  Then, emit the event by including it in
+the list of operations in the return value of the entrypoint.
 
 For example, this entrypoint creates two events and emits them:
 
@@ -20,8 +21,8 @@ For example, this entrypoint creates two events and emits them:
 ```cameligo group=events
 [@entry]
 let emitEvents (_ : unit) (storage : int) : operation list * int =
-  let event1 : operation = Tezos.Next.Operation.emit "%emitEvents" "hi" in
-  let event2 : operation = Tezos.Next.Operation.emit "%emitEvents" 6 in
+  let event1 : operation = Tezos.Operation.emit "%emitEvents" "hi" in
+  let event2 : operation = Tezos.Operation.emit "%emitEvents" 6 in
   [event1; event2], storage
 ```
 
@@ -30,10 +31,10 @@ let emitEvents (_ : unit) (storage : int) : operation list * int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=events
-@entry
+// @entry
 const emitEvents = (_: unit, storage: int): [list<operation>, int] => {
-  const event1: operation = Tezos.Next.Operation.emit("%emitEvents", "hi");
-  const event2: operation = Tezos.Next.Operation.emit("%emitEvents", 6);
+  const event1: operation = Tezos.Operation.emit("%emitEvents", "hi");
+  const event2: operation = Tezos.Operation.emit("%emitEvents", 6);
   return [[event1, event2], storage];
 }
 ```

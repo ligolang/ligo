@@ -6,13 +6,26 @@ title: Preprocessor
 import Syntax from '@theme/Syntax';
 
 The preprocessor edits files before they go to the LIGO compiler.
-You can include commands called _preprocessor directives_ to instruct the preprocessor to make changes to a file before the compiler receives it, such as including or excluding code and importing code from other files.
+
+<Syntax syntax="jsligo">
+
+The JsLIGO compiler no longer supports preprocessor directives.
+
+- Instead of using the `#include` or `#import` directives, import namespaces in other files directly with the `import` keyword as described in [Importing and using classes](../syntax/classes#importing-and-using-classes) or [Importing namespaces](../syntax/modules#importing-namespaces).
+
+- The `#if`, `#else`, `#elif`, `#endif`, `#define`, `#undef`, and `#error` directives are no longer supported.
+If you need to continue using them, you can run your JsLIGO code through a C++ preprocessor, which uses the same syntax.
+JsLIGO code with these directives does not compile.
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+CameLIGO code can include commands called _preprocessor directives_ to instruct the preprocessor to make changes to a file before the compiler receives it, such as including or excluding code and importing code from other files.
 
 Preprocessor directives can allow you to make changes to files before the compiler processes them.
 For example, the following contract has three entrypoints, but one is between `#if` and `#endif` directives.
 The line `#if INCLUDE_RESET` instructs the preprocessor to include the text between the directives (in this case, the third entrypoint) only if the `INCLUDE_RESET` Boolean variable is set:
-
-<Syntax syntax="cameligo">
 
 ```cameligo group=includereset
 module MyContract = struct
@@ -29,29 +42,6 @@ module MyContract = struct
 end
 ```
 
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-```jsligo group=includereset
-export namespace MyContract {
-  export type storage = int;
-  export type result = [list<operation>, storage];
-
-  @entry const increment = (delta : int, storage : storage) : result => [[], storage + delta];
-
-  @entry const decrement = (delta : int, storage : storage) : result => [[], storage - delta];
-
-  #if INCLUDE_RESET
-  @entry const reset = (_u : unit, _storage : storage) : result => [[], 0];
-  #endif
-}
-```
-
-</Syntax>
-
-<Syntax syntax="cameligo">
-
 You can set these Boolean preprocessor variables with the [`#define`](#define-and-undef) directive or by passing them to the `-D` argument of the `ligo compile contract` command.
 For example, if the contract in the previous example is in a file named `mycontract.mligo`, this command causes the preprocessor and compiler to output a contract with only two entrypoints:
 
@@ -63,23 +53,6 @@ This command passes the `INCLUDE_RESET` Boolean variable to the preprocessor and
 
 ```bash
 ligo compile contract -D INCLUDE_RESET mycontract.mligo
-```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-You can set these Boolean preprocessor variables with the [`#define`](#define-and-undef) directive or by passing them to the `-D` argument of the `ligo compile contract` command.
-For example, if the contract in the previous example is in a file named `mycontract.jsligo`, this command causes the preprocessor and compiler to output a contract with only two entrypoints:
-
-```bash
-ligo compile contract mycontract.jsligo
-```
-
-This command passes the `INCLUDE_RESET` Boolean variable to the preprocessor and causes the compiler to output a contract with three entrypoints:
-
-```bash
-ligo compile contract -D INCLUDE_RESET mycontract.jsligo
 ```
 
 </Syntax>
@@ -104,6 +77,8 @@ ligo print preprocessed myContract.jsligo
 
 </Syntax>
 
+<Syntax syntax="cameligo">
+
 ## Comments
 
 The preprocessor ignores directives that are in [comments](../syntax/comments), which prevents problems where comments in your code contain text that looks like a directive.
@@ -123,25 +98,11 @@ The preprocessor ignores directives that are in strings, which prevents problems
 
 For example, this code includes a string with the text `#endif`, but the preprocessor does not interpret this text as the `#endif` directive:
 
-<Syntax syntax="cameligo">
-
 ```cameligo skip
 #if true
 let textValue = "This string includes the text #endif"
 #endif
 ```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-```jsligo skip
-#if true
-const textValue = "This string includes the text #endif";
-#endif
-```
-
-</Syntax>
 
 ## Blank lines
 
@@ -216,7 +177,7 @@ The LIGO compiler ignores these linemarkers when it compiles the code.
 
 ## Directives
 
-These are the preprocessor directives that the LIGO preprocessor supports:
+These are the preprocessor directives that the CameLIGO preprocessor supports:
 
 - [`#define` and `#undef`](#define-and-undef)
 - [`#error`](#error)
@@ -304,8 +265,6 @@ type storage =
 
 ### `#import`
 
-<Syntax syntax="cameligo">
-
 The `#import` directive prompts the preprocessor to include another file as a [module](../syntax/modules) in the current file.
 
 For example, you can create a file with related type definitions, as in this example file named `euro.mligo`:
@@ -322,7 +281,7 @@ let two : t = 2n
 In another file, you can import this file, assign it the module `Euro`, and use its definitions:
 
 ```cameligo group=main_importer
-#import "gitlab-pages/docs/compiling/src/preprocessor/euro.mligo" "Euro"
+module Euro = Gitlab_pages.Docs.Compiling.Src.Preprocessor.Euro
 
 type storage = Euro.t
 
@@ -331,86 +290,14 @@ let tip (s : storage) : storage = Euro.add (s, Euro.one)
 
 For more information, see [Modules](../syntax/modules).
 
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The `#import` directive prompts the preprocessor to include another file as a [namespace](../syntax/modules) in the current file.
-
-For example, you can create a file with related type definitions, as in this example file named `euro.jsligo`:
-
-```jsligo group=euro
-export type t = nat;
-
-export const add = (a: t, b: t): t => a + b;
-
-export const one: t = 1n;
-export const two: t = 2n;
-```
-
-In another file, you can import this file, assign it the namespace `Euro`, and use its definitions:
-
-```jsligo group=main_importer
-#import "gitlab-pages/docs/compiling/src/preprocessor/euro.jsligo" "Euro"
-
-type storage = Euro.t;
-
-const tip = (s : storage) : storage =>
-  Euro.add (s, Euro.one);
-```
-
-When you import a file with the `#import` directive, LIGO packages the file as a namespace.
-Therefore, any namespaces in the file are sub-namespaces of that namespace.
-
-However, the namespace does not export those sub-namespaces automatically.
-As a result, if you import a file that contains namespaces, those namespaces are not accessible.
-
-To work around this limitation, add the `@public` decorator to the namespaces in the file.
-For example, this file defines the Euro type as a namespace with the `@public` decorator:
-
-```jsligo group=euro_namespace_public
-// This file is gitlab-pages/docs/preprocessor/src/import/euro_namespace_public.jsligo
-
-@public
-namespace Euro {
-  export type t = nat;
-  export const add = (a: t, b: t) : t => a + b;
-  export const one: t = 1n;
-  export const two: t = 2n;
-};
-```
-
-Because the namespace is public, you can access it as a sub-namespace when you import the file into another file:
-
-```jsligo group=import_euro_public
-#import "gitlab-pages/docs/compiling/src/preprocessor/euro_namespace_public.jsligo" "Euro_import"
-
-type euro_balance = Euro_import.Euro.t;
-
-const add_tip = (s: euro_balance): euro_balance =>
-  Euro_import.Euro.add(s, Euro_import.Euro.one);
-```
-
-For more information, see [Namespaces](../syntax/modules).
-
-</Syntax>
-
 ### `#include`
 
 The `#include` directive includes the entire text contents of the specified file, as in this example:
 
 ```
-#include "path/to/standard_1.ligo"
+#include "path/to/standard_1.mligo"
 ```
 
-<Syntax syntax="cameligo">
-
 Unlike the `#import` directive, the `#include` directive does not package the included file as a module.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-Unlike the `#import` directive, the `#include` directive does not package the included file as a namespace.
 
 </Syntax>

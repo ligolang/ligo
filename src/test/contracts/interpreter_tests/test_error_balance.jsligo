@@ -1,5 +1,3 @@
-import Test = Test.Next
-
 namespace C {
   type storage = int;
 
@@ -13,30 +11,33 @@ namespace C {
   const add = ([store, delta] : [storage, int]) : storage => store + delta;
   const sub = ([store, delta] : [storage, int]) : storage => store - delta;
 
-  @entry
-  const main = (action: parameter, store: storage) : return_ => {
-  return [
-    ([] as list <operation>),    // No operations
-    (match (action) {
-      when(Increment(n)): add ([store, n]);
-      when(Decrement(n)): sub ([store, n]);
-      when(Reset()): 0; })
+  // @entry
+  const main = (action: parameter, store: storage) : return_ =>
+    [ [],    // No operations
+      $match (action, {
+        "Increment": n => add ([store, n]),
+        "Decrement": n => sub ([store, n]),
+        "Reset": () => 0 })
     ]
-  };
 }
 
-const _test = () : test_exec_error_balance_too_low => {
+function _test () : test_exec_error_balance_too_low {
   let initial_storage = 42 as int;
   let orig = Test.Originate.contract(contract_of(C), initial_storage, 0 as tez);
-  let r = Test.Typed_address.transfer(orig.taddr, Main((Increment (1))), 100000000 as tez);
-  return match(r) {
-    when(Success(_n)): failwith("Success");
-    when(Fail(e)): match (e) {
-       when(Rejected(_x)): failwith("Rejected");
-       when(Balance_too_low(x)): ((x: test_exec_error_balance_too_low) => { Test.IO.log(x.spend_request); Test.IO.log(x.contract_balance); return x; })(x);
-       when(Other(_s)): failwith("Other");
-     };
-  };
+  let r = Test.Typed_address.transfer
+           (orig.taddr,
+            ["Main" as "Main", ["Increment" as "Increment", 1]],
+            100000000 as tez);
+  return $match(r, {
+      "Success": _n => failwith("Success"),
+      "Fail": e =>
+        $match(e, {
+          "Rejected": (_) => failwith("Rejected"),
+          "Balance_too_low": (x) =>
+          ((x: test_exec_error_balance_too_low) => { Test.IO.log(x.spend_request); Test.IO.log(x.contract_balance); return x; })(x),
+          "Other": (_) => failwith("Other")
+        })
+  });
 };
 
 const test = _test();

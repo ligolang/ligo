@@ -36,7 +36,6 @@ To test this function, you might provide some input and output values as test ca
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=twice
-module Test = Test.Next
 let simple_tests (f : int -> int) =
   (* Test 1 *)
   let () = Assert.assert (Test.Compare.eq (Test.Michelson.run f 0) (Test.Michelson.eval 0)) in
@@ -52,7 +51,6 @@ let test = simple_tests twice
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=twice
-import Test = Test.Next;
 const simple_tests = (f : ((input: int) => int)) : unit => {
   /* Test 1 */
   Assert.assert(Test.Compare.eq(Test.Michelson.run(f, 0), Test.Michelson.eval(0)));
@@ -119,9 +117,13 @@ That result suggests that the tests are not good enough to distinguish a good im
 
 To help you add more test cases and ensure that the tests are complete, you can use mutation testing to identify different versions of the function (known as _mutations_) that pass all of the tests.
 
-The `Test.Next.Mutation.func` function takes a value to mutate (usually a function) and a test case function to apply to mutated versions of that value.
-If the test case function terminates correctly, the `Test.Next.Mutation.func` function stops trying mutations and returns a `Some` option with the mutation that passed all of the tests.
-If no mutation passes the test case function, the `Test.Next.Mutation.func` function returns `None`.
+The `Test.Mutation.func` function takes a value to mutate (usually a
+function) and a test case function to apply to mutated versions of
+that value.  If the test case function terminates correctly, the
+`Test.Mutation.func` function stops trying mutations and returns
+a `Some` option with the mutation that passed all of the tests.  If no
+mutation passes the test case function, the `Test.Mutation.func`
+function returns `None`.
 
 <Syntax syntax="cameligo">
 
@@ -134,7 +136,7 @@ val Test.mutation_test : 'a -> ('a -> 'b) -> ('b * mutation) option
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-val Test.mutation_test : (value: 'a, tester: ('a -> 'b)) => option <['b, mutation]>
+Test.mutation_test : (value: 'a, tester: ('a -> 'b)) => option <['b, mutation]>
 ```
 
 </Syntax>
@@ -158,13 +160,13 @@ let test_mutation =
 
 ```jsligo test-ligo group=twice
 const test_mutation =
-  match(Test.Mutation.func(twice, simple_tests)) {
-    when(None()): unit;
-    when(Some(pmutation)): do {
+  $match(Test.Mutation.func(twice, simple_tests), {
+    "None": () => unit,
+    "Some": pmutation => (() => {
       Test.IO.log(pmutation[1]);
       Test.IO.println("Some mutation also passes the tests! ^^")
-    }
-  };
+    })()
+  });
 ```
 
 </Syntax>
@@ -178,7 +180,6 @@ ligo run test gitlab-pages/docs/testing/src/mutation-testing/twice.mligo
 # Outputs:
 # Mutation at: File "gitlab-pages/docs/testing/src/mutation-testing/twice.mligo", line 1, characters 22-27:
 #   1 | let twice (x : int) = x + x
-#   2 | module Test = Test.Next
 #
 # Replacing by: x * x.
 #
@@ -194,7 +195,6 @@ ligo run test gitlab-pages/docs/testing/src/mutation-testing/twice.jsligo
 # Outputs:
 # Mutation at: File "/Users/timothymcmackin/tezos/ligo/gitlab-pages/docs/testing/src/mutation-testing/twice.jsligo", line 1, characters 26-31:
 #   1 | const twice = (x: int) => x + x;
-#   2 | import Test = Test.Next;
 #
 # Replacing by: x * x.
 #
@@ -288,9 +288,10 @@ end
 export namespace AddSub {
   export type storage = int;
 
-  @entry
+  // @entry
   const add = (delta: int, storage: storage): [list<operation>, storage] => [[], storage + delta];
-  @entry
+
+  // @entry
   const sub = (delta: int, storage: storage): [list<operation>, storage] => [[], storage - delta];
 }
 ```
@@ -307,10 +308,11 @@ Note that the test uses a function named `tester` to deploy the contract and run
 ```cameligo test-ligo group=mutation-contract-test
 (* This is mutation-contract-test.mligo *)
 
-#import "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.mligo" "MutationContract"
-module Test = Test.Next
+module MutationContract = Gitlab_pages.Docs.Testing.Src.Mutation_testing.Mutation_contract
+
 type storage = MutationContract.AddSub.storage
 type param = MutationContract.AddSub parameter_of
+
 let initial_storage = 7
 
 let tester (taddr : (param, storage) typed_address) (_ : (param ,storage) michelson_contract) (_:int) : unit =
@@ -327,21 +329,25 @@ let test_original =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=mutation-contract-test
-// This is mutation-contract-test.jsligo
+import * as MutationContract from "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.jsligo";
 
-#import "gitlab-pages/docs/testing/src/mutation-testing/mutation-contract.jsligo" "MutationContract"
-import Test = Test.Next;
 type storage = int;
-type param = parameter_of MutationContract.AddSub;
+type param = parameter_of<MutationContract.AddSub>;
+
 const initial_storage = 7;
 
-const tester = (taddr: typed_address<param, storage>, _c: michelson_contract<param, storage> , _: int): unit => {
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add", taddr), 7, 0tez);
+const tester = (taddr: typed_address<param, storage>,
+                _c: michelson_contract<param, storage>,
+                _: int): unit => {
+  Test.Contract.transfer_exn(
+    Test.Typed_address.get_entrypoint("add", taddr), 7, 0 as tez);
   Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 7);
 }
 
 const test_original = (() => {
-  let orig = Test.Originate.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez);
+  let orig =
+  Test.Originate.contract
+    (contract_of(MutationContract.AddSub), initial_storage, 0 as tez);
   return tester(orig.taddr);
 })();
 ```
@@ -370,16 +376,20 @@ let test_mutation =
 
 ```jsligo test-ligo group=mutation-contract-test
 const test_mutation =
-  match(Test.Mutation.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez, tester)) {
-    when(None()): unit;
-    when(Some(pmutation)): do {
+  $match(Test.Mutation.contract(
+           contract_of(MutationContract.AddSub),
+           initial_storage,
+           0 as tez,
+           tester), {
+    "None": () => unit,
+    "Some": pmutation => (() => {
       Test.IO.log(pmutation[1]);
       // In a real program, one would write `failwith "A mutation passes"`
       // Because we want to demonstrate the issue without an actual error
       // a milder println is used in this document.
       Test.IO.println("A mutation of the contract still passes the tests!");
-    }
-  };
+    })()
+  });
 ```
 
 </Syntax>
@@ -429,9 +439,9 @@ The following updated test adds a call to the `Sub` entrypoint to test it:
 ```cameligo test-ligo group=mutation-contract-test
 let tester_add_and_sub (taddr : (param, storage) typed_address) (_ : (param, storage) michelson_contract) (_ : int) : unit =
   let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "add" taddr) 7 0tez in
-  let () = Assert.assert (Test.get_storage taddr = initial_storage + 7) in
+  let () = Assert.assert (Test.Typed_address.get_storage taddr = initial_storage + 7) in
   let _ = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "sub" taddr) 3 0tez in
-  Assert.assert (Test.get_storage taddr = initial_storage + 4)
+  Assert.assert (Test.Typed_address.get_storage taddr = initial_storage + 4)
 
 let test_mutation_sub =
   match Test.Mutation.contract (contract_of MutationContract.AddSub) initial_storage 0tez tester_add_and_sub with
@@ -446,22 +456,30 @@ let test_mutation_sub =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=mutation-contract-test
-const tester_add_and_sub = (taddr: typed_address<param, storage>, _c: michelson_contract<param, storage>, _i: int): unit => {
-
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add", taddr), 7, 0tez);
+const tester_add_and_sub =
+  (taddr: typed_address<param, storage>,
+   _c: michelson_contract<param, storage>,
+   _i: int): unit => {
+  Test.Contract.transfer_exn
+    (Test.Typed_address.get_entrypoint("add", taddr), 7, 0 as tez);
   Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 7);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("sub", taddr), 3, 0tez);
+  Test.Contract.transfer_exn
+    (Test.Typed_address.get_entrypoint("sub", taddr), 3, 0 as tez);
   Assert.assert(Test.Typed_address.get_storage(taddr) == initial_storage + 4);
 }
 
 const test_mutation_sub =
-  match(Test.Mutation.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez, tester_add_and_sub)) {
-    when(None()): unit;
-    when(Some(pmutation)): do {
+  $match(Test.Mutation.contract(
+           contract_of(MutationContract.AddSub),
+           initial_storage,
+           0 as tez,
+           tester_add_and_sub), {
+    "None": () => unit,
+    "Some": pmutation => (() => {
       Test.IO.log(pmutation[1]);
       Test.IO.println("A mutation of the contract still passes the tests!");
-    }
-  };
+    })()
+  });
 ```
 
 </Syntax>
@@ -470,9 +488,13 @@ When this test runs, it finds that no mutation of the `Sub` entrypoint passes al
 
 ## Returning multiple mutations
 
-In the previous examples, the functions `Test.Next.Mutation.func` and `Test.Next.Mutation.contract` return an option that contains either None or Some with a single mutation that passes the tests.
-To speed up the process of eliminating mutations, you can use the `Test.Next.Mutation.All.func` and `Test.Next.Mutation.All.contract` functions to get every mutation that passes the tests.
-These functions return a list of mutations instead of an option.
+In the previous examples, the functions `Test.Mutation.func` and
+`Test.Mutation.contract` return an option that contains either None or
+Some with a single mutation that passes the tests.  To speed up the
+process of eliminating mutations, you can use the
+`Test.Mutation.All.func` and `Test.Mutation.All.contract` functions to
+get every mutation that passes the tests.  These functions return a
+list of mutations instead of an option.
 
 This example gets every mutation that passes the tests for the `twice` function:
 
@@ -493,25 +515,27 @@ let get_all_mutations =
 
 ```jsligo test-ligo group=twice
 const get_all_mutations =
-  match(Test.Mutation.All.func(twice, simple_tests)) {
-    when([]): unit;
-    when([hd,...tl]): do {
+  $match(List.head_and_tail(Test.Mutation.All.func(twice, simple_tests)), {
+    "None": () => unit,
+    "Some": ([hd,tl]) => (() => {
       let mutations = list([hd,...tl]);
       Test.IO.println("Some mutations also pass the tests!");
       for (const m of mutations) {
         let [_, mutation] = m;
         Test.IO.log(mutation);
       };
-    }
-  };
+    })()
+  });
 ```
 
 </Syntax>
 
 In this case, the output is the same because only one mutation passed all of the tests.
 
-Similarly, the `Test.Next.Mutation.All.contract` function returns a list of all contract mutations that pass the tests.
-For example, this test adapts the contract test in the previous section to return every passing mutation:
+Similarly, the `Test.Mutation.All.contract` function returns a list of
+all contract mutations that pass the tests.  For example, this test
+adapts the contract test in the previous section to return every
+passing mutation:
 
 <Syntax syntax="cameligo">
 
@@ -557,17 +581,22 @@ Replacing by: storage * delta.
 
 ```jsligo test-ligo group=mutation-contract-test
 const test_mutation_all =
-  match(Test.Mutation.All.contract(contract_of(MutationContract.AddSub), initial_storage, 0tez, tester)) {
-    when([]): unit;
-    when([hd,...tl]): do {
+  $match(List.head_and_tail(
+           Test.Mutation.All.contract(
+             contract_of(MutationContract.AddSub),
+             initial_storage,
+             0 as tez,
+             tester)), {
+    "None": () => unit,
+    "Some": ([hd,tl]) => (() => {
       let mutations = list([hd,...tl]);
       let _p = Test.IO.println("Some mutations also pass the tests!");
       for (const m of mutations) {
         let [_, mutation] = m;
         Test.IO.log(mutation);
       };
-    }
-  };
+    })()
+  });
 ```
 
 In this case, the output shows that multiple mutations pass the tests:
@@ -618,7 +647,7 @@ type result = operation list * storage
 (* Two entrypoints *)
 [@entry]
 let add (delta : int) (store : storage) : result =
-  [@no_mutation] let _ = assert (0 = 0) in
+  [@no_mutation] let _ = Assert.assert (0 = 0) in
   [], store + delta
 
 [@entry] [@no_mutation]
@@ -643,17 +672,17 @@ type storage = int;
 
 type result = [list<operation>, storage];
 
-// Two entrypoints
-@entry
+// @entry
 const add = (delta : int, store : storage) : result => {
-  @no_mutation let _a = assert (0 == 0);
+  // @no_mutation
+  let _a = Assert.assert (0 == 0);
   return [[], store + delta];
 };
 
-@entry @no_mutation
-const sub = (delta : int, store : storage) : result => {
-  return [[], store - delta];
-};
+// @entry
+// @no_mutation
+const sub = (delta : int, store : storage) : result =>
+  [[], store - delta];
 ```
 
 </Syntax>

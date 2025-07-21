@@ -6,7 +6,7 @@ function foo (_ : unit) : int {
 }
 
 function bar (_ : unit) : int {
-  const [x,y] = [4,5]
-  let add = (_ : unit) : int => x + y
-  return add()
+  const [x,y] = [4,5];
+  const add = (_ : unit) : int => x + y;
+  return add();
 }

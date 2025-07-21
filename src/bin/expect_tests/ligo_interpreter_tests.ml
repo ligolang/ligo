@@ -551,7 +551,7 @@ let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test"; test "switch_case_part_1.jsligo"; "--no-warn" ];
+  run_ligo_good [ "run"; "test"; test "switch_case_part_1.jsligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
@@ -578,7 +578,7 @@ let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test"; test "switch_case_part_2.jsligo"; "--no-warn" ];
+  run_ligo_good [ "run"; "test"; test "switch_case_part_2.jsligo" ];
   [%expect
     {|
       Everything at the top-level was executed.
@@ -641,7 +641,7 @@ let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test"; test "switch_case_part_3.jsligo"; "--no-warn" ];
+  run_ligo_good [ "run"; "test"; test "switch_case_part_3.jsligo" ];
   [%expect
     {|
       Everything at the top-level was executed.
@@ -662,14 +662,13 @@ let%expect_test _ =
       - test15 exited with value ().
       - test16 exited with value ().
       - test17 exited with value ().
-      - test18 exited with value ().
-      - test19 exited with value (). |}]
+      - test18 exited with value (). |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test"; test "switch_case_if_else.jsligo"; "--no-warn" ];
+  run_ligo_good [ "run"; "test"; test "switch_case_if_else.jsligo" ];
   [%expect
     {|
       Everything at the top-level was executed.
@@ -791,204 +790,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_baker_account.mligo" ];
   [%expect
     {|
-    File "./test_baker_account.mligo", line 7, characters 12-28:
-      6 | let test =
-      7 |   let acc = Test.new_account () in
-                      ^^^^^^^^^^^^^^^^
-      8 |   let () = Test.baker_account acc (None : tez option) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.new` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 8, characters 11-29:
-      7 |   let acc = Test.new_account () in
-      8 |   let () = Test.baker_account acc (None : tez option) in
-                     ^^^^^^^^^^^^^^^^^^
-      9 |   let () = Test.reset_state 2n ([] : tez list) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.Reset.add_baker` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 9, characters 11-27:
-      8 |   let () = Test.baker_account acc (None : tez option) in
-      9 |   let () = Test.reset_state 2n ([] : tez list) in
-                     ^^^^^^^^^^^^^^^^
-     10 |   let pkh = Crypto.hash_key acc.1 in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.reset` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 13, characters 11-19:
-     12 |   let a = Tezos.address c in
-     13 |   let () = Test.log "STARTING BALANCE AND VOTING POWER" in
-                     ^^^^^^^^
-     14 |   let () = Test.log(Test.get_balance_of_address a) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 14, characters 11-19:
-     13 |   let () = Test.log "STARTING BALANCE AND VOTING POWER" in
-     14 |   let () = Test.log(Test.get_balance_of_address a) in
-                     ^^^^^^^^
-     15 |   let () = Test.log(Test.get_voting_power pkh) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 14, characters 20-47:
-     13 |   let () = Test.log "STARTING BALANCE AND VOTING POWER" in
-     14 |   let () = Test.log(Test.get_balance_of_address a) in
-                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     15 |   let () = Test.log(Test.get_voting_power pkh) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 15, characters 11-19:
-     14 |   let () = Test.log(Test.get_balance_of_address a) in
-     15 |   let () = Test.log(Test.get_voting_power pkh) in
-                     ^^^^^^^^
-     16 |   let () = Test.set_baker a in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 15, characters 20-41:
-     14 |   let () = Test.log(Test.get_balance_of_address a) in
-     15 |   let () = Test.log(Test.get_voting_power pkh) in
-                              ^^^^^^^^^^^^^^^^^^^^^
-     16 |   let () = Test.set_baker a in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 16, characters 11-25:
-     15 |   let () = Test.log(Test.get_voting_power pkh) in
-     16 |   let () = Test.set_baker a in
-                     ^^^^^^^^^^^^^^
-     17 |   let orig = Test.originate (contract_of C) 41 5tez in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.set_baker` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 17, characters 13-27:
-     16 |   let () = Test.set_baker a in
-     17 |   let orig = Test.originate (contract_of C) 41 5tez in
-                       ^^^^^^^^^^^^^^
-     18 |   let () = Test.log "BALANCE AND VOTING POWER AFTER ORIGINATE" in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 18, characters 11-19:
-     17 |   let orig = Test.originate (contract_of C) 41 5tez in
-     18 |   let () = Test.log "BALANCE AND VOTING POWER AFTER ORIGINATE" in
-                     ^^^^^^^^
-     19 |   let () = Test.log(Test.get_balance_of_address a) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 19, characters 11-19:
-     18 |   let () = Test.log "BALANCE AND VOTING POWER AFTER ORIGINATE" in
-     19 |   let () = Test.log(Test.get_balance_of_address a) in
-                     ^^^^^^^^
-     20 |   let () = Test.log(Test.get_voting_power pkh) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 19, characters 20-47:
-     18 |   let () = Test.log "BALANCE AND VOTING POWER AFTER ORIGINATE" in
-     19 |   let () = Test.log(Test.get_balance_of_address a) in
-                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     20 |   let () = Test.log(Test.get_voting_power pkh) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 20, characters 11-19:
-     19 |   let () = Test.log(Test.get_balance_of_address a) in
-     20 |   let () = Test.log(Test.get_voting_power pkh) in
-                     ^^^^^^^^
-     21 |   let cc = Test.to_contract orig.addr in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 20, characters 20-41:
-     19 |   let () = Test.log(Test.get_balance_of_address a) in
-     20 |   let () = Test.log(Test.get_voting_power pkh) in
-                              ^^^^^^^^^^^^^^^^^^^^^
-     21 |   let cc = Test.to_contract orig.addr in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 21, characters 11-27:
-     20 |   let () = Test.log(Test.get_voting_power pkh) in
-     21 |   let cc = Test.to_contract orig.addr in
-                     ^^^^^^^^^^^^^^^^
-     22 |   let _ = Test.transfer_to_contract cc (Main 1) 3tez in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 22, characters 10-35:
-     21 |   let cc = Test.to_contract orig.addr in
-     22 |   let _ = Test.transfer_to_contract cc (Main 1) 3tez in
-                    ^^^^^^^^^^^^^^^^^^^^^^^^^
-     23 |   let () = Test.log "BALANCE AND VOTING POWER AFTER TRANSFER" in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 23, characters 11-19:
-     22 |   let _ = Test.transfer_to_contract cc (Main 1) 3tez in
-     23 |   let () = Test.log "BALANCE AND VOTING POWER AFTER TRANSFER" in
-                     ^^^^^^^^
-     24 |   let () = Test.log(Test.get_balance_of_address a) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 24, characters 11-19:
-     23 |   let () = Test.log "BALANCE AND VOTING POWER AFTER TRANSFER" in
-     24 |   let () = Test.log(Test.get_balance_of_address a) in
-                     ^^^^^^^^
-     25 |   let () = Test.log(Test.get_voting_power pkh) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 24, characters 20-47:
-     23 |   let () = Test.log "BALANCE AND VOTING POWER AFTER TRANSFER" in
-     24 |   let () = Test.log(Test.get_balance_of_address a) in
-                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     25 |   let () = Test.log(Test.get_voting_power pkh) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_balance` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 25, characters 11-19:
-     24 |   let () = Test.log(Test.get_balance_of_address a) in
-     25 |   let () = Test.log(Test.get_voting_power pkh) in
-                     ^^^^^^^^
-     26 |   ()
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_baker_account.mligo", line 25, characters 20-41:
-     24 |   let () = Test.log(Test.get_balance_of_address a) in
-     25 |   let () = Test.log(Test.get_voting_power pkh) in
-                              ^^^^^^^^^^^^^^^^^^^^^
-     26 |   ()
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.get_voting_power` from `Test.Next` is encouraged for a smoother migration.
-
     "STARTING BALANCE AND VOTING POWER"
     3800000000000mutez
     4000000000000n
@@ -1102,7 +903,7 @@ let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
 
 let%expect_test _ =
-  run_ligo_good [ "run"; "test"; test "test_error_balance.jsligo"; "--no-warn" ];
+  run_ligo_good [ "run"; "test"; test "test_error_balance.jsligo" ];
   [%expect
     {|
     100000000000000mutez
@@ -1326,23 +1127,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_print_values.mligo" ];
   [%expect
     {|
-    File "./test_print_values.mligo", line 1, characters 9-32:
-      1 | let () = Test.unset_print_values ()
-                   ^^^^^^^^^^^^^^^^^^^^^^^
-      2 | let () = Test.println "aloh"
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.unset_test_print` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_print_values.mligo", line 2, characters 9-21:
-      1 | let () = Test.unset_print_values ()
-      2 | let () = Test.println "aloh"
-                   ^^^^^^^^^^^^
-      3 | let test = 42
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.println` from `Test.Next` is encouraged for a smoother migration.
-
     aloh |}]
 
 let () = Sys_unix.chdir pwd
@@ -1353,7 +1137,7 @@ let%expect_test _ =
   [%expect
     {|
     ["typed_address","KT19SRGEVxDMKdou6Fu7vZrtPy6X9GB7Dwna"]
-    ["record",[[["Label","bar",["File",{"start":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":9,"pos_bol":0,"pos_cnum":31},"point_num":228,"point_bol":197},"stop":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":9,"pos_bol":0,"pos_cnum":34},"point_num":231,"point_bol":197}}]],["list",[["constant",["string","hello"]],["constant",["string","world"]]]]],[["Label","foo",["File",{"start":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":9,"pos_bol":0,"pos_cnum":19},"point_num":216,"point_bol":197},"stop":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":9,"pos_bol":0,"pos_cnum":22},"point_num":219,"point_bol":197}}]],["constant",["int","42"]]]]] |}]
+    ["record",[[["Label","bar",["File",{"start":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":7,"pos_bol":0,"pos_cnum":31},"point_num":203,"point_bol":172},"stop":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":7,"pos_bol":0,"pos_cnum":34},"point_num":206,"point_bol":172}}]],["list",[["constant",["string","hello"]],["constant",["string","world"]]]]],[["Label","foo",["File",{"start":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":7,"pos_bol":0,"pos_cnum":19},"point_num":191,"point_bol":172},"stop":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":7,"pos_bol":0,"pos_cnum":22},"point_num":194,"point_bol":172}}]],["constant",["int","42"]]]]] |}]
 
 (*
 let%expect_test _ =
@@ -1389,113 +1173,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_compare_setmap.mligo" ];
   [%expect
     {test|
-    File "./test_compare_setmap.mligo", line 6, characters 23-37:
-      5 |  let s = Set.add ("tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ" : address) s in
-      6 |  let s : address set = Test.decompile (Test.eval s) in
-                                 ^^^^^^^^^^^^^^
-      7 |  Test.eval s
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.decompile` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_compare_setmap.mligo", line 6, characters 39-48:
-      5 |  let s = Set.add ("tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ" : address) s in
-      6 |  let s : address set = Test.decompile (Test.eval s) in
-                                                 ^^^^^^^^^
-      7 |  Test.eval s
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_compare_setmap.mligo", line 7, characters 1-10:
-      6 |  let s : address set = Test.decompile (Test.eval s) in
-      7 |  Test.eval s
-           ^^^^^^^^^
-      8 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_compare_setmap.mligo", line 13, characters 19-33:
-     12 |  let s = Set.add 3 s in
-     13 |  let s : int set = Test.decompile (Test.eval s) in
-                             ^^^^^^^^^^^^^^
-     14 |  Test.eval s
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.decompile` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_compare_setmap.mligo", line 13, characters 35-44:
-     12 |  let s = Set.add 3 s in
-     13 |  let s : int set = Test.decompile (Test.eval s) in
-                                             ^^^^^^^^^
-     14 |  Test.eval s
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_compare_setmap.mligo", line 14, characters 1-10:
-     13 |  let s : int set = Test.decompile (Test.eval s) in
-     14 |  Test.eval s
-           ^^^^^^^^^
-     15 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_compare_setmap.mligo", line 20, characters 30-44:
-     19 |  let s = Map.add ("tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" : address) 900 s in
-     20 |  let s : (address, int) map = Test.decompile (Test.eval s) in
-                                        ^^^^^^^^^^^^^^
-     21 |  Test.eval s
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.decompile` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_compare_setmap.mligo", line 20, characters 46-55:
-     19 |  let s = Map.add ("tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" : address) 900 s in
-     20 |  let s : (address, int) map = Test.decompile (Test.eval s) in
-                                                        ^^^^^^^^^
-     21 |  Test.eval s
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_compare_setmap.mligo", line 21, characters 1-10:
-     20 |  let s : (address, int) map = Test.decompile (Test.eval s) in
-     21 |  Test.eval s
-           ^^^^^^^^^
-     22 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_compare_setmap.mligo", line 27, characters 34-48:
-     26 |  let s = Big_map.add ("tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" : address) 900 s in
-     27 |  let s : (address, int) big_map = Test.decompile (Test.eval s) in
-                                            ^^^^^^^^^^^^^^
-     28 |  Test.eval s
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.decompile` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_compare_setmap.mligo", line 27, characters 50-59:
-     26 |  let s = Big_map.add ("tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" : address) 900 s in
-     27 |  let s : (address, int) big_map = Test.decompile (Test.eval s) in
-                                                            ^^^^^^^^^
-     28 |  Test.eval s
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./test_compare_setmap.mligo", line 28, characters 1-10:
-     27 |  let s : (address, int) big_map = Test.decompile (Test.eval s) in
-     28 |  Test.eval s
-           ^^^^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Michelson.eval` from `Test.Next` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test_address_set exited with value { "tz1KeYsjjSCLEELMuiq1oXzVZmuJrZ15W4mv" ;
       "tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ" }.
@@ -1514,7 +1191,7 @@ let%expect_test _ =
     ; "test-expr"
     ; "cameligo"
     ; "type t = [@layout:comb] { num : int ; num_nat : nat ; str : string } in let v = \
-       Test.parse_michelson {| { Elt 1 (Pair 1 1 \"q\") } |} in ((Test.decompile v : \
+       Test.Michelson.parse {| { Elt 1 (Pair 1 1 \"q\") } |} in ((Test.Michelson.decompile v : \
        (nat, t) big_map))"
     ];
   [%expect
@@ -1601,74 +1278,12 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "contract_with_ticket_storage.mligo" ];
   [%expect
     {|
-    ("unforged_ticket" , Some ({amount = 15n ; ticketer = KT1CDHnKFHBMFtyzC92oTfi4Z5wthR4Yk3LW ; value = 0x0202}))
+    ("unforged_ticket" , Some ({amount = 15n ; ticketer = KT1J6ZRf5Ni53KqEXS5yaQ5FPiBTMFH75EVf ; value = 0x0202}))
     Everything at the top-level was executed.
     - test_originate_contract exited with value (). |}];
   run_ligo_good [ "run"; "test"; test "contract_with_ticket_param.mligo" ];
   [%expect
     {|
-    File "./contract_with_ticket_param.mligo", line 7, characters 24-41:
-      6 |     let (_,ticket) = p in
-      7 |     let (_,(v,_)) , _ = Tezos.read_ticket ticket in
-                                  ^^^^^^^^^^^^^^^^^
-      8 |     [] , (v, Tezos.get_sender ())
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.read` from `Tezos.Next` is encouraged for a smoother migration.
-
-    File "./contract_with_ticket_param.mligo", line 12, characters 13-27:
-     11 | let test_transfer_to_contract =
-     12 |   let orig = Test.originate (contract_of C) ("bye",Test.nth_bootstrap_account 1) 1mutez in
-                       ^^^^^^^^^^^^^^
-     13 |   let main_addr = Tezos.address (Test.to_contract orig.addr) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./contract_with_ticket_param.mligo", line 12, characters 51-77:
-     11 | let test_transfer_to_contract =
-     12 |   let orig = Test.originate (contract_of C) ("bye",Test.nth_bootstrap_account 1) 1mutez in
-                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-     13 |   let main_addr = Tezos.address (Test.to_contract orig.addr) in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.address` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./contract_with_ticket_param.mligo", line 13, characters 33-49:
-     12 |   let orig = Test.originate (contract_of C) ("bye",Test.nth_bootstrap_account 1) 1mutez in
-     13 |   let main_addr = Tezos.address (Test.to_contract orig.addr) in
-                                           ^^^^^^^^^^^^^^^^
-     14 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./contract_with_ticket_param.mligo", line 32, characters 16-43:
-     31 |   in
-     32 |   let s, addr = Test.get_storage_of_address main_addr in
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     33 |   let p_addr = proxy_taddr |> Test.to_contract |> Tezos.address in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Address.get_storage` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./contract_with_ticket_param.mligo", line 33, characters 30-46:
-     32 |   let s, addr = Test.get_storage_of_address main_addr in
-     33 |   let p_addr = proxy_taddr |> Test.to_contract |> Tezos.address in
-                                        ^^^^^^^^^^^^^^^^
-     34 |   assert (s = "world" && addr = p_addr)
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.to_contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "./contract_with_ticket_param.mligo", line 34, characters 2-8:
-     33 |   let p_addr = proxy_taddr |> Test.to_contract |> Tezos.address in
-     34 |   assert (s = "world" && addr = p_addr)
-            ^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test_transfer_to_contract exited with value (). |}]
 
@@ -1719,60 +1334,6 @@ let%expect_test "for loops" =
   run_ligo_good [ "run"; "test"; test "/for_loop/pascal_triangle.jsligo" ];
   [%expect
     {|
-    File ".//for_loop/pascal_triangle.jsligo", line 13, characters 35-45:
-     12 | const printSpaces = (n: int): unit => {
-     13 |     for (let i = n ; i >= 0 ; i--) Test.print(" ")
-                                             ^^^^^^^^^^
-     14 | }
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.print` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/pascal_triangle.jsligo", line 20, characters 8-18:
-     19 |     for (const x of xs) {
-     20 |         Test.print(x > 9 ? "  " : "   ");
-                  ^^^^^^^^^^
-     21 |         Test.print(Test.to_string(x));
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.print` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/pascal_triangle.jsligo", line 21, characters 8-18:
-     20 |         Test.print(x > 9 ? "  " : "   ");
-     21 |         Test.print(Test.to_string(x));
-                  ^^^^^^^^^^
-     22 |     }
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.print` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/pascal_triangle.jsligo", line 21, characters 19-33:
-     20 |         Test.print(x > 9 ? "  " : "   ");
-     21 |         Test.print(Test.to_string(x));
-                             ^^^^^^^^^^^^^^
-     22 |     }
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `String.show` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/pascal_triangle.jsligo", line 36, characters 8-20:
-     35 |         printNums(nums);
-     36 |         Test.println("")
-                  ^^^^^^^^^^^^
-     37 |     };
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.println` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/pascal_triangle.jsligo", line 42, characters 18-30:
-     41 | const test8 = printPascalTriangle(8)
-     42 | const testspace = Test.println("")
-                            ^^^^^^^^^^^^
-     43 | const test10 = printPascalTriangle(9)
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.println` from `Test.Next` is encouraged for a smoother migration.
-
                       1
                     1   1
                   1   2   1
@@ -1798,51 +1359,6 @@ let%expect_test "for loops" =
   run_ligo_good [ "run"; "test"; test "/for_loop/matrix_multiplication.jsligo" ];
   [%expect
     {|
-    File ".//for_loop/matrix_multiplication.jsligo", line 15, characters 4-26:
-     14 | {
-     15 |     Test.assert_with_error(m1c == m2r,
-              ^^^^^^^^^^^^^^^^^^^^^^
-     16 |     "Error: The number of columns in 1st matrix must be equal to number of rows in 2nd matrix");
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.Error.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/matrix_multiplication.jsligo", line 39, characters 4-15:
-     38 |         Map.literal([[[0, 0], 4], [[0, 1], 5], [[0, 2], 6]]), 1, 3);
-     39 |     Test.assert(m == Map.literal(list([
-              ^^^^^^^^^^^
-     40 |         [[0, 0], 4] , [[0, 1], 5] , [[0, 2], 6],
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/matrix_multiplication.jsligo", line 55, characters 4-15:
-     54 |                           [[2, 0], 16], [[2, 1], 17], [[2, 2], 18]])), 3, 3);
-     55 |     Test.assert(m == Map.literal(list([
-              ^^^^^^^^^^^
-     56 |         [[0, 0], 84] , [[0, 1], 90] , [[0, 2], 96] ,
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/matrix_multiplication.jsligo", line 69, characters 4-15:
-     68 |                           [[2, 0], 6]])), 3, 1);
-     69 |     Test.assert(m == Map.literal(list([
-              ^^^^^^^^^^^
-     70 |         [[0, 0], 32]
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/matrix_multiplication.jsligo", line 84, characters 4-15:
-     83 |                           [[2, 0], 16], [[2, 1], 17], [[2, 2], 18]])), 3, 3);
-     84 |     Test.assert(m == Map.literal(list([
-              ^^^^^^^^^^^
-     85 |         [[0, 0], 10], [[0, 1], 11], [[0, 2], 12] ,
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test_3x1_1x3 exited with value ().
     - test_3x3_3x3 exited with value ().
@@ -1851,78 +1367,6 @@ let%expect_test "for loops" =
   run_ligo_good [ "run"; "test"; test "/for_loop/for_loops.jsligo" ];
   [%expect
     {|
-    File ".//for_loop/for_loops.jsligo", line 7, characters 2-13:
-      6 |   };
-      7 |   Test.assert(a == 10)
-            ^^^^^^^^^^^
-      8 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/for_loops.jsligo", line 13, characters 2-13:
-     12 |   };
-     13 |   Test.assert(b == 12);
-            ^^^^^^^^^^^
-     14 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/for_loops.jsligo", line 23, characters 2-13:
-     22 |   };
-     23 |   Test.assert(d == 15);
-            ^^^^^^^^^^^
-     24 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/for_loops.jsligo", line 33, characters 2-13:
-     32 |   };
-     33 |   Test.assert(f == 10);
-            ^^^^^^^^^^^
-     34 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/for_loops.jsligo", line 37, characters 2-13:
-     36 |   for ( ; g < 10 ; ) ;
-     37 |   Test.assert(g == 11);
-            ^^^^^^^^^^^
-     38 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/for_loops.jsligo", line 41, characters 2-13:
-     40 |   for ( ;h < 10; h++) ;
-     41 |   Test.assert(h == 10);
-            ^^^^^^^^^^^
-     42 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/for_loops.jsligo", line 47, characters 2-13:
-     46 |   for (j = 11 ; j < 10 ; ) ;
-     47 |   Test.assert(j == 11);
-            ^^^^^^^^^^^
-     48 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
-    File ".//for_loop/for_loops.jsligo", line 53, characters 2-13:
-     52 |   for (l = 0 ;l < 10; l++) ;
-     53 |   Test.assert(l == 10);
-            ^^^^^^^^^^^
-     54 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Assert.assert` from `Test.Next` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - testLoop exited with value (). |}];
   run_ligo_good [ "run"; "test"; test "/for_loop/for_map.jsligo" ];
@@ -1956,7 +1400,7 @@ let%expect_test _ =
     {|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
-    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}];
+    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}] ;
   run_ligo_good [ "run"; "test"; test "test.jsligo" ];
   [%expect
     {|
@@ -1984,7 +1428,8 @@ let%expect_test _ =
     {|
     Everything at the top-level was executed.
     - test_originate_from_file_relative_path exited with value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS.
-    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}];
+    - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
+  ;
   run_ligo_good [ "run"; "test"; test "test/a/b/test.jsligo" ];
   [%expect
     {|
@@ -1999,11 +1444,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_capture_meta_type.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_capture_meta_type.mligo", line 15, characters 26-27:
-     14 |
-     15 | let f = fun (_ : unit) -> v.x
+    File "../../test/contracts/negative//interpreter_tests/test_capture_meta_type.mligo", line 14, characters 26-27:
+     13 |
+     14 | let f = fun (_ : unit) -> v.x
                                     ^
-     16 |
+     15 |
 
     Invalid usage of a Test type: typed_address (sum[Main -> unit] ,
     unit) in record[x -> int , y -> typed_address (sum[Main -> unit] , unit)] cannot be translated to Michelson. |}]
@@ -2053,10 +1498,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "bad_balances_reset.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 3, characters 11-48:
-      2 |
-      3 | let test = Test.State.reset 2n [4000tez;4000tez]
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-49:
+      1 | let test = Test.State.reset 2n [4000tez; 4000tez]
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
      baker account initial balance must at least reach 6000 tez |}]
 
@@ -2097,37 +1541,37 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_trace2.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 9, characters 11-86:
-      8 | let make_call (contr : C parameter_of contract) =
-      9 |   let () = Test.Address.get_storage ("KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL" : address) in
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 7, characters 11-86:
+      6 | let make_call (contr : C parameter_of contract) =
+      7 |   let () = Test.Address.get_storage ("KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL" : address) in
                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     10 |   Test.Contract.transfer_exn contr (Main ()) 10tez
+      8 |   Test.Contract.transfer_exn contr (Main ()) 10tez
 
     An uncaught error occured:
     Did not find service: GET ocaml:context/contracts/KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL/storage
     Trace:
-    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 9, characters 11-86 ,
-    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 9, characters 11-86 ,
-    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 15, characters 2-55 |}]
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 7, characters 11-86 ,
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 7, characters 11-86 ,
+    File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 13, characters 2-55 |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_mutation_loop.mligo"; "--steps"; "1000" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 15, characters 8-55:
-     14 |         let () = Test.IO.log(mutation) in
-     15 |         failwith "Some mutation also passes the tests!"
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 13, characters 8-55:
+     12 |         let () = Test.IO.log(mutation) in
+     13 |         failwith "Some mutation also passes the tests!"
                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     An uncaught error occured:
     Failwith: "Some mutation also passes the tests!"
     Trace:
-    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 15, characters 8-55
-    Mutation at: File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 4, characters 43-44:
-      3 | let rec my_rec_fun (rounds : int) : unit =
-      4 |   if rounds > 0 then  my_rec_fun (rounds - 1)
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 13, characters 8-55
+    Mutation at: File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 2, characters 43-44:
+      1 | let rec my_rec_fun (rounds : int) : unit =
+      2 |   if rounds > 0 then  my_rec_fun (rounds - 1)
                                                      ^
-      5 |
+      3 |
 
     Replacing by: 2. |}]
 
@@ -2135,11 +1579,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_source1.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 15, characters 10-57:
-     14 |   let () = Test.State.set_source addr in
-     15 |   let _ = Test.Originate.contract (contract_of C) () 0tez in
+    File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 13, characters 10-57:
+     12 |   let () = Test.State.set_source addr in
+     13 |   let _ = Test.Originate.contract (contract_of C) () 0tez in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     16 |   ()
+     14 |   ()
 
     The source address is not an implicit account
     KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS |}]
@@ -2148,11 +1592,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_source2.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 13, characters 10-67:
-     12 |              (Test.Typed_address.to_address orig.taddr) in
-     13 |   let _ = Test.Typed_address.transfer_exn orig.taddr (Main ()) 0tez in
+    File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 11, characters 10-67:
+     10 |              (Test.Typed_address.to_address orig.taddr) in
+     11 |   let _ = Test.Typed_address.transfer_exn orig.taddr (Main ()) 0tez in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     14 |   ()
+     12 |   ()
 
     The source address is not an implicit account
     KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS |}]
@@ -2161,9 +1605,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_run_types.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 4, characters 36-54:
-      3 | const foo = (x: {field: int}): {field: int} => {return x};
-      4 | const bar = Test.Michelson.run(foo, {property: "toto"});
+    File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 36-54:
+      1 | const foo = (x: {field: int}): {field: int} => x;
+      2 | const bar = Test.Michelson.run(foo, {property: "toto"});
                                               ^^^^^^^^^^^^^^^^^^
 
     Mismatching record labels. Expected record of type "record[field -> int]". |}]
@@ -2172,9 +1616,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_run_types2.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 4, characters 36-42:
-      3 | const foo = (x:  {b:int}):  {b:int} => {return x};
-      4 | const bar = Test.Michelson.run(foo, "toto");
+    File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 2, characters 36-42:
+      1 | const foo = (x:  {b:int}):  {b:int} => x;
+      2 | const bar = Test.Michelson.run(foo, "toto");
                                               ^^^^^^
 
     This expression has type "string", but an expression was expected of type
@@ -2185,9 +1629,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_run_types3.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 4, characters 36-51:
-      3 | const foo = (x: int): int => {return x};
-      4 | const bar = Test.Michelson.run(foo, {field: "toto"});
+    File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 36-51:
+      1 | const foo = (x: int): int => x;
+      2 | const bar = Test.Michelson.run(foo, {field: "toto"});
                                               ^^^^^^^^^^^^^^^
 
     This expression has type "record[field -> string]", but an expression was expected of type
@@ -2198,9 +1642,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_decompile.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 5, characters 2-39:
-      4 |   let x = Test.Michelson.eval 4n in
-      5 |   (Test.Michelson.decompile x : string)
+    File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 3, characters 2-39:
+      2 |   let x = Test.Michelson.eval 4n in
+      3 |   (Test.Michelson.decompile x : string)
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     This Michelson value has assigned type 'nat', which does not coincide with expected type 'string'. |}]
@@ -2209,11 +1653,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 27, characters 4-51:
-     26 |   let {taddr=ta; code=_; size=_} =
-     27 |     Test.Originate.contract (contract_of C) 41 5tez in
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 24, characters 4-51:
+     23 |   let {taddr=ta; code=_; size=_} =
+     24 |     Test.Originate.contract (contract_of C) 41 5tez in
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     28 |
+     25 |
 
     Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
@@ -2222,47 +1666,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate_stake.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 6, characters 12-28:
-      5 | let test =
-      6 |   let acc = Test.new_account () in
-                      ^^^^^^^^^^^^^^^^
-      7 |   let pkh = Crypto.hash_key acc.1 in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Account.new` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 10, characters 10-39:
-      9 |
-     10 |   let _ = Test.transfer_to_contract_exn c () 1000000tez in
-                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     11 |   let () = Test.register_delegate pkh in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Contract.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 11, characters 11-33:
-     10 |   let _ = Test.transfer_to_contract_exn c () 1000000tez in
-     11 |   let () = Test.register_delegate pkh in
-                     ^^^^^^^^^^^^^^^^^^^^^^
-     12 |   let () = Test.stake pkh 1000000tez in
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.register_delegate` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 12, characters 11-21:
-     11 |   let () = Test.register_delegate pkh in
-     12 |   let () = Test.stake pkh 1000000tez in
-                     ^^^^^^^^^^
-     13 |   ()
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `State.stake` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 12, characters 11-36:
-     11 |   let () = Test.register_delegate pkh in
-     12 |   let () = Test.stake pkh 1000000tez in
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^
-     13 |   ()
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 13, characters 11-42:
+     12 |   let () = Test.State.register_delegate pkh in
+     13 |   let () = Test.State.stake pkh 1000000tez in
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     14 |   ()
 
     An uncaught error occured:
     { "id": "proto.alpha.operation.manual_staking_forbidden",
@@ -2270,7 +1678,7 @@ let%expect_test _ =
         "Manual staking operations are forbidden because staking is currently automated.",
       "data": {} }
     Trace:
-    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 12, characters 11-36 |}]
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 13, characters 11-42 |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/negative/interpreter_tests/"
@@ -2280,22 +1688,23 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; "typed_addr_in_bytes_pack.mligo" ];
   [%expect
     {|
-  File "typed_addr_in_bytes_pack.mligo", line 15, character 17 to line 19, character 5:
-   14 |     let r = originate_record () in
-   15 |     let packed = Bytes.pack (fun() ->
-                         ^^^^^^^^^^^^^^^^^^^^
-   16 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   17 |           Some(c) -> let op = Tezos.Next.Operation.transaction () 0mutez c in [op]
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   18 |         | None ->  ([] : operation list)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   19 |     ) in
-        ^^^^^
-   20 |     let () = Test.IO.log(packed) in
+File "typed_addr_in_bytes_pack.mligo", line 13, character 17 to line 17, character 5:
+ 12 |     let r = originate_record () in
+ 13 |     let packed = Bytes.pack (fun() ->
+                       ^^^^^^^^^^^^^^^^^^^^
+ 14 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 15 |           Some(c) -> let op = Tezos.Operation.transaction () 0mutez c in [op]
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 16 |         | None ->  ([] : operation list)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 17 |     ) in
+      ^^^^^
+ 18 |     let () = Test.IO.log(packed) in
 
-  Cannot decompile value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS of type typed_address (unit ,
-  unit) |}]
+Cannot decompile value KT1MoPRoithHNa7i6LYHqeQfZB4oyWThinnS of type typed_address (unit ,
+unit)
+     |}]
 
 let () = Sys_unix.chdir pwd
 
@@ -2303,11 +1712,11 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_michelson_non_func.mligo" ];
   [%expect
     {test|
-    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 5, characters 16-55:
-      4 | let test =
-      5 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
+    File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, characters 16-55:
+      1 | let test =
+      2 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      6 |   begin
+      3 |   begin
 
     Embedded raw code can only have a functional type |test}]
 
@@ -2315,14 +1724,14 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "get_contract.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 21, characters 10-66:
-     20 |   let _ = (Tezos.get_contract a : (C parameter_of contract)) in
-     21 |   let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
-                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     22 |   ()
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 19, characters 10-64:
+     18 |   let _ = (Tezos.get_contract a : C parameter_of contract) in
+     19 |   let _ = (Tezos.get_contract_with_error a "foo" : int contract) in
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     20 |   ()
 
     An uncaught error occured:
     Failwith: "foo"
     Trace:
-    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 21, characters 10-66 ,
-    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 21, characters 10-66 |}]
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 19, characters 10-64 ,
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 19, characters 10-64 |}]

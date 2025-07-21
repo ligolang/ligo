@@ -46,14 +46,17 @@ Here is how you emit events and fetch them from your tests:
 
 ```cameligo test-ligo group=test_ex
 module C = struct
-  [@entry] let main (p: int*int) (_: unit) =
-    [Tezos.emit "%foo" p ; Tezos.emit "%foo" p.0],()
+  [@entry]
+  let main (p : int * int) () =
+    let op1 = Tezos.Operation.emit "%foo" p in
+    let op2 = Tezos.Operation.emit "%foo" p.0 in
+    [op1; op2], ()
 end
 
 let test_foo =
-  let orig = Test.originate (contract_of C) () 0tez in
-  let _ = Test.transfer_exn orig.addr (Main (1,2)) 0tez in
-  (Test.get_last_events_from orig.addr "foo" : (int*int) list),(Test.get_last_events_from orig.addr "foo" : int list)
+  let orig = Test.Originate.contract (contract_of C) () 0tez in
+  let _: nat = Test.Typed_address.transfer_exn orig.taddr (Main (1,2)) 0tez in
+  (Test.State.last_events orig.taddr "foo" : (int*int) list),(Test.State.last_events orig.taddr "foo" : int list)
 ```
 
 </Syntax>
@@ -61,19 +64,21 @@ let test_foo =
 
 ```jsligo test-ligo group=test_ex
 namespace C {
-  @entry
-  let main = (p: [int, int], _s : unit) => { 
-    let op1 = Tezos.emit("%foo", p);
-    let op2 = Tezos.emit("%foo", p[0]);
-    return [list([op1, op2]), unit];
+  // @entry
+  const main = (p: [int, int], _: unit) : [list<operation>, unit] => {
+    const op1 = Tezos.Operation.emit("%foo", p);
+    const op2 = Tezos.Operation.emit("%foo", p[0]);
+    return [[op1, op2], unit];
   };
 }
 
-let test = (() : [list<[int,int]>, list<int>] => {
-  let orig = Test.originate(contract_of(C), unit, 0 as tez);
-  Test.transfer_exn(orig.addr, Main([1,2]), 0 as tez);
-  return [Test.get_last_events_from(orig.addr, "foo") as list<[int, int]>, Test.get_last_events_from(orig.addr, "foo") as list<int>];
-}) ();
+const test = () => {
+  const orig = Test.Originate.contract(contract_of(C), unit, 0 as tez);
+  Test.Typed_address.transfer_exn(orig.taddr, ["Main" as "Main", [1,2]], 0 as tez);
+  return [Test.State.last_events(orig.taddr, "foo") as list<[int, int]>, Test.State.last_events(orig.taddr, "foo") as list<int>];
+};
+
+const run_test = test();
 ```
 
 </Syntax>

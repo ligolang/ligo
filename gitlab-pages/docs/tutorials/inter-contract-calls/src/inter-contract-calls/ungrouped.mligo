@@ -1,5 +1,4 @@
 type parameter = address
-
 type storage = unit
 
 [@entry]
@@ -9,7 +8,8 @@ let main (destination_addr : parameter) (_ : storage) =
     match maybe_contract with
       Some contract -> contract
     | None -> failwith "Contract does not exist" in
-  let op = Tezos.transaction () (Tezos.get_amount ()) destination_contract in
+  let op = Tezos.Operation.transaction
+             () (Tezos.get_amount ()) destination_contract in
   [op], ()
 type t = {hello : int; l : nat; i : bytes; g : string; o : address}
 (* examples/contracts/mligo/CreateAndCall.mligo *)
@@ -20,11 +20,11 @@ type t = {hello : int; l : nat; i : bytes; g : string; o : address}
 
 let create_and_call (storage : address list) =
   let create_op, addr =
-    Tezos.create_contract
+    Tezos.Operation.create_contract
       (fun (p : int) (s : int) -> [], p + s)
       None
       0tez
       1 in
   let call_op =
-    Tezos.transaction (addr, 41) 0tez (Tezos.self "%callback") in
+    Tezos.Operation.transaction (addr, 41) 0tez (Tezos.self "%callback") in
   [create_op; call_op], addr :: storage

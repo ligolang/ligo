@@ -1,26 +1,25 @@
-namespace C {
-  export type storage = int;
+type storage = int;
+
+class C {
+  @entry
+  increment = (action: int, store: storage) : [list <operation>, storage] => [[], store + action];
 
   @entry
-  const increment = (action: int, store: storage) : [list <operation>, storage] => [[], store + action];
-
-  @entry
-  const decrement = (action: int, store: storage) : [list <operation>, storage] => [[], store - action];
+  decrement = (action: int, store: storage) : [list <operation>, storage] => [[], store - action];
 
   @view
-  const get_storage = (must_be_positive: bool, storage: int): int => {
-    if (must_be_positive && storage < 0) {
+  get_storage = (must_be_positive: bool, storage: int): int => {
+    if (must_be_positive && storage < 0)
       return failwith("Negative value in storage");
-    } else {
+    else
       return storage;
-    }
   }
 };
 
-const testC = do {
-    let initial_storage = 42;
-    let originated = Test.originate(contract_of(C), initial_storage, 0tez);
-    let p : parameter_of C = Increment(1);
-    Test.transfer_exn(originated.addr, p, 1mutez);
-    return assert(Test.get_storage(originated.addr) == initial_storage + 1);
-}
+const testC = (() => {
+  const initial_storage = 42;
+  const originated = Test.Originate.contract(contract_of(C), initial_storage, 0 as tez);
+  const p : parameter_of<C> = ["Increment" as "Increment", 1];
+  Test.Typed_address.transfer_exn(originated.taddr, p, 1 as mutez);
+  return Assert.assert(Test.Typed_address.get_storage(originated.taddr) == initial_storage + 1);
+})()

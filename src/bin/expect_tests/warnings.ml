@@ -48,15 +48,15 @@ let%expect_test _ =
     {|
   File "../../test/contracts/warning_duplicate.mligo", line 2, characters 6-7:
     1 | module Foo = struct
-    2 |   let x : nat ticket = Option.unopt (Tezos.create_ticket 42n 42n)
+    2 |   let x : nat ticket =
               ^
-    3 | end
+    3 |     Option.value_with_error "no ticket" (Tezos.Ticket.create 42n 42n)
   :
   Warning: variable cannot be used more than once.
 
   Error(s) occurred while checking the contract:
-  At (unshown) location 15, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
-  At (unshown) location 15, Ticket in unauthorized position (type error). |}]
+  At (unshown) location 18, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
+  At (unshown) location 18, Ticket in unauthorized position (type error). |}]
 
 let%expect_test _ =
   run_ligo_bad
@@ -70,9 +70,9 @@ let%expect_test _ =
   [%expect
     {|
   File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5:
-    1 | let x = Tezos.create_ticket 42n 42n
+    1 | let x = Tezos.Ticket.create 42n 42n
             ^
-    2 | let x = (x, x)
+    2 | let x = x, x
   :
   Warning: variable cannot be used more than once.
 
@@ -84,81 +84,54 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; contract "duplicate_ticket_local_module.mligo" ];
   [%expect
     {|
-  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 10, characters 8-9:
-    9 |
-   10 |     let y = ticket, ticket
-                ^
-   11 |
-  :
-  Warning: variable cannot be used more than once.
+      File "../../test/contracts/duplicate_ticket_local_module.mligo", line 8, characters 8-9:
+        7 |     let ticket = Option.value_with_error "option is None" (Tezos.Ticket.create 10n 10n)
+        8 |     let y = ticket, ticket
+                    ^
+        9 |   end in
+      :
+      Warning: variable cannot be used more than once.
 
-  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 8, characters 8-14:
-    7 |   module B = struct
-    8 |     let ticket = Option.unopt (Tezos.create_ticket 10n 10n)
-                ^^^^^^
-    9 |
-  :
-  Warning: variable cannot be used more than once.
+      File "../../test/contracts/duplicate_ticket_local_module.mligo", line 7, characters 8-14:
+        6 |   module B = struct
+        7 |     let ticket = Option.value_with_error "option is None" (Tezos.Ticket.create 10n 10n)
+                    ^^^^^^
+        8 |     let y = ticket, ticket
+      :
+      Warning: variable cannot be used more than once.
 
-  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 8, characters 17-29:
-    7 |   module B = struct
-    8 |     let ticket = Option.unopt (Tezos.create_ticket 10n 10n)
-                         ^^^^^^^^^^^^
-    9 |
-  :
-  Warning: deprecated value.
-  Use `Option.value_with_error` instead.
-
-  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 8, characters 31-50:
-    7 |   module B = struct
-    8 |     let ticket = Option.unopt (Tezos.create_ticket 10n 10n)
-                                       ^^^^^^^^^^^^^^^^^^^
-    9 |
-  :
-  Warning: deprecated value.
-  In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration.
-
-  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 13, characters 6-18:
-   12 |   end in
-   13 |   [], Option.unopt (Tezos.join_tickets (fst B.y, snd B.y))
-              ^^^^^^^^^^^^
-  :
-  Warning: deprecated value.
-  Use `Option.value_with_error` instead.
-
-  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 13, characters 20-38:
-   12 |   end in
-   13 |   [], Option.unopt (Tezos.join_tickets (fst B.y, snd B.y))
-                            ^^^^^^^^^^^^^^^^^^
-  :
-  Warning: deprecated value.
-  In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.join` from `Tezos.Next` is encouraged for a smoother migration.
-
-  Error(s) occurred while type checking the contract:
-  Ill typed contract:
-    01: { parameter unit ;
-    02:   storage (ticket nat) ;
-    03:   code { DROP
-    04:          /* [] */ ;
-    05:          PUSH nat 10
-    06:          /* [ nat ] */ ;
-    07:          PUSH nat 10
-    08:          /* [ nat : nat ] */ ;
-    09:          TICKET
-    10:          /* [ option (ticket nat) ] */ ;
-    11:          IF_NONE
-    12:            { PUSH string "option is None" /* [ string ] */ ; FAILWITH /* [] */ }
-    13:            { /* [ ticket nat ] */ } ;
-    14:          DUP ;
-    15:          PAIR ;
-    16:          JOIN_TICKETS ;
-    17:          IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
-    18:          NIL operation ;
-    19:          PAIR } }
-  At line 14 characters 9 to 12,
-  type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
-  At line 14 characters 9 to 12,
-  Ticket in unauthorized position (type error). |}]
+      Error(s) occurred while type checking the contract:
+      Ill typed contract:
+        01: { parameter unit ;
+        02:   storage (ticket nat) ;
+        03:   code { DROP
+        04:          /* [] */ ;
+        05:          PUSH nat 10
+        06:          /* [ nat ] */ ;
+        07:          PUSH nat 10
+        08:          /* [ nat : nat ] */ ;
+        09:          TICKET
+        10:          /* [ option (ticket nat) ] */ ;
+        11:          PUSH string "option is None"
+        12:          /* [ string : option (ticket nat) ] */ ;
+        13:          SWAP
+        14:          /* [ option (ticket nat) : string ] */ ;
+        15:          IF_NONE
+        16:            { FAILWITH /* [] */ }
+        17:            { SWAP /* [ string : ticket nat ] */ ; DROP /* [ ticket nat ] */ } ;
+        18:          DUP ;
+        19:          PAIR ;
+        20:          JOIN_TICKETS ;
+        21:          PUSH string "option is None" ;
+        22:          SWAP ;
+        23:          IF_NONE { FAILWITH } { SWAP ; DROP } ;
+        24:          NIL operation ;
+        25:          PAIR } }
+      At line 18 characters 9 to 12,
+      type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
+      At line 18 characters 9 to 12,
+      Ticket in unauthorized position (type error).
+     |}]
 
 (* some check about the warnings of the E_constructor cases *)
 let%expect_test _ =

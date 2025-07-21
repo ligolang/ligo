@@ -1,6 +1,6 @@
 ---
 id: cameligo-ocaml-syntax-diff
-title: What are the differences between syntaxes of CameLIGO and OCaml ?
+title: What are the differences between syntaxes of CameLIGO and OCaml?
 ---
 
 Most of the CameLIGO syntax follows the OCaml syntax, however, there are a few syntactic shortcuts available in one but not the other.
@@ -33,7 +33,7 @@ For example, here is a function returning a list of integers :
 
 ```cameligo
 (* In CameLIGO *)
-let res = 
+let res =
   type t = int list in
   let x : t = [42] in
   43 :: x
@@ -50,12 +50,20 @@ the blockchain. An entry point must have the type
 must be the same for all entry points in a given contract, but different
 entry points will typically use different parameter types.
 
-An entry point will take the value of the parameter passed in the transaction,
-and the value of the permanent on-chain storage, and will return a list of new transactions initiated from the contract (i.e. transfers of 0 or more tokens to other contracts or to implicit account addresses), and a new value
-for the on-chain storage. The next transaction sent to that contract will use
-the updated storage, and so on. In order to provide a pure function that may
-consult the storage without modifying it, one can use `@view` instead of `@entry`. A _view_ can be called by another contract without generating a
-transaction (i.e., the call is performed synchronously, instead of returning a delayed transaction which would run after the end of this contract's execution), and the view can return any value (since it cannot produce new transactions nor an updated storage, it simply returns the desired output value).
+An entry point will take the value of the parameter passed in the
+transaction, and the value of the permanent on-chain storage, and will
+return a list of new transactions initiated from the contract
+(i.e. transfers of zero or more tokens to other contracts or to
+implicit account addresses), and a new value for the on-chain
+storage. The next transaction sent to that contract will use the
+updated storage, and so on. In order to provide a pure function that
+may consult the storage without modifying it, one can use `@view`
+instead of `@entry`. A _view_ can be called by another contract
+without generating a transaction (i.e., the call is performed
+synchronously, instead of returning a delayed transaction which would
+run after the end of this contract's execution), and the view can
+return any value (since it cannot produce new transactions nor an
+updated storage, it simply returns the desired output value).
 
 ```cameligo
 type storage = string
@@ -90,8 +98,8 @@ type storage = int
 let main (_p : unit) (s : storage) : operation list * storage =
   let tests =
     begin
-      assert (1 = 1);
-      assert (2 = 2) // no semicolon here
+      Assert.assert (1 = 1);
+      Assert.assert (2 = 2) // no semicolon here
     end
   in
   [], s
@@ -111,7 +119,7 @@ type point = {
 
 let x = 24
 let y = 42
-  
+
 let p_assign_without_punning : point = {x = x; y = y}
 let p_assign_with_punning    : point = {x; y}  (* Unavailable in CameLIGO *)
 ```

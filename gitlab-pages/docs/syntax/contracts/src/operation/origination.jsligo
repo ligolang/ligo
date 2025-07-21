@@ -1,13 +1,12 @@
-type @return = [list<operation>, string];
+type return_ = [list<operation>, string];
 
-@entry
-const main = (_: string, storage: string) : @return => {
-  const entrypoint = (_param: nat, storage: string) =>
-    [list([]), storage];
+// @entry
+const main = (_: string, storage: string) : return_ => {
+  const entrypoint = (_param: nat, storage: string) : return_ => [[], storage];
   const [op, _addr]: [operation, address] =
-    Tezos.Next.Operation.create_contract(entrypoint,
-                          (None() as option<key_hash>),
-                          300000000mutez,
+    Tezos.Operation.create_contract(entrypoint,
+                          (["None" as "None"] as option<key_hash>),
+                          300000000 as mutez,
                           "one");
   return [[op], storage];
 }

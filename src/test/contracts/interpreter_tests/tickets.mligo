@@ -1,11 +1,9 @@
+module Ticket = Tezos.Ticket
+
+let assert = Test.Assert.assert
+
 let content0 = "hello world"
 let amount0 = 10n
-
-module Test = Test.Next
-module Tezos = Tezos.Next
-
-module Ticket = Tezos.Ticket
-let assert = Test.Assert.assert
 
 let () =
     let ticket0 = Ticket.create content0 amount0

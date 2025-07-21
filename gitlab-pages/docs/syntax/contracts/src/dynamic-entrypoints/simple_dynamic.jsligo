@@ -21,45 +21,51 @@ namespace DynamicContract {
   export const currentAction = (_u: unit, s: internal_storage): dyn_return_type => [[], s];
 
   // Run the currentAction entrypoint
-  @entry
+  // @entry
   const runAction = (_u: unit, full_storage: storage_type): return_type => {
-    const {storage; dynamic_entrypoints} = full_storage;
+    const {storage, dynamic_entrypoints} = full_storage;
 
-    return match (Dynamic_entrypoints.get(currentAction, dynamic_entrypoints)) {
-      when (Some(f)): do {
+    return $match (Dynamic_entrypoints.get(currentAction, dynamic_entrypoints), {
+      "Some": f => (() => {
         const [operations, newStorage] = f(unit, storage);
         return [operations, ({
           storage: newStorage,
           dynamic_entrypoints: dynamic_entrypoints
         })];
-      };
-      when (None): failwith(-1);
-    }
+      })(),
+      "None": () => failwith(-1)
+    })
   }
 
   // Change the currentAction entrypoint to double or square
-  @entry
+  // @entry
   const changeAction = (new_action_str: string, full_storage: storage_type): return_type => {
-    const {storage; dynamic_entrypoints} = full_storage;
+    const {storage, dynamic_entrypoints} = full_storage;
 
     let new_dynamic_entrypoints = dynamic_entrypoints;
 
     if (new_action_str == "double") {
-
-      const new_action = match (Dynamic_entrypoints.get(double, dynamic_entrypoints)) {
-        when (Some(f)): f;
-        when (None): failwith(-1);
-      };
-      new_dynamic_entrypoints = Dynamic_entrypoints.set(currentAction, Some(new_action), dynamic_entrypoints);
+      const new_action =
+        $match(Dynamic_entrypoints.get(double, dynamic_entrypoints), {
+          "Some": f => f,
+          "None": () => failwith(-1)
+        });
+      new_dynamic_entrypoints =
+        Dynamic_entrypoints.set(currentAction,
+                                ["Some" as "Some", new_action],
+                                dynamic_entrypoints);
     }
 
     if (new_action_str == "square") {
-
-      const new_action = match (Dynamic_entrypoints.get(square, dynamic_entrypoints)) {
-        when (Some(f)): f;
-        when (None): failwith(-1);
-      };
-      new_dynamic_entrypoints = Dynamic_entrypoints.set(currentAction, Some(new_action), dynamic_entrypoints);
+      const new_action =
+        $match(Dynamic_entrypoints.get(square, dynamic_entrypoints), {
+          "Some": f => f,
+          "None": () => failwith(-1)
+      });
+      new_dynamic_entrypoints =
+        Dynamic_entrypoints.set(currentAction,
+                                ["Some" as "Some", new_action],
+                                dynamic_entrypoints);
     }
 
     return [[], {
@@ -68,42 +74,49 @@ namespace DynamicContract {
     }];
   }
 }
-import Test = Test.Next;
-
-const test_dyn = do {
-
+const test_dyn = (() => {
   // Generate storage with dynamic entrypoints
-  const initial_storage = Test.Dynamic_entrypoints.storage(contract_of(DynamicContract), 3);
-  const contract = Test.Originate.contract(contract_of(DynamicContract), initial_storage, 0mutez);
+  const initial_storage =
+    Test.Dynamic_entrypoints.storage(contract_of(DynamicContract), 3);
+  const contract =
+  Test.Originate.contract(contract_of(DynamicContract),
+                          initial_storage,
+                          0 as mutez);
   const storage_before = Test.Typed_address.get_storage(contract.taddr);
   Assert.assert(Test.Compare.eq(storage_before.storage, 3));
 
   // At the start, the runAction dynamic entrypoint does nothing
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("runAction", contract.taddr), unit, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("runAction",
+  contract.taddr), unit, 0 as tez);
   let storage = Test.Typed_address.get_storage(contract.taddr);
   // Verify that storage did not change
   Assert.assert(Test.Compare.eq(storage, storage_before));
 
   // Set current action to double
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("changeAction", contract.taddr), "double", 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("changeAction",
+  contract.taddr), "double", 0 as tez);
 
   // Double storage to 6
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("runAction", contract.taddr), unit, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("runAction",
+  contract.taddr), unit, 0 as tez);
   storage = Test.Typed_address.get_storage(contract.taddr);
   Assert.assert(Test.Compare.eq(storage.storage, 6));
 
   // Double storage to 12
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("runAction", contract.taddr), unit, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("runAction",
+  contract.taddr), unit, 0 as tez);
   storage = Test.Typed_address.get_storage(contract.taddr);
   Assert.assert(Test.Compare.eq(storage.storage, 12));
 
   // Switch to square
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("changeAction", contract.taddr), "square", 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("changeAction",
+  contract.taddr), "square", 0 as tez);
   storage = Test.Typed_address.get_storage(contract.taddr);
   Assert.assert(Test.Compare.eq(storage.storage, 12));
 
   // Square storage to 144
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("runAction", contract.taddr), unit, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("runAction",
+  contract.taddr), unit, 0 as tez);
   storage = Test.Typed_address.get_storage(contract.taddr);
   Assert.assert(Test.Compare.eq(storage.storage, 144));
-}
+})()

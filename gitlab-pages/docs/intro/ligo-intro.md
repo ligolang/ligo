@@ -20,13 +20,12 @@ Even if LIGO currently offers **two syntaxes**, you'll need to **choose only one
 
   - **JsLIGO**, ideal for web developers, is a TypeScript/JavaScript inspired syntax without unnecessary complexity, which is not helpful in smart contract development. A quick way to produce your first dApp!
 
-
-```jsligo
+```jsligo group=intro
   type storage = string;
 
-  @entry
-  const store_hello = (delta: int, store: storage): [list<operation>, storage] =>
-    [[], "Hello"];
+  // @entry
+  const store_hello = (delta: int, store: storage): [list<operation>, storage] => [[], "Hello"];
+
 ```
 
   - **CameLIGO** is designed for developers with a background in
@@ -35,14 +34,15 @@ Even if LIGO currently offers **two syntaxes**, you'll need to **choose only one
     a functional style.
 
 
-```cameligo
+```cameligo group=intro
   type storage = string
 
   [@entry]
   let store_hello (delta : int) (store : storage) : operation list * storage = [], "Hello"
+
 ```
 
-A significant advantage of the multi-syntax feature is to share knowledge, toolings, and [modules](../language-basics/modules) (like [libraries](../advanced/package-management) onto [registry](https://packages.ligolang.org/packages)) in a larger community.
+A significant advantage of the multi-syntax feature is to share knowledge, toolings, and [modules](../syntax/modules) (like [libraries](../advanced/package-management) onto [registry](https://packages.ligolang.org/packages)) in a larger community.
 
 ### LIGO, designed to be cost-effective
 
@@ -97,14 +97,13 @@ For a quick overview, [get-started](../tutorials/getting-started) is a good choi
 ### Do you want to learn LIGO?
 
 Your choice to learn LIGO is already available:
-- Read [basics](../language-basics/types) to have a basic comprehension
-- Write your first [smart contract](../tutorials/taco-shop/tezos-taco-shop-smart-contract).
+- Write your first [smart contract](../tutorials/taco-shop/selling-tacos).
 - Others resources are available on [marigold.dev](https://www.marigold.dev/learn)
 
 ### Do you want to build a production-ready project?
 
 You will need a deeper comprehension:
-- Teach yourself how to structure your code with [Combining code](../language-basics/modules) section
+- Teach yourself how to structure your code with [Combining code](../syntax/modules) section
 - Learn how to [write tests](../testing) we strongly encourage to use [breathalyzer library from the LIGO registry.](https://packages.ligolang.org/package/ligo-breathalyzer)
 - Understand how to [secure a contract](../tutorials/security)
 

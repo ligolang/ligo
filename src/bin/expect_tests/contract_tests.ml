@@ -52,69 +52,53 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "deprecated.mligo" ];
   [%expect
-    {|
-    File "../../test/contracts/deprecated.mligo", line 5, characters 74-75:
-      4 | module C = struct
-      5 |   [@entry] let foo (() : unit) (m : int) : operation list * int = [], m + f ()
-                                                                                    ^
-      6 | end
-    :
-    Warning: deprecated value.
-    Replace me by...
-    g!
-    mail: foo@bar.com
+      {|
+File "../../test/contracts/deprecated.mligo", line 8, characters 65-66:
+  7 |   [@entry]
+  8 |   let foo (() : unit) (m : int) : operation list * int = [], m + f ()
+                                                                       ^
+  9 | end
+:
+Warning: deprecated value.
+Replace me by...
+g!
+mail: foo@bar.com
 
-    File "../../test/contracts/deprecated.mligo", line 8, characters 11-19:
-      7 |
-      8 | let test = Test.log (f ())
-                     ^^^^^^^^
-      9 |
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
+File "../../test/contracts/deprecated.mligo", line 11, characters 24-25:
+ 10 |
+ 11 | let test = Test.IO.log (f ())
+                              ^
+ 12 |
+:
+Warning: deprecated value.
+Replace me by...
+g!
+mail: foo@bar.com
 
-    File "../../test/contracts/deprecated.mligo", line 8, characters 21-22:
-      7 |
-      8 | let test = Test.log (f ())
+File "../../test/contracts/deprecated.mligo", line 19, characters 25-26:
+ 18 |
+ 19 | let test2 = Test.IO.log (h () + i ())
                                ^
-      9 |
-    :
-    Warning: deprecated value.
-    Replace me by...
-    g!
-    mail: foo@bar.com
+:
+Warning: deprecated value.
+this is h, but only h or i will trigger
 
-    File "../../test/contracts/deprecated.mligo", line 13, characters 12-20:
-     12 |
-     13 | let test2 = Test.log (h () + i ())
-                      ^^^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/deprecated.mligo", line 13, characters 22-23:
-     12 |
-     13 | let test2 = Test.log (h () + i ())
-                                ^
-    :
-    Warning: deprecated value.
-    this is h, but only h or i will trigger
-
-    1
-    6
-    Everything at the top-level was executed.
-    - test exited with value ().
-    - test2 exited with value (). |}]
+1
+6
+Everything at the top-level was executed.
+- test exited with value ().
+- test2 exited with value ().
+|}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "deprecated.mligo"; "-m"; "C" ];
   [%expect
     {|
-    File "../../test/contracts/deprecated.mligo", line 5, characters 74-75:
-      4 | module C = struct
-      5 |   [@entry] let foo (() : unit) (m : int) : operation list * int = [], m + f ()
-                                                                                    ^
-      6 | end
+    File "../../test/contracts/deprecated.mligo", line 8, characters 65-66:
+      7 |   [@entry]
+      8 |   let foo (() : unit) (m : int) : operation list * int = [], m + f ()
+                                                                           ^
+      9 | end
     :
     Warning: deprecated value.
     Replace me by...
@@ -189,46 +173,45 @@ let%expect_test _ =
     [ "compile"; "contract"; bad_contract "interfaces.optional.jsligo"; "-m"; "FAAll" ];
   [%expect
     {|
-    File "../../test/contracts/negative/interfaces.optional.jsligo", line 17, character 0 to line 23, character 1:
-     16 |
-     17 | namespace Impl implements FA0Ext, FA1 {
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     18 |   type t = int;
-          ^^^^^^^^^^^^^^^
-     19 |
+    File "../../test/contracts/negative/interfaces.optional.jsligo", line 33, character 0 to line 47, character 1:
+     32 |
+     33 | class ImplAll implements FAAll {
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     34 |   @entry transfer = (_u : unit, s : int) : ret => [[], s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     35 |   @entry other1 = (_u : unit, s : int) : ret => [[], s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     36 |   @entry other2 = (_u : unit, s : int) : ret => [[], s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     37 |   @entry other3 = (_u : unit, s : int) : ret => [[], s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     38 |   @view v1 = (_u : unit, s : int) : int => s;
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     39 |   /* this is wrong because juju has a different type */
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     40 |   @entry juju = (_i : string, s : int) : ret => [[], s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     41 |
 
-     20 |   @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     21 |   @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     22 |   @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [[], s];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     23 | };
+     42 |   /* foo, other4 and v2 are not in FAAll, but still added, because filtering
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     43 |      is not enabled */
+          ^^^^^^^^^^^^^^^^^^^^^^
+     44 |   foo = (s : int) : int => s;
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     45 |   @entry other4 = (_u : unit, s : int) : ret => [[], s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     46 |   @view v2 = (_u : unit, s : int) : int => s;
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     47 | };
           ^
-     24 |
+     48 |
 
-    Type "t" declared in signature but not found. |}];
+    Value "juju" does not match.
+    Expected "[_i, s]string -> int -> ret", but got: "[i, s]int -> int -> ret". |}];
   run_ligo_good [ "run"; "test"; contract "interfaces.include.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/interfaces.include.jsligo", line 68, characters 13-27:
-     67 | const test = do {
-     68 |   let orig = Test.originate(contract_of(ImplAll), ImplAll.foo(42), 0tez);
-                       ^^^^^^^^^^^^^^
-     69 |   let p : parameter_of ImplAll = Other4();
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/interfaces.include.jsligo", line 70, characters 2-19:
-     69 |   let p : parameter_of ImplAll = Other4();
-     70 |   Test.transfer_exn(orig.addr, p, 1mutez);
-            ^^^^^^^^^^^^^^^^^
-     71 | }
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test exited with value 1297n. |}]
 
@@ -348,36 +331,9 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good
-    [ "compile"; "contract"; contract "FA1.2.interface.mligo"; "-m"; "FA12_ENTRIES" ];
+    [ "compile"; "contract"; contract "FA1_2_interface.mligo"; "-m"; "FA12_ENTRIES" ];
   [%expect
     {|
-    File "../../test/contracts/FA1.2.entries.mligo", line 108, characters 3-20:
-    107 |     | None -> 0n in
-    108 |   [Tezos.transaction value 0mutez param.callback], storage
-             ^^^^^^^^^^^^^^^^^
-    109 |
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/FA1.2.entries.mligo", line 116, characters 3-20:
-    115 |     | None -> 0n in
-    116 |   [Tezos.transaction value 0mutez param.callback], storage
-             ^^^^^^^^^^^^^^^^^
-    117 |
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/FA1.2.entries.mligo", line 121, characters 3-20:
-    120 |   let total = storage.total_supply in
-    121 |   [Tezos.transaction total 0mutez param.callback],storage
-             ^^^^^^^^^^^^^^^^^
-    122 |
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
     { parameter
         (or (pair %getTotalSupply (unit %request) (contract %callback nat))
             (or (pair %getBalance (address %owner) (contract %callback nat))
@@ -570,7 +526,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; contract "export_attribute.jsligo"; "-m"; "Foo" ];
+  run_ligo_good [ "compile"; "contract"; contract "export_attribute.jsligo"; "-m"; "Foo.C" ];
   [%expect
     {|
     { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
@@ -655,13 +611,13 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_of_file.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/create_contract_of_file.jsligo", line 3, characters 21-59:
-      2 | const main = (u : unit, _ : unit) : [list<operation>, unit] => {
-      3 |   let [op, _addr] = (create_contract_of_file `./removed.tz`)(None(), 1tez, u);
-                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      4 |   return [[op], []]
+File "../../test/contracts/negative/create_contract_of_file.jsligo", line 4, characters 23-61:
+  3 |   main = (u : unit, _ : unit) : [list<operation>, unit] => {
+  4 |     let [op, _addr] = (create_contract_of_file `./removed.tz`)(["None" as "None"], 1 as tez, u);
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  5 |     return [[op], []]
 
-    Found a system error: ./removed.tz: No such file or directory. |}]
+Found a system error: ./removed.tz: No such file or directory. |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -844,11 +800,11 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "ticket_builder.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/ticket_builder.mligo", line 31, characters 30-36:
-     30 |         begin
-     31 |           let ((ticketer, _), ticket) =
+    File "../../test/contracts/ticket_builder.mligo", line 29, characters 30-36:
+     28 |         begin
+     29 |           let ((ticketer, _), ticket) =
                                         ^^^^^^
-     32 |             (Tezos.Ticket.read ticket : (address * (unit * nat)) * unit ticket) in
+     30 |             (Tezos.Ticket.read ticket : (address * (unit * nat)) * unit ticket) in
     :
     Warning: unused variable "ticket".
     Hint: replace it by "_ticket" to prevent this warning.
@@ -901,24 +857,6 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "implicit.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/implicit.mligo", line 4, characters 8-9:
-      3 |   let main (p : key_hash) (s : unit) =
-      4 |     let c : unit contract = Tezos.implicit_account p in
-                  ^
-      5 |     ([] : operation list), unit
-    :
-    Warning: unused variable "c".
-    Hint: replace it by "_c" to prevent this warning.
-
-    File "../../test/contracts/implicit.mligo", line 3, characters 27-28:
-      2 |   [@entry]
-      3 |   let main (p : key_hash) (s : unit) =
-                                     ^
-      4 |     let c : unit contract = Tezos.implicit_account p in
-    :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
-
     { parameter key_hash ;
       storage unit ;
       code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
@@ -980,51 +918,6 @@ let%expect_test _ =
   (* AMOUNT should occur inside the second lambda, but not the first lambda *)
   [%expect
     {|
-    File "../../test/contracts/amount_lambda.mligo", line 5, characters 7-8:
-      4 |   let amt : tez = Tezos.get_amount () in
-      5 |   fun (x : unit) -> amt
-                 ^
-      6 |
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 3, characters 8-9:
-      2 |
-      3 | let f1 (x : unit) : unit -> tez =
-                  ^
-      4 |   let amt : tez = Tezos.get_amount () in
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 9, characters 39-40:
-      8 |
-      9 | let f2 (x : unit) : unit -> tez = fun (x : unit) -> Tezos.get_amount ()
-                                                 ^
-     10 |
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 9, characters 8-9:
-      8 |
-      9 | let f2 (x : unit) : unit -> tez = fun (x : unit) -> Tezos.get_amount ()
-                  ^
-     10 |
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/amount_lambda.mligo", line 12, characters 21-22:
-     11 | [@entry]
-     12 | let main (b : bool) (s : (unit -> tez)) : operation list * (unit -> tez) =
-                               ^
-     13 |   (([] : operation list), (if b then f1 () else f2 ()))
-    :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
-
     { parameter bool ;
       storage (lambda unit mutez) ;
       code { CAR ;
@@ -1064,15 +957,6 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "self_in_lambdarec.mligo" ];
   [%expect
     {|
-      File "../../test/contracts/negative/self_in_lambdarec.mligo", line 7, characters 7-19:
-        6 |     Tezos.address
-        7 |       (Option.unopt (Tezos.get_contract_opt addr : int contract option))
-                   ^^^^^^^^^^^^
-        8 |
-      :
-      Warning: deprecated value.
-      Use `Option.value_with_error` instead.
-
       "Tezos.self" must be used directly and cannot be used via another function. |}]
 
 let%expect_test _ =
@@ -1145,26 +1029,18 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_toplevel.mligo" ];
   [%expect
     {|
-File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, character 35 to line 9, character 8:
+File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, characters 35-56:
   4 | let main (_ : string) (store : string) : return =
   5 |   let toto : operation * address = Tezos.create_contract
                                          ^^^^^^^^^^^^^^^^^^^^^
   6 |     (fun (_p : nat) (_s : string) -> (([] : operation list), store))
-      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  7 |     (None: key_hash option)
-      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  8 |     300tz
-      ^^^^^^^^^^
-  9 |     "un"
-      ^^^^^^^^
- 10 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#474. |}];
+Variable "create_contract" not found. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract_var.mligo" ];
   [%expect
     {|
     File "../../test/contracts/create_contract_var.mligo", line 9, characters 22-23:
-      8 |     Tezos.create_contract
+      8 |     Tezos.Operation.create_contract
       9 |       (fun (p : nat) (s : int) -> (([] : operation list), a))
                                 ^
      10 |       (None : key_hash option)
@@ -1173,7 +1049,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#474.
     Hint: replace it by "_s" to prevent this warning.
 
     File "../../test/contracts/create_contract_var.mligo", line 9, characters 12-13:
-      8 |     Tezos.create_contract
+      8 |     Tezos.Operation.create_contract
       9 |       (fun (p : nat) (s : int) -> (([] : operation list), a))
                       ^
      10 |       (None : key_hash option)
@@ -1210,20 +1086,20 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#474.
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_modfv.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 11, characters 22-23:
-     10 |     Tezos.create_contract
-     11 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 10, characters 22-23:
+      9 |     Tezos.Operation.create_contract
+     10 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
                                 ^
-     12 |       (None : key_hash option)
+     11 |       (None : key_hash option)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 11, characters 12-13:
-     10 |     Tezos.create_contract
-     11 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 10, characters 12-13:
+      9 |     Tezos.Operation.create_contract
+     10 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
                       ^
-     12 |       (None : key_hash option)
+     11 |       (None : key_hash option)
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
@@ -1237,89 +1113,44 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#474.
     Warning: unused variable "action".
     Hint: replace it by "_action" to prevent this warning.
 
-    File "../../test/contracts/negative/create_contract_modfv.mligo", line 10, character 4 to line 14, character 10:
-      9 |   let toto : operation * address =
-     10 |     Tezos.create_contract
-              ^^^^^^^^^^^^^^^^^^^^^
-     11 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+    File "../../test/contracts/negative/create_contract_modfv.mligo", line 9, character 4 to line 13, character 10:
+      8 |   let toto : operation * address =
+      9 |     Tezos.Operation.create_contract
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     10 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     12 |       (None : key_hash option)
+     11 |       (None : key_hash option)
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     13 |       300000000mutez
+     12 |       300000000mutez
           ^^^^^^^^^^^^^^^^^^^^
-     14 |       "un" in
+     13 |       "un" in
           ^^^^^^^^^^
-     15 |   ([toto.0], store)
+     14 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#475. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#340. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 30-31:
-      4 |
-      5 | let dummy_contract (p : nat) (s : int) : return = (([] : operation list), foo)
-                                        ^
-      6 |
-    :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 20-21:
-      4 |
-      5 | let dummy_contract (p : nat) (s : int) : return = (([] : operation list), foo)
-                              ^
-      6 |
-    :
-    Warning: unused variable "p".
-    Hint: replace it by "_p" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 9, characters 11-15:
-      8 | let main (action : int) (store : int) : return =
-      9 |   let (op, addr) =
-                     ^^^^
-     10 |     Tezos.create_contract
-    :
-    Warning: unused variable "addr".
-    Hint: replace it by "_addr" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 8, characters 25-30:
-      7 | [@entry]
-      8 | let main (action : int) (store : int) : return =
-                                   ^^^^^
-      9 |   let (op, addr) =
-    :
-    Warning: unused variable "store".
-    Hint: replace it by "_store" to prevent this warning.
-
-    File "../../test/contracts/negative/create_contract_no_inline.mligo", line 8, characters 10-16:
-      7 | [@entry]
-      8 | let main (action : int) (store : int) : return =
-                    ^^^^^^
-      9 |   let (op, addr) =
-    :
-    Warning: unused variable "action".
-    Hint: replace it by "_action" to prevent this warning.
-
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 10, character 4 to line 14, character 7:
-      9 |   let (op, addr) =
-     10 |     Tezos.create_contract
-              ^^^^^^^^^^^^^^^^^^^^^
+      9 |   let op, _addr =
+     10 |     Tezos.Operation.create_contract
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      11 |       dummy_contract
           ^^^^^^^^^^^^^^^^^^^^
      12 |       ((None : key_hash option))
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      13 |       300000000mutez
           ^^^^^^^^^^^^^^^^^^^^
-     14 |       1 in
+     14 |       1
           ^^^^^^^
-     15 |   let toto : operation list = [op] in
+     15 |   in [op], foo
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#489. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#353. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|
     File "../../test/contracts/create_contract.mligo", line 7, characters 22-23:
-      6 |     Tezos.create_contract
+      6 |     Tezos.Operation.create_contract
       7 |       (fun (p : nat) (s : string) -> (([] : operation list), "one"))
                                 ^
       8 |       (None : key_hash option)
@@ -1328,7 +1159,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#474.
     Hint: replace it by "_s" to prevent this warning.
 
     File "../../test/contracts/create_contract.mligo", line 7, characters 12-13:
-      6 |     Tezos.create_contract
+      6 |     Tezos.Operation.create_contract
       7 |       (fun (p : nat) (s : string) -> (([] : operation list), "one"))
                       ^
       8 |       (None : key_hash option)
@@ -1526,15 +1357,6 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "self_annotations.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/self_annotations.mligo", line 8, characters 11-28:
-      7 |   let c = (Tezos.self ("%foo") : unit contract) in
-      8 |   let op = Tezos.transaction () 0mutez c in
-                     ^^^^^^^^^^^^^^^^^
-      9 |   ([op] : operation list), ()
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
     { parameter (or (unit %foo) (unit %b)) ;
       storage unit ;
       code { DROP ;
@@ -1556,7 +1378,7 @@ let%expect_test _ =
       6 | let main (_ : param) (_ : unit) : operation list * unit =
       7 |   let c = (Tezos.self ("%a") : unit contract) in
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      8 |   let op = Tezos.transaction () 0mutez c in
+      8 |   let op = Tezos.Operation.transaction () 0mutez c in
 
     Invalid entrypoint value.
     The entrypoint value does not match a constructor of the contract parameter. |}]
@@ -1566,17 +1388,15 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_get_entrypoint.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/bad_get_entrypoint.mligo", line 4, character 4 to line 7, character 28:
-      3 |   let v =
-      4 |     (Tezos.get_entrypoint_opt
-              ^^^^^^^^^^^^^^^^^^^^^^^^^
-      5 |        "foo"
-          ^^^^^^^^^^^^
-      6 |        ("tz1fakefakefakefakefakefakefakcphLA5" : address)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      7 |      : unit contract option) in
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      8 |   let u : unit =
+    File "../../test/contracts/negative/bad_get_entrypoint.mligo", line 4, character 4 to line 6, character 56:
+      3 |   let v : unit contract option =
+      4 |     Tezos.get_entrypoint_opt
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+      5 |       "foo"
+          ^^^^^^^^^^^
+      6 |       ("tz1fakefakefakefakefakefakefakcphLA5" : address) in
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      7 |   let u : unit =
 
     Invalid entrypoint "foo". One of the following patterns is expected:
     * "%bar" is expected for entrypoint "Bar"
@@ -1659,10 +1479,10 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative/reuse_variable_name_block.jsligo", line 3, characters 8-9:
-      2 |     let x = 2;
-      3 |     let x = 2;
+      2 |   const x = 2;
+      3 |   const x = 2;
                   ^
-      4 |     return x;
+      4 |   return x;
 
     Duplicate identifier. |}]
 
@@ -1714,45 +1534,22 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "modules_export_const.jsligo" ];
   [%expect
     {|
-      File "../../test/contracts/negative/modules_export_const.jsligo", line 2, characters 4-15:
-        1 | namespace Bar {
-        2 |     let foo = 2
-                ^^^^^^^^^^^
-        3 | }
+     File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 10-17:
+       4 |
+       5 | const a = Bar.foo;
+                     ^^^^^^^
 
-      Toplevel let declaration is silently changed to const declaration.
-
-      File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 0-15:
-        4 |
-        5 | let a = Bar.foo;
-            ^^^^^^^^^^^^^^^
-
-      Toplevel let declaration is silently changed to const declaration.
-
-      File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 8-15:
-        4 |
-        5 | let a = Bar.foo;
-                    ^^^^^^^
-
-      Variable "foo" not found. |}];
+     Variable "foo" not found. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "modules_export_namespace.jsligo" ];
   [%expect
     {|
-      File "../../test/contracts/negative/modules_export_namespace.jsligo", line 3, characters 8-17:
-        2 |     namespace Foo {
-        3 |         let a = 2;
-                    ^^^^^^^^^
-        4 |     }
-
-      Toplevel let declaration is silently changed to const declaration.
-
       File "../../test/contracts/negative/modules_export_namespace.jsligo", line 7, characters 13-20:
         6 |
         7 | import Foo = Bar.Foo
                          ^^^^^^^
 
-       Module "Bar.Foo" not found. |}];
-  run_ligo_bad
+       Module "Bar.Foo" not found. |}] ;
+    run_ligo_bad
     [ "compile"
     ; "expression"
     ; "jsligo"
@@ -2171,15 +1968,6 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "get_capitalized_entrypoint.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/get_capitalized_entrypoint.mligo", line 7, characters 25-42:
-      6 |   | Some dst ->
-      7 |     let op : operation = Tezos.transaction () 0mutez dst in
-                                   ^^^^^^^^^^^^^^^^^
-      8 |     ([op], ())
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -2328,7 +2116,7 @@ let%expect_test _ =
     [ "compile"
     ; "expression"
     ; "jsligo"
-    ; "cat(list([1,2,3]), list([4,fib(5)]))"
+    ; "cat([1,2,3], [4,fib(5)])"
     ; "--init-file"
     ; contract "lambdarec.jsligo"
     ];
@@ -2477,31 +2265,7 @@ let%expect_test _ =
     ; "--init-file"
     ; contract "extend_builtin.jsligo"
     ];
-  [%expect
-    {|
-File "../../test/contracts/extend_builtin.jsligo", line 2, characters 9-19:
-  1 | namespace Tezos {
-  2 |   export let x = 42;
-               ^^^^^^^^^^
-  3 |   export let f = (x  : int) : int => x + 2;
-
-Toplevel let declaration is silently changed to const declaration.
-
-File "../../test/contracts/extend_builtin.jsligo", line 3, characters 9-42:
-  2 |   export let x = 42;
-  3 |   export let f = (x  : int) : int => x + 2;
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  4 | }
-
-Toplevel let declaration is silently changed to const declaration.
-
-File "../../test/contracts/extend_builtin.jsligo", line 6, characters 0-24:
-  5 |
-  6 | let y = Tezos.f(Tezos.x);
-      ^^^^^^^^^^^^^^^^^^^^^^^^
-
-Toplevel let declaration is silently changed to const declaration.
-
+  [%expect {|
 44 |}]
 
 let%expect_test _ =
@@ -2556,7 +2320,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/negative/call_view_not_litstr.mligo", line 4, character 10 to line 8, character 21:
       3 |   let u =
-      4 |     match (Tezos.call_view
+      4 |     match (Tezos.View.call
                     ^^^^^^^^^^^^^^^^
       5 |          s
           ^^^^^^^^^^
@@ -2643,7 +2407,7 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative/bytes_literals.jsligo", line 2, characters 12-23:
-      1 | const shame = () => {
+      1 | function shame () {
       2 |   const x = bytes `foo` as nat;
                       ^^^^^^^^^^^
       3 |   return x
@@ -2656,24 +2420,17 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "get_entrypoint.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/get_entrypoint.jsligo", line 3, characters 26-38:
-      2 | const main = (_u : unit, _b : address) : [list <operation>, address] => {
-      3 |   let c : contract<int> = Option.unopt(Tezos.get_entrypoint_opt ("%foo", Tezos.get_sender()));
-                                    ^^^^^^^^^^^^
-      4 |   return [[] as list <operation>, Tezos.address(c)];
-    :
-    Warning: deprecated value.
-    Use `Option.value_with_error` instead.
-
-    { parameter unit ;
-      storage address ;
-      code { DROP ;
-             SENDER ;
-             CONTRACT %foo int ;
-             IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
-             ADDRESS ;
-             NIL operation ;
-             PAIR } } |}]
+{ parameter unit ;
+  storage address ;
+  code { DROP ;
+         SENDER ;
+         CONTRACT %foo int ;
+         PUSH string "option is None" ;
+         SWAP ;
+         IF_NONE { FAILWITH } { SWAP ; DROP } ;
+         ADDRESS ;
+         NIL operation ;
+         PAIR } } |}]
 
 (* make sure that in compile storage/expression we can check ENTRYPOINT/EMIT *)
 let%expect_test _ =
@@ -2685,15 +2442,6 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "storage"; contract "self_annotations.mligo"; "()" ];
   [%expect
     {|
-    File "../../test/contracts/self_annotations.mligo", line 8, characters 11-28:
-      7 |   let c = (Tezos.self ("%foo") : unit contract) in
-      8 |   let op = Tezos.transaction () 0mutez c in
-                     ^^^^^^^^^^^^^^^^^
-      9 |   ([op] : operation list), ()
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
     Unit |}]
 
 (* check tag in Tezos.emit *)
@@ -2701,10 +2449,10 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "emit_bad_tag.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/emit_bad_tag.mligo", line 3, characters 3-31:
+    File "../../test/contracts/negative/emit_bad_tag.mligo", line 3, characters 3-41:
       2 | let main (_ : unit) (_ : string) : operation list * string =
-      3 |   [Tezos.emit "%hello world" 12], "bye"
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      3 |   [Tezos.Operation.emit "%hello world" 12], "bye"
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Invalid entrypoint "%hello world". One of the following patterns is expected:
     * "%bar" is expected for entrypoint "Bar"
@@ -2713,12 +2461,12 @@ let%expect_test _ =
 
 (* test compile parameter w.r.t. @entry *)
 let%expect_test _ =
-  run_ligo_good [ "compile"; "parameter"; contract "single.contract.jsligo"; "Poke()" ];
+  run_ligo_good [ "compile"; "parameter"; contract "single.contract.jsligo"; "[\"Poke\" as \"Poke\"]" ];
   [%expect {| Unit |}];
   run_ligo_good
     [ "compile"; "parameter"; contract "single.contract.jsligo"; "[]"; "-e"; "poke" ];
   [%expect {| Unit |}];
-  run_ligo_good
+    run_ligo_good
     [ "compile"
     ; "parameter"
     ; contract "single.parameter.jsligo"
@@ -2734,7 +2482,7 @@ let%expect_test _ =
     [ "compile"
     ; "parameter"
     ; contract "single.parameter.jsligo"
-    ; "Poke()"
+    ; "[\"Poke\" as \"Poke\"]"
     ; "-m"
     ; "Contract"
     ];
@@ -2964,11 +2712,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "entrypoint_no_type.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/entrypoint_no_type.jsligo", line 8, characters 6-12:
-      7 | @entry
-      8 | const unique = (_p : organization, _s : storage) => {
+    File "../../test/contracts/negative/entrypoint_no_type.jsligo", line 9, characters 6-12:
+      8 | // @entry
+      9 | const unique = (_p : organization, _s : storage) => {
                 ^^^^^^
-      9 |     return failwith("You need to be part of Tezos organization to activate an organization");
+     10 |     return failwith("You need to be part of Tezos organization to activate an organization");
 
     Not an entrypoint: [_p]record[admins -> int , name -> string] -> ∀ a : * . [_s]int -> a |}]
 
@@ -2984,36 +2732,9 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; contract "FA1.2.entries.mligo" ];
+  run_ligo_good [ "compile"; "contract"; contract "FA1_2_entries.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/FA1.2.entries.mligo", line 108, characters 3-20:
-    107 |     | None -> 0n in
-    108 |   [Tezos.transaction value 0mutez param.callback], storage
-             ^^^^^^^^^^^^^^^^^
-    109 |
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/FA1.2.entries.mligo", line 116, characters 3-20:
-    115 |     | None -> 0n in
-    116 |   [Tezos.transaction value 0mutez param.callback], storage
-             ^^^^^^^^^^^^^^^^^
-    117 |
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/FA1.2.entries.mligo", line 121, characters 3-20:
-    120 |   let total = storage.total_supply in
-    121 |   [Tezos.transaction total 0mutez param.callback],storage
-             ^^^^^^^^^^^^^^^^^
-    122 |
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
     { parameter
         (or (pair %getTotalSupply (unit %request) (contract %callback nat))
             (or (pair %getBalance (address %owner) (contract %callback nat))
@@ -3176,144 +2897,78 @@ let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "parameter"
-    ; contract "FA1.2.entries.mligo"
+    ; contract "FA1_2_entries.mligo"
     ; "Approve { spender = (\"tz1fakefakefakefakefakefakefakcphLA5\" : address) ; value \
        = 3n }"
     ];
   [%expect
     {|
-      File "../../test/contracts/FA1.2.entries.mligo", line 108, characters 3-20:
-      107 |     | None -> 0n in
-      108 |   [Tezos.transaction value 0mutez param.callback], storage
-               ^^^^^^^^^^^^^^^^^
-      109 |
-      :
-      Warning: deprecated value.
-      In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
-      File "../../test/contracts/FA1.2.entries.mligo", line 116, characters 3-20:
-      115 |     | None -> 0n in
-      116 |   [Tezos.transaction value 0mutez param.callback], storage
-               ^^^^^^^^^^^^^^^^^
-      117 |
-      :
-      Warning: deprecated value.
-      In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
-      File "../../test/contracts/FA1.2.entries.mligo", line 121, characters 3-20:
-      120 |   let total = storage.total_supply in
-      121 |   [Tezos.transaction total 0mutez param.callback],storage
-               ^^^^^^^^^^^^^^^^^
-      122 |
-      :
-      Warning: deprecated value.
-      In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
       (Right (Right (Right (Left (Pair "tz1fakefakefakefakefakefakefakcphLA5" 3))))) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "pokeGame.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/pokeGame.jsligo", line 102, characters 31-43:
-    101 |   } else {
-    102 |     const t : ticket<string> = Option.unopt(Tezos.create_ticket("can_poke", ticketCount));
-                                         ^^^^^^^^^^^^
-    103 |     return [
-    :
-    Warning: deprecated value.
-    Use `Option.value_with_error` instead.
-
-    File "../../test/contracts/pokeGame.jsligo", line 102, characters 44-63:
-    101 |   } else {
-    102 |     const t : ticket<string> = Option.unopt(Tezos.create_ticket("can_poke", ticketCount));
-                                                      ^^^^^^^^^^^^^^^^^^^
-    103 |     return [
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration.
-
-    { parameter
-        (or (pair %init address nat) (or (address %pokeAndGetFeedback) (unit %poke))) ;
-      storage
-        (pair (map %pokeTraces address (pair (address %receiver) (string %feedback)))
-              (string %feedback)
-              (map %ticketOwnership address (ticket string))) ;
-      code { UNPAIR ;
-             IF_LEFT
+{ parameter
+    (or (pair %init address nat) (or (address %pokeAndGetFeedback) (unit %poke))) ;
+  storage
+    (pair (map %pokeTraces address (pair (address %receiver) (string %feedback)))
+          (string %feedback)
+          (map %ticketOwnership address (ticket string))) ;
+  code { UNPAIR ;
+         IF_LEFT
+           { SWAP ;
+             UNPAIR 3 ;
+             PUSH nat 0 ;
+             DUP 5 ;
+             CDR ;
+             COMPARE ;
+             EQ ;
+             IF { DIG 3 ; DROP ; DIG 2 }
+                { DUP 4 ;
+                  CDR ;
+                  PUSH string "can_poke" ;
+                  TICKET ;
+                  PUSH string "option is None" ;
+                  SWAP ;
+                  IF_NONE { FAILWITH } { SWAP ; DROP } ;
+                  DIG 3 ;
+                  SWAP ;
+                  SOME ;
+                  DIG 4 ;
+                  CAR ;
+                  UPDATE } ;
+             DUG 2 ;
+             PAIR 3 ;
+             NIL operation ;
+             PAIR }
+           { IF_LEFT
                { SWAP ;
                  UNPAIR 3 ;
-                 PUSH nat 0 ;
-                 DUP 5 ;
-                 CDR ;
-                 COMPARE ;
-                 EQ ;
-                 IF { DIG 3 ; DROP ; DIG 2 }
-                    { DUP 4 ;
-                      CDR ;
-                      PUSH string "can_poke" ;
-                      TICKET ;
-                      IF_NONE { PUSH string "option is None" ; FAILWITH } {} ;
-                      DIG 3 ;
-                      SWAP ;
-                      SOME ;
-                      DIG 4 ;
-                      CAR ;
-                      UPDATE } ;
-                 DUG 2 ;
-                 PAIR 3 ;
-                 NIL operation ;
-                 PAIR }
-               { IF_LEFT
-                   { SWAP ;
-                     UNPAIR 3 ;
-                     SWAP ;
-                     DROP ;
-                     SWAP ;
-                     NONE (ticket string) ;
-                     SOURCE ;
-                     GET_AND_UPDATE ;
-                     DUP 4 ;
-                     UNIT ;
-                     VIEW "feedback" string ;
-                     SWAP ;
-                     IF_NONE
-                       { DROP 4 ;
-                         PUSH string "User does not have tickets => not allowed" ;
-                         FAILWITH }
-                       { DROP ;
-                         IF_NONE
-                           { DROP 3 ;
-                             PUSH string "Cannot find view feedback on given oracle address" ;
-                             FAILWITH }
-                           { SWAP ;
-                             DUP 2 ;
-                             DIG 3 ;
-                             DIG 3 ;
-                             DIG 4 ;
-                             PAIR ;
-                             SOURCE ;
-                             DUG 2 ;
-                             SOME ;
-                             DIG 2 ;
-                             UPDATE ;
-                             PAIR 3 ;
-                             NIL operation ;
-                             PAIR } } }
+                 SWAP ;
+                 DROP ;
+                 SWAP ;
+                 NONE (ticket string) ;
+                 SOURCE ;
+                 GET_AND_UPDATE ;
+                 DUP 4 ;
+                 UNIT ;
+                 VIEW "feedback" string ;
+                 SWAP ;
+                 IF_NONE
+                   { DROP 4 ;
+                     PUSH string "User does not have tickets => not allowed" ;
+                     FAILWITH }
                    { DROP ;
-                     UNPAIR 3 ;
-                     DIG 2 ;
-                     NONE (ticket string) ;
-                     SOURCE ;
-                     GET_AND_UPDATE ;
                      IF_NONE
                        { DROP 3 ;
-                         PUSH string "User does not have tickets => not allowed" ;
+                         PUSH string "Cannot find view feedback on given oracle address" ;
                          FAILWITH }
-                       { DROP ;
-                         DUG 2 ;
-                         PUSH string "" ;
-                         SELF_ADDRESS ;
+                       { SWAP ;
+                         DUP 2 ;
+                         DIG 3 ;
+                         DIG 3 ;
+                         DIG 4 ;
                          PAIR ;
                          SOURCE ;
                          DUG 2 ;
@@ -3322,32 +2977,36 @@ let%expect_test _ =
                          UPDATE ;
                          PAIR 3 ;
                          NIL operation ;
-                         PAIR } } } } ;
-      view "feedback" unit string { CDR ; GET 3 } } |}]
+                         PAIR } } }
+               { DROP ;
+                 UNPAIR 3 ;
+                 DIG 2 ;
+                 NONE (ticket string) ;
+                 SOURCE ;
+                 GET_AND_UPDATE ;
+                 IF_NONE
+                   { DROP 3 ;
+                     PUSH string "User does not have tickets => not allowed" ;
+                     FAILWITH }
+                   { DROP ;
+                     DUG 2 ;
+                     PUSH string "" ;
+                     SELF_ADDRESS ;
+                     PAIR ;
+                     SOURCE ;
+                     DUG 2 ;
+                     SOME ;
+                     DIG 2 ;
+                     UPDATE ;
+                     PAIR 3 ;
+                     NIL operation ;
+                     PAIR } } } } ;
+  view "feedback" unit string { CDR ; GET 3 } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "parameter"; contract "pokeGame.jsligo"; "Poke()" ];
+  run_ligo_good [ "compile"; "parameter"; contract "pokeGame.jsligo"; "[\"Poke\" as \"Poke\"]" ];
   [%expect
-    {|
-    File "../../test/contracts/pokeGame.jsligo", line 102, characters 31-43:
-    101 |   } else {
-    102 |     const t : ticket<string> = Option.unopt(Tezos.create_ticket("can_poke", ticketCount));
-                                         ^^^^^^^^^^^^
-    103 |     return [
-    :
-    Warning: deprecated value.
-    Use `Option.value_with_error` instead.
-
-    File "../../test/contracts/pokeGame.jsligo", line 102, characters 44-63:
-    101 |   } else {
-    102 |     const t : ticket<string> = Option.unopt(Tezos.create_ticket("can_poke", ticketCount));
-                                                      ^^^^^^^^^^^^^^^^^^^
-    103 |     return [
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Ticket.create` from `Tezos.Next` is encouraged for a smoother migration.
-
-    (Right (Right Unit)) |}]
+    {| (Right (Right Unit)) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "contract_of.jsligo" ];
@@ -3372,15 +3031,6 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "bytes_bitwise.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/bytes_bitwise.mligo", line 7, characters 11-17:
-      6 |   let b_shift_right = 0x0006 lsr  1n     in
-      7 |   let () = assert (b_and         = 0x0004 &&
-                     ^^^^^^
-      8 |                    b_or          = 0x0107 &&
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -3427,57 +3077,12 @@ let%expect_test _ =
   run_ligo_good [ "run"; "dry-run"; contract "bytes_bitwise.mligo"; "()"; "()" ];
   [%expect
     {|
-    File "../../test/contracts/bytes_bitwise.mligo", line 7, characters 11-17:
-      6 |   let b_shift_right = 0x0006 lsr  1n     in
-      7 |   let () = assert (b_and         = 0x0004 &&
-                     ^^^^^^
-      8 |                    b_or          = 0x0107 &&
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
     ( LIST_EMPTY() , unit ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "bytes_int_nat_conv.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/bytes_int_nat_conv.mligo", line 4, characters 11-17:
-      3 |   (* bytes => nat => bytes *)
-      4 |   let () = assert (b = bytes(nat(b))) in
-                     ^^^^^^
-      5 |   (* bytes => int => bytes *)
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
-    File "../../test/contracts/bytes_int_nat_conv.mligo", line 6, characters 11-17:
-      5 |   (* bytes => int => bytes *)
-      6 |   let () = assert (b = bytes(int(b))) in
-                     ^^^^^^
-      7 |   (* int => bytes => int *)
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
-    File "../../test/contracts/bytes_int_nat_conv.mligo", line 8, characters 11-17:
-      7 |   (* int => bytes => int *)
-      8 |   let () = assert (1234 = int(bytes(1234))) in
-                     ^^^^^^
-      9 |   (* nat => bytes => nat *)
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
-    File "../../test/contracts/bytes_int_nat_conv.mligo", line 10, characters 11-17:
-      9 |   (* nat => bytes => nat *)
-     10 |   let () = assert (4567n = nat(bytes(4567n))) in
-                     ^^^^^^
-     11 |   [], ()
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -3516,42 +3121,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "dry-run"; contract "bytes_int_nat_conv.mligo"; "()"; "()" ];
   [%expect
     {|
-    File "../../test/contracts/bytes_int_nat_conv.mligo", line 4, characters 11-17:
-      3 |   (* bytes => nat => bytes *)
-      4 |   let () = assert (b = bytes(nat(b))) in
-                     ^^^^^^
-      5 |   (* bytes => int => bytes *)
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
-    File "../../test/contracts/bytes_int_nat_conv.mligo", line 6, characters 11-17:
-      5 |   (* bytes => int => bytes *)
-      6 |   let () = assert (b = bytes(int(b))) in
-                     ^^^^^^
-      7 |   (* int => bytes => int *)
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
-    File "../../test/contracts/bytes_int_nat_conv.mligo", line 8, characters 11-17:
-      7 |   (* int => bytes => int *)
-      8 |   let () = assert (1234 = int(bytes(1234))) in
-                     ^^^^^^
-      9 |   (* nat => bytes => nat *)
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
-    File "../../test/contracts/bytes_int_nat_conv.mligo", line 10, characters 11-17:
-      9 |   (* nat => bytes => nat *)
-     10 |   let () = assert (4567n = nat(bytes(4567n))) in
-                     ^^^^^^
-     11 |   [], ()
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
     ( LIST_EMPTY() , unit ) |}]
 
 let%expect_test _ =
@@ -3570,42 +3139,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "increment_prefix.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/increment_prefix.jsligo", line 24, characters 13-27:
-     23 |   let initial_storage = 42;
-     24 |   let orig = Test.originate(contract_of(IncDec), initial_storage, 0tez);
-                       ^^^^^^^^^^^^^^
-     25 |   Test.transfer_exn(orig.addr, Increment(), 1mutez);
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/increment_prefix.jsligo", line 25, characters 2-19:
-     24 |   let orig = Test.originate(contract_of(IncDec), initial_storage, 0tez);
-     25 |   Test.transfer_exn(orig.addr, Increment(), 1mutez);
-            ^^^^^^^^^^^^^^^^^
-     26 |   return assert(Test.get_storage(orig.addr) == initial_storage + 1);
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/increment_prefix.jsligo", line 26, characters 9-15:
-     25 |   Test.transfer_exn(orig.addr, Increment(), 1mutez);
-     26 |   return assert(Test.get_storage(orig.addr) == initial_storage + 1);
-                   ^^^^^^
-     27 | }) ();
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
-    File "../../test/contracts/increment_prefix.jsligo", line 26, characters 16-32:
-     25 |   Test.transfer_exn(orig.addr, Increment(), 1mutez);
-     26 |   return assert(Test.get_storage(orig.addr) == initial_storage + 1);
-                          ^^^^^^^^^^^^^^^^
-     27 | }) ();
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
-
     Everything at the top-level was executed.
     - test_increment exited with value (). |}]
 
@@ -3620,19 +3153,12 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/negative/loop.jsligo", line 4, character 4 to line 7, character 5:
-      3 |     let values : list<int> = [];
-      4 |     for (const [k, v, z] of x) {
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      5 |       keys = [k, ...keys];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^
-      6 |       values = [v, ...values];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      7 |     };
-          ^^^^^
-      8 |     return [keys, values];
-
-    Unsupported pattern in loop. Only single variables or pairs of variables (for maps) are allowed. |}]
+     File "../../test/contracts/negative/loop.jsligo", line 4, characters 13-22:
+       3 |   let values : list<int> = [];
+       4 |   for (const [k, v, z] of x) {
+                        ^^^^^^^^^
+       5 |     keys = [k, ...keys];
+     Only a variable or a pair key-value (for maps) can index loops in JsLIGO. |}]
 
 let%expect_test _ =
   run_ligo_bad
@@ -3645,19 +3171,19 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/negative/loop2.jsligo", line 4, character 4 to line 7, character 5:
-      3 |     let values : list<int> = [];
-      4 |     for (const [k, v] of x) {
-              ^^^^^^^^^^^^^^^^^^^^^^^^^
-      5 |       keys = [k, ...keys];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^
-      6 |       values = [v, ...values];
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      7 |     };
-          ^^^^^
-      8 |     return [keys, values];
+    File "../../test/contracts/negative/loop2.jsligo", line 4, character 2 to line 7, character 3:
+      3 |   let values : list<int> = [];
+      4 |   for (const [k, v] of x) {
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+      5 |     keys = [k, ...keys];
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+      6 |     values = [v, ...values];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      7 |   };
+          ^^^
+      8 |   return [keys, values];
 
-    Expected collection of type "any", but recieved collection of type "list (
+    Expected collection of type "any", but received collection of type "list (
     ( int *
       int ))". |}]
 
@@ -3702,60 +3228,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "reverse_string_for_loop.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 19, characters 17-31:
-     18 |       let initial_storage = "esrever";
-     19 |       let orig = Test.originate(contract_of(C), initial_storage, 0 as tez);
-                           ^^^^^^^^^^^^^^
-     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Originate.contract` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 20, characters 6-23:
-     19 |       let orig = Test.originate(contract_of(C), initial_storage, 0 as tez);
-     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
-                ^^^^^^^^^^^^^^^^^
-     21 |       Test.log(Test.get_storage(orig.addr));
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 21, characters 6-14:
-     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
-     21 |       Test.log(Test.get_storage(orig.addr));
-                ^^^^^^^^
-     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `IO.log` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 21, characters 15-31:
-     20 |       Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
-     21 |       Test.log(Test.get_storage(orig.addr));
-                         ^^^^^^^^^^^^^^^^
-     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
-
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 22, characters 13-19:
-     21 |       Test.log(Test.get_storage(orig.addr));
-     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
-                       ^^^^^^
-     23 |     }
-    :
-    Warning: deprecated value.
-    In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
-    File "../../test/contracts/reverse_string_for_loop.jsligo", line 22, characters 20-36:
-     21 |       Test.log(Test.get_storage(orig.addr));
-     22 |       return assert(Test.get_storage(orig.addr) == "reverse")
-                              ^^^^^^^^^^^^^^^^
-     23 |     }
-    :
-    Warning: deprecated value.
-    In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.get_storage` from `Test.Next` is encouraged for a smoother migration.
-
     "reverse"
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -3778,7 +3250,7 @@ let%expect_test "dry-run module contract" =
     [ "run"
     ; "dry-run"
     ; contract "simple_contract_in_module.jsligo"
-    ; "1n"
+    ; "1 as nat"
     ; "default_storage"
     ; "-m"
     ; "C"

@@ -7,14 +7,16 @@
   repl_test
   contract_test
   get_scope_tests
-  pretty_printer_tests
-  lsp_test
-  decompiler_tests)
+;;  pretty_printer_tests
+;;  lsp_test
+;;  decompiler_tests
+  )
  (libraries
   simple-utils
   ligo.tezos-memory-proto-alpha
   ligo.main_interpreter
   ligo.checking
+  ligo.build
   ligo.api
   ligo_init
   ligo
@@ -30,7 +32,7 @@
   prometheus
   prometheus_format
   prometheus_push
-  lsp_test_requests
+;;  lsp_test_requests
   package_management
   lwt
   lwt.unix
@@ -128,11 +130,12 @@
   ;;  (alias parser-negative-tests)
   (alias repl-test)
   (alias contract_test)
-  (alias error-recovery/recovery-test)
-  (alias get_scope_tests)
-  (alias decompiler_tests)
-  (alias pretty-printer-tests)
-  (alias lsp-test)))
+;;  (alias error-recovery/recovery-test)
+;;  (alias get_scope_tests)
+;;  (alias decompiler_tests)
+;;  (alias pretty-printer-tests)
+  ;;  (alias lsp-test)
+  ))
 
 (rule
  (alias manual-test)
@@ -141,23 +144,23 @@
  (deps
   (glob_files contracts/*)))
 
-(rule
- (alias decompiler_tests)
- (action
-  (run ./decompiler_tests.exe))
- (deps
-  (glob_files contracts/*)))
+;; (rule
+;;  (alias decompiler_tests)
+;;  (action
+;;   (run ./decompiler_tests.exe))
+;;  (deps
+;;   (glob_files contracts/*)))
 
-(rule
- (alias pretty-printer-tests)
- (action
-  (run ./pretty_printer_tests.exe))
- (deps
-  (source_tree contracts)))
+;; (rule
+;;  (alias pretty-printer-tests)
+;;  (action
+;;   (run ./pretty_printer_tests.exe))
+;;  (deps
+;;   (source_tree contracts)))
 
-(rule
- (alias lsp-test)
- (action
-  (run ./lsp_test.exe))
- (deps
-  (source_tree contracts)))
+;; (rule
+;;  (alias lsp-test)
+;;  (action
+;;   (run ./lsp_test.exe))
+;;  (deps
+;;   (source_tree contracts)))

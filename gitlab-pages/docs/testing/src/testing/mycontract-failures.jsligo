@@ -2,23 +2,29 @@ namespace MyContract {
   export type storage = int;
   export type result = [list<operation>, storage];
 
-  @entry const increment = (delta : int, storage : storage) : result =>
-    abs(delta) <= 5n ? [[], storage + delta] : failwith("Pass 5 or less");
-  @entry const decrement = (delta : int, storage : storage) : result =>
-    abs(delta) <= 5n ? [[], storage - delta] : failwith("Pass 5 or less");
-  @entry const reset = (_u : unit, _storage : storage) : result => [[], 0];
-}
-import Test = Test.Next;
+  // @entry
+  const increment = (delta : int, storage : storage) : result =>
+    abs(delta) <= (5 as nat) ? [[], storage + delta] : failwith("Pass 5 or less");
 
+  // @entry
+  const decrement = (delta : int, storage : storage) : result =>
+    abs(delta) <= (5 as nat) ? [[], storage - delta] : failwith("Pass 5 or less");
+
+  // @entry
+  const reset = (_u : unit, _storage : storage) : result => [[], 0];
+}
 const test_failure = () => {
   const initial_storage = 10 as int;
-  const orig = Test.Originate.contract(contract_of(MyContract), initial_storage, 0tez);
-  const result = Test.Contract.transfer(Test.Typed_address.get_entrypoint("increment", orig.taddr), 50 as int, 0tez);
+  const orig = Test.Originate.contract(contract_of(MyContract),
+                                       initial_storage, 0 as tez);
+  const result =
+    Test.Contract.transfer(Test.Typed_address.get_entrypoint("increment",
+                             orig.taddr), 50 as int, 0 as tez);
 
-  match(result) {
-    when(Fail(_x)): Test.IO.log("Failed as expected");
-    when(Success(_s)): failwith("This should not succeed")
-  };
+  $match(result, {
+    "Fail": _x => Test.IO.log("Failed as expected"),
+    "Success": _s => failwith("This should not succeed")
+  });
 }
 
 const test1 = test_failure();

@@ -1,20 +1,18 @@
 namespace Foo {
-
   type storage = int;
   type ret = [list<operation>, storage];
-  // Three entrypoints
 
-  @entry
+  // @entry
   const increment = (delta: int, store: storage): ret =>
     [[], store + delta];
 
-  @entry
+  // @entry
   const decrement = (delta: int, store: storage): ret =>
     [[], store - delta];
 
-  @entry
+  // @entry
   const reset = (_u: unit, _s: storage): ret => [[], 0]
 };
 
 
-let test = Test.log (Test.compile_value(contract_of(Foo)))
+let test = Test.IO.log (Test.Michelson.eval(contract_of(Foo)))

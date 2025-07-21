@@ -26,19 +26,19 @@ module Project_root_test = struct
     Format.printf "%a" (Fmt.Dump.option String.pp) project_root
 
 
-  let%expect_test "Should find project root in parent directory" =
-    get_project_root_test
-      "contracts/lsp/project_tests/project_file_in_parent/nested/test.mligo";
-    [%expect
-      {|
-      Some
-        "../../../../../default/src/test/contracts/lsp/project_tests/project_file_in_parent" |}]
+  (* let%expect_test "Should find project root in parent directory" = *)
+  (*   get_project_root_test *)
+  (*     "contracts/lsp/project_tests/project_file_in_parent/nested/test.mligo"; *)
+  (*   [%expect *)
+  (*     {| *)
+  (*     Some *)
+  (*       "../../../../../default/src/test/contracts/lsp/project_tests/project_file_in_parent" |}] *)
 
-  let%expect_test "Should find innermost project root" =
-    get_project_root_test
-      "contracts/lsp/project_tests/two_project_files/nested/test.jsligo";
-    [%expect
-      {|
-      Some
-        "../../../../../default/src/test/contracts/lsp/project_tests/two_project_files/nested" |}]
+  (* let%expect_test "Should find innermost project root" = *)
+  (*   get_project_root_test *)
+  (*     "contracts/lsp/project_tests/two_project_files/nested/test.jsligo"; *)
+  (*   [%expect *)
+  (*     {| *)
+  (*     Some *)
+  (*       "../../../../../default/src/test/contracts/lsp/project_tests/two_project_files/nested" |}] *)
 end

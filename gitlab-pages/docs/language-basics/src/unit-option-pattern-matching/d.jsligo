@@ -1,3 +1,0 @@
-function div (a: nat, b: nat): option<nat> {
-  if (b == 0n) return None() else return Some(a/b)
-};

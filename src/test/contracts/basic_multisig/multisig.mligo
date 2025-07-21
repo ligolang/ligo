@@ -59,7 +59,7 @@ let main (p : parameter) (s : storage) : return =
     in
     let contract_opt : payload contract option = Tezos.get_contract_opt(c_address) in
     let op = match contract_opt with
-        Some (c) -> [Tezos.transaction payload 0tez c]
+        Some (c) -> [Tezos.Operation.transaction payload 0tez c]
       | None     -> (failwith ("Contract not found") : operation list)
     in
     op, s

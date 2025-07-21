@@ -1,6 +1,5 @@
-import Test = Test.Next
-
-const initAccount = ([accList, k]: [list<address>, key]) : list<address> => {
+function initAccount ([accList, k]: [list<address>, key]) : list<address>
+  {
     let hk : key_hash = Crypto.hash_key(k);
     let c : contract<unit> = Tezos.implicit_account(hk);
     let a : address = Tezos.address(c);

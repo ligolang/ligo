@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let println = Test.IO.println
 let to_string = Test.String.show
 let get_storage = Test.Typed_address.get_storage
@@ -21,7 +19,7 @@ let test =
   let () = println "Deployed the contract:" in
   let () = println (to_string m) in
   let () = println ("With storage: " ^ to_string (get_storage ta)) in
-  let c : (Bar.Foo parameter_of) contract =
+  let c : Bar.Foo parameter_of contract =
     Test.Typed_address.to_contract ta in
   let _ = Test.Contract.transfer_exn c (Add 42) 0tez in
   let () = println ("Storage after call: " ^ to_string (get_storage ta)) in

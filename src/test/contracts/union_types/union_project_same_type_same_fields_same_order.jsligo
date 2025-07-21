@@ -1,13 +1,12 @@
-const f = (x: int) => {
-    const record: { a: int, b: bool } | { a: int, b: string } = {
-        a: x,
-        b: true
-    };
-    return record.a;
+function f (x: int) {
+  const record: { a: int, b: bool } | { a: int, b: string } = {
+    a: x,
+    b: true
+  };
+  return record.a;
 }
 
-@entry
-const entry = (_p: unit, s: int): [list<operation>, int] => {
-    let result = f(s);
-    return [list([]), result];
+class C {
+  @entry
+  entry = (_p: unit, s: int): [list<operation>, int] => [[], f(s)];
 }

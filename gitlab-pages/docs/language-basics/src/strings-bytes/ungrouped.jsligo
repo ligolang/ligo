@@ -1,3 +1,0 @@
-const a = "Hello Alice";
-const b = 0x7070;
-const bs = (bytes `foo`);

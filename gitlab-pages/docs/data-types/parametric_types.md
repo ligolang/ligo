@@ -143,12 +143,12 @@ let rev (type a) (xs : a list) : a list =
 ```jsligo group=poly
 function rev <T>(xs : list<T>) : list<T> {
   const rev = <T>([xs, acc] : [list<T>, list<T>]) : list<T> =>
-    match(xs) {
-      when([]): acc;
-      when([y,...ys]): rev([ys, [y,...acc]])
-    };
+    $match(List.head_and_tail(xs), {
+      "None": () => acc,
+      "Some": ([y,ys]) => rev([ys, [y,...acc]])
+    });
 
-  return rev([xs, ([] as list<T>)]);
+  return rev([xs, []]);
 };
 ```
 
@@ -169,7 +169,7 @@ let lnat : nat list = rev [1n; 2n; 3n]
 
 ```jsligo group=poly
 const lint : list<int> = rev([1, 2, 3]);
-const lnat : list<nat> = rev([1n, 2n, 3n]);
+const lnat : list<nat> = rev([(1 as nat), (2 as nat), (3 as nat)]);
 ```
 
 </Syntax>

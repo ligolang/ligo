@@ -7,15 +7,6 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "protocol_dalphanet.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/protocol_dalphanet.mligo", line 18, characters 22-23:
-     17 | [@entry]
-     18 | let main (p : bls_l) (s : bool) : operation list * bool =
-                                ^
-     19 |   (([] : operation list), Tezos.pairing_check p)
-    :
-    Warning: unused variable "s".
-    Hint: replace it by "_s" to prevent this warning.
-
     { parameter (list (pair bls12_381_g1 bls12_381_g2)) ;
       storage bool ;
       code { CAR ; PAIRING_CHECK ; NIL operation ; PAIR } } |}]
@@ -29,11 +20,11 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/sapling.mligo", line 10, characters 27-32:
-      9 | [@entry]
-     10 | let main (tr : parameter) (store : storage) : return =
+    File "../../test/contracts/sapling.mligo", line 8, characters 27-32:
+      7 | [@entry]
+      8 | let main (tr : parameter) (store : storage) : return =
                                      ^^^^^
-     11 |   ([] : operation list),
+      9 |   ([] : operation list),
     :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
@@ -86,10 +77,10 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "emit.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/emit.mligo", line 4, characters 3-18:
+    File "../../test/contracts/negative/emit.mligo", line 4, characters 3-28:
       3 |   let x = "%lol" in
-      4 |   [Tezos.emit x 12], x
-             ^^^^^^^^^^^^^^^
+      4 |   [Tezos.Operation.emit x 12], x
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Invalid event tag.
     The tag must be a string literal. |}]
@@ -98,14 +89,6 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "rollup_address.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/rollup_address.mligo", line 4, characters 4-21:
-      3 |   let sr_cont = Tezos.get_contract_with_error sr_address "Err" in
-      4 |   [ Tezos.transaction () 0mutez sr_cont ], ()
-              ^^^^^^^^^^^^^^^^^
-    :
-    Warning: deprecated value.
-    In a future version, `Tezos` will be replaced by `Tezos.Next`, and using `Operation.transaction` from `Tezos.Next` is encouraged for a smoother migration.
-
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -121,7 +104,7 @@ let%expect_test _ =
              CONS ;
              PAIR } } |}]
 
-(* Test if pre alpha protocol works in this case it's mumbai, but in future this 
+(* Test if pre alpha protocol works in this case it's mumbai, but in future this
    will change *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "unit.mligo"; "--protocol"; "parisb" ];

@@ -19,10 +19,33 @@ type statement = CST.statement
 type 'a legacy_variant = 'a CST.legacy_variant
 type signature_expr    = CST.intf_expr
 
-val print           : state -> cst -> PPrint.document
-val print_expr      : state -> expr -> PPrint.document
-val print_type_expr : state -> type_expr -> PPrint.document
-val print_pattern   : state -> pattern -> PPrint.document
-val print_statement : state -> statement -> PPrint.document
-val print_legacy_variant : 'a. (state -> 'a -> PPrint.document) -> state -> 'a legacy_variant reg -> PPrint.document
-val print_signature_expr : state -> signature_expr -> PPrint.document
+val print :
+  ?stdlib:bool ->
+  ?classes:bool ->
+  state ->
+  cst ->
+  PPrint.document
+
+val print_expr      : ?stdlib:bool -> state -> expr -> PPrint.document
+val print_type_expr : ?stdlib:bool -> state -> type_expr -> PPrint.document
+val print_pattern   : ?stdlib:bool -> state -> pattern -> PPrint.document
+
+val print_statement :
+  ?stdlib:bool ->
+  ?decl_kind:bool ->
+  ?dec_in_com:bool ->
+  ?classes:bool ->
+  ?static:bool ->
+  ?let_to_const:bool ->
+  state ->
+  CST.statement ->
+  PPrint.document
+
+val print_legacy_variant :
+  'a.(state -> 'a -> PPrint.document) ->
+    state ->
+    'a legacy_variant reg ->
+    PPrint.document
+
+val print_signature_expr :
+  ?stdlib:bool -> state -> signature_expr -> PPrint.document

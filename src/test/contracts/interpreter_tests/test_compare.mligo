@@ -1,4 +1,3 @@
-module Test = Test.Next
 let assert = Test.Assert.assert
 
 type t = [@layout tree] | D of int | C of string

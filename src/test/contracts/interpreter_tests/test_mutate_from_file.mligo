@@ -1,7 +1,5 @@
 let assert = Assert.assert
 
-module Test = Test.Next
-
 let test =
   let tester (a, _, _) : unit =
     (* Test 1 *)

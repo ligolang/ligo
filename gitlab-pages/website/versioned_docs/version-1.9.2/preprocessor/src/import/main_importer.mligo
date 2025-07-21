@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/preprocessor/src/import/euro.mligo" "Euro"
+module Euro = Gitlab_pages.Docs.Preprocessor.Src.Import.Euro
 
 type storage = Euro.t
 

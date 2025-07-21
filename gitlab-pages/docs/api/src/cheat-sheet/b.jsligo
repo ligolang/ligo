@@ -1,7 +1,7 @@
 type age = int
 type name = string
-const add = (a: int, b: int): int => {
-  let c = a;
-  let d = b;
+function add (a: int, b: int): int {
+  const c = a;
+  const d = b;
   return c + d
 };

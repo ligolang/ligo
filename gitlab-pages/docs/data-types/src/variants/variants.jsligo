@@ -1,6 +1,6 @@
 type coin = ["Head"] | ["Tail"];
-let head: coin = Head();
-let tail: coin = Tail();
+let head: coin = ["Head" as "Head"];
+let tail: coin = ["Tail" as "Tail"];
 type id = nat;
 
 type user =
@@ -8,5 +8,5 @@ type user =
 | ["Manager", id]
 | ["Guest"];
 
-const bob : user = Admin(1000n);
-const carl : user = Guest();
+const bob : user = ["Admin" as "Admin", 1000 as nat];
+const carl : user = ["Guest" as "Guest"];

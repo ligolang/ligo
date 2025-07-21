@@ -1,5 +1,7 @@
-  type storage = string;
+type storage = string;
 
+class C {
   @entry
-  const store_hello = (delta: int, store: storage): [list<operation>, storage] =>
+  store_hello = (delta: int, store: storage): [list<operation>, storage] =>
     [[], "Hello"];
+}

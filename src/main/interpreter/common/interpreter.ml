@@ -1347,7 +1347,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_TO_ENTRYPOINT, _ -> fail @@ error_type ()
   | C_TEST_TO_TYPED_ADDRESS, [ V_Ct (C_contract { address; _ }) ] ->
     let>> () = Check_storage_address (loc, address, expr_ty) in
-    return @@ v_address address
+    return @@ v_typed_address address
   | C_TEST_TO_TYPED_ADDRESS, _ -> fail @@ error_type ()
   | C_TEST_TO_ADDRESS, [ V_Typed_address address ] -> return @@ v_address address
   | C_TEST_TO_ADDRESS, _ -> fail @@ error_type ()

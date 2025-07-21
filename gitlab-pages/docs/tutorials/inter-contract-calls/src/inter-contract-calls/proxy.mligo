@@ -1,7 +1,6 @@
 (* examples/contracts/mligo/Proxy.mligo *)
 
 type parameter = int
-
 type storage = address
 
 let get_contract (addr : address) =
@@ -12,5 +11,5 @@ let get_contract (addr : address) =
 [@entry]
 let main (param : parameter) (callee_addr : storage) =
   let callee = get_contract (callee_addr) in
-  let op = Tezos.transaction param 0mutez callee in
+  let op = Tezos.Operation.transaction param 0mutez callee in
   [op], callee_addr

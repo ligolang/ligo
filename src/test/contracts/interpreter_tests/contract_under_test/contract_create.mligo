@@ -12,12 +12,12 @@ let main (action : parameter) (store : storage) : return =
       in
       let c : nat contract option = Tezos.get_contract_opt a in
       let ops = match c with
-          Some (c) -> [ Tezos.Next.Operation.transaction 1n 10tez c ]
+          Some (c) -> [ Tezos.Operation.transaction 1n 10tez c ]
         | None     -> (failwith 2 : operation list)
       in
       (ops, (None: storage))
     | Two ->
-      let x : operation * address = Tezos.create_contract
+      let x : operation * address = Tezos.Operation.create_contract
         (fun (_p : nat) (_s : string) -> (failwith 111: operation list * string))
         (None: key_hash option)
         1tz

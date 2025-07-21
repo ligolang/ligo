@@ -2868,16 +2868,17 @@ and infer_declaration (decl : I.declaration)
                      enclosing module. *)
                   Attrs.Module.of_core_attr import_attr )
          ]
-  | D_import (Import_all_as { alias; module_str; import_attr } as decl) ->
+  | D_import (Import_all_as { alias; module_str; original_module_str; import_attr } as decl) ->
     let%bind path = path () in
     let inner_name = path @ [ alias ] in
     let%bind loc = loc () in
     let imported_module = Module_var.of_input_var ~loc module_str in
+    let orig_module = Module_var.of_input_var ~loc original_module_str in
     (* Lookup signature of [module_path] *)
     let%bind sig_ =
       Error_recovery.Get.module_
         imported_module
-        ~error:(Errors.unbound_module_variable imported_module)
+        ~error:(Errors.unbound_module_variable orig_module)
     in
     set_path inner_name
     @@ const
@@ -2891,16 +2892,15 @@ and infer_declaration (decl : I.declaration)
                      enclosing module. *)
                   Attrs.Module.of_core_attr import_attr )
          ]
-  | D_import (Import_selected { imported; module_str; import_attr } as decl) ->
+  | D_import (Import_selected { imported; module_str; original_module_str; import_attr } as decl) ->
     let%bind loc = loc () in
     let imported_module = Module_var.of_input_var ~loc module_str in
+    let orig_module = Module_var.of_input_var ~loc original_module_str in
     let%bind { items; _ } =
       Error_recovery.Get.module_
         imported_module
-        ~error:(Errors.unbound_module_variable imported_module)
+        ~error:(Errors.unbound_module_variable orig_module)
     in
-    let (h :: tl) = imported in
-    let imported = h :: tl in
     let find_var_type items var =
       let item =
         List.find_map items ~f:(fun item ->

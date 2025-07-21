@@ -1,2 +1,0 @@
-const b     = 0x12345678;
-const slice = Bytes.sub (1n, 2n, b); // 0x3456

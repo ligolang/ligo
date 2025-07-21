@@ -5,14 +5,14 @@ module C = struct
 
   let f (x : int) = x * 3 + 2
 
-  let ct = Test.register_constant (Test.eval f)
+  let ct = Test.State.register_constant (Test.Michelson.eval f)
 
   [@entry]
   let main (() : parameter) (store : storage) : return =
-    [], (Tezos.constant ct store)
+    [], Tezos.constant ct store
 end
 
 let test =
-  let orig = Test.originate (contract_of C) 1 0tez in
-  let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
-  assert (Test.get_storage orig.addr = 5)
+  let orig = Test.Originate.contract (contract_of C) 1 0tez in
+  let _ = Test.Typed_address.transfer_exn orig.taddr (Main ()) 0tez in
+  Assert.assert (Test.Typed_address.get_storage orig.taddr = 5)

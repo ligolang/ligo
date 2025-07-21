@@ -1,7 +1,7 @@
 type 'a return = operation list * 'a
 
 [@entry]
-let main (() : unit) (s : int) : int return = ([] : operation list), s
+let main (() : unit) (s : int) : int return = [], s
 
 (* self forbidden anyway *)
 

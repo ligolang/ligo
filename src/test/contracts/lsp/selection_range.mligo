@@ -1,6 +1,3 @@
-// alias
-module Test = Test.Next
-
 // structure / contract
 module C = struct
   type storage = unit
@@ -10,7 +7,7 @@ module C = struct
 end
 
 // type: sum
-type sum_type = 
+type sum_type =
   | Sum_of_int of int
   | Sum_of_string of string
   | Sum_of_enum
@@ -36,4 +33,3 @@ let test =
   let orig = Test.originate (contract_of C) () 0tez in
   let _c = Test.to_contract orig.taddr in
   ()
-

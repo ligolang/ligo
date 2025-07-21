@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 module C = struct
   [@entry]
   let main (ts : timestamp) (_ : timestamp) : operation list * timestamp = [], ts
@@ -16,7 +14,7 @@ let boot () =
   let orig = Test.Originate.contract (contract_of C) init_storage 0mutez in
   let contr = Test.Typed_address.to_contract orig.taddr in
   let addr = Tezos.address contr in
-  {addr = addr; taddr = orig.taddr; contr = contr}
+  {addr; taddr = orig.taddr; contr}
 
 let test_timestamp =
   let c = boot() in

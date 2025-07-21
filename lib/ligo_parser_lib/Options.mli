@@ -7,8 +7,10 @@ module type S =
     include LexerLib.Options.S
 
     val mono        : bool         (* --mono        *)
-    val pretty      : bool         (* --pretty      *)
+    val pretty      : bool         (* --upgrade     *)
     val width       : int option   (* --width=<n>   *)
+    val classes     : bool         (* --namespaces  *)
+    val stdlib      : bool         (* --stdlib      *)
     val cst         : bool         (* --cst         *)
     val recovery    : bool         (* --recovery    *)
     val used_tokens : bool         (* --used-tokens *)

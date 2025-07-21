@@ -9,14 +9,16 @@ type account = {
   is_admin : bool
 };
 
-const user : user = {login: "al", name: "Alice"};
-const alice : account = {user, id: 5, is_admin: true};
+const user: user = {login: "al", name: "Alice"};
+const alice: account = {user, id: 5, is_admin: true};
 const is_alice_admin = alice.is_admin; // == true
-function userToTuple (a : account) {
+const alice_name = alice.user.name; // == "Alice"
+const alice_id = alice["id"]; // 5
+function userToTuple (a: account) {
   const {user, id, is_admin} = a;
   return [user, id, is_admin];
 }
-function getId (a : account) {
+function getId (a: account) {
   let {user, id, is_admin} = a;
   ignore([user, is_admin]); // To avoid a warning
   return id;

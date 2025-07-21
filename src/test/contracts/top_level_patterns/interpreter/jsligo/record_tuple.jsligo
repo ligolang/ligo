@@ -1,37 +1,36 @@
-//TODO: write in jsligo
+const _ = Test.IO.set_test_print ();
 
-// let () = Test.set_print_values ()
+type r =
+  { a: [nat, int, string],
+    b: [int, nat, string],
+    c: [string, int, nat]
+  }
 
-// type r = 
-//   { a : nat    * int * string
-//   ; b : int    * nat * string 
-//   ; c : string * int * nat
-//   }
+function f () {
+  Test.IO.log("Once");
+  return { a: [1 as nat, 1, "H"],
+           b: [2, 2 as nat, "E"],
+           c: ["Hello", 3 , 3 as nat]
+         }
+}
 
-// let f () =
-//   let () = Test.log "Once" in
-//   { a = (1n     , 1 , "H") 
-//   ; b = (2      , 2n, "E") 
-//   ; c = ("Hello", 3 , 3n ) 
-//   }
-// let { a = (a1, a2, a3)
-//     ; b = (b1, b2, b3)
-//     ; c = (c1, c2, c3)
-//     } = f ()
+const { a: [a1, a2, a3],
+        b: [b1, b2, b3],
+        c: [c1, c2, c3]
+      } = f()
 
-// let 
-//   { a = (a4, a5, a6)
-//   ; b = (b4, b5, b6)
-//   ; c = (c4, c5, c6)
-//   } = 
-//   { a = (1n     , 1 , "H") 
-//   ; b = (2      , 2n, "E") 
-//   ; c = ("Hello", 3 , 3n ) 
-//   }
+const
+  { a: [a4, a5, a6],
+    b: [b4, b5, b6],
+    c: [c4, c5, c6]
+  } =
+  { a: [1 as nat, 1 , "H"],
+    b: [2, 2 as nat, "E"],
+    c: ["Hello", 3, 3 as nat]
+  }
 
-// let test =
-//   begin
-//     assert ((a1 + b2 + c3) = (a4 + b5 + c6));
-//     assert ((b1 + a2 + c2) = (a5 + b4 + c5));
-//     assert ((a3 ^ b3 ^ c1) = (a6 ^ b6 ^ c4))
-//   end
+const test = (() => {
+  Assert.assert ((a1 + b2 + c3) == (a4 + b5 + c6));
+  Assert.assert ((b1 + a2 + c2) == (a5 + b4 + c5));
+  Assert.assert ((a3 + b3 + c1) == (a6 + b6 + c4))
+})()

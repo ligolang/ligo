@@ -30,7 +30,8 @@ This module provides ways of originating contracts and executing transactions in
 The LIGO interpreter uses the [same library that Tezos internally uses for testing](https://gitlab.com/tezos/tezos/-/tree/master/src/proto_alpha/lib_protocol/test/helpers).
 :::
 
-To originate a contract in the test simulation, use the `Test.Next.originate` function, which accepts these parameters:
+To originate a contract in the test simulation, use the
+`Test.Originate.contract` function, which accepts these parameters:
 
 - The contract itself
 - The initial storage value
@@ -42,7 +43,7 @@ The function returns an object that has these values:
 - `size`: The size of the deployed contract in bytes, as an integer
 - `code`: The Michelson code of the contract
 
-You can get the storage of a deployed contract by passing the address of the contract to the `Test.Next.Typed_address.get_storage` function.
+You can get the storage of a deployed contract by passing the address of the contract to the `Test.Typed_address.get_storage` function.
 
 For example, this LIGO file includes a simple counter contract:
 
@@ -70,9 +71,14 @@ export namespace MyContract {
   export type storage = int;
   export type result = [list<operation>, storage];
 
-  @entry const increment = (delta : int, storage : storage) : result => [[], storage + delta];
-  @entry const decrement = (delta : int, storage : storage) : result => [[], storage - delta];
-  @entry const reset = (_u : unit, _storage : storage) : result => [[], 0];
+  // @entry
+  const increment = (delta : int, storage : storage) : result => [[], storage + delta];
+
+  // @entry
+  const decrement = (delta : int, storage : storage) : result => [[], storage - delta];
+
+  // @entry
+  const reset = (_u : unit, _storage : storage) : result => [[], 0];
 }
 ```
 
@@ -89,17 +95,13 @@ It follows these basic steps:
 1. In the function, it creates a value for the initial storage of the contract.
 1. It originates the contract to the test simulation with the initial storage.
 1. It verifies that the deployed contract has the storage value.
-1. It calls the `increment` entrypoint with the `Test.Next.Contract.transfer_exn` function, passing the entrypoint, the parameter, and 0 tez.
+1. It calls the `increment` entrypoint with the `Test.Contract.transfer_exn` function, passing the entrypoint, the parameter, and 0 tez.
 1. It verifies the updated storage value.
 
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=mycontract-test
-(* This is mycontract-test.mligo *)
-
-module Test = Test.Next
-
-#import "gitlab-pages/docs/testing/src/testing/mycontract.mligo" "MyContract"
+module MyContract = Gitlab_pages.Docs.Testing.Src.Testing.Mycontract
 
 let run_test1 =
   let initial_storage = 10 in
@@ -114,17 +116,19 @@ let run_test1 =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=mycontract-test
-// This is mycontract-test.jligo
-
-import Test = Test.Next;
-
-#import "gitlab-pages/docs/testing/src/testing/mycontract.jsligo" "MyModule"
+import * as MyContract from "gitlab-pages/docs/testing/src/testing/mycontract.jsligo";
 
 const run_test1 = () => {
-    let initial_storage = 10;
-    let orig = Test.Originate.contract(contract_of(MyModule.MyContract), initial_storage, 0tez);
-    Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("increment", orig.taddr), 5, 0tez);
-    return Assert.assert(Test.Typed_address.get_storage(orig.taddr) == initial_storage + 5);
+  let initial_storage = 10;
+  let orig = Test.Originate.contract(
+               contract_of(MyContract.MyContract),
+               initial_storage,
+               0 as tez);
+  Test.Contract.transfer_exn(
+    Test.Typed_address.get_entrypoint("increment", orig.taddr),
+    5,
+    0 as tez);
+  return Assert.assert(Test.Typed_address.get_storage(orig.taddr) == initial_storage + 5);
 };
 
 const test1 = run_test1();
@@ -132,11 +136,11 @@ const test1 = run_test1();
 
 </Syntax>
 
-The `run test` command evaluates all top-level definitions and prints any
-entries that begin with the prefix `test` as well as the value that these
-definitions evaluate to. If any of the definitions fail, it prints a message
-with the line number where the problem occurred.
-You can also log messages to the console with the `Test.Next.IO.log` function.
+The `run test` command evaluates all top-level definitions and prints
+any entries that begin with the prefix `test` as well as the value
+that these definitions evaluate to. If any of the definitions fail, it
+prints a message with the line number where the problem occurred.  You
+can also log messages to the console with the `Test.IO.log` function.
 
 To run the tests, pass the file with the tests to the `run test` command.
 If the file imports other files, pass the folders that contain these files in the `--library` argument, as in this example:
@@ -166,8 +170,9 @@ Everything at the top-level was executed.
 
 ### Creating transactions
 
-The function `Test.Next.Contract.transfer_exn` creates a transaction in the test simulation, as in the example in the previous section.
-It takes these parameters:
+The function `Test.Contract.transfer_exn` creates a transaction in the
+test simulation, as in the example in the previous section.  It takes
+these parameters:
 
 - The target entrypoint or account to call
 - The parameter to pass
@@ -176,13 +181,18 @@ It takes these parameters:
 If the transaction succeeds, it returns the gas consumption.
 If it fails, it fails the test.
 
-For greater control, such as to test error conditions and error messages, you can use the function `Test.Next.Contract.transfer`.
-The function takes the same parameters but returns an option of the type `test_exec_result`, which is `Fail` if the transaction failed and `Success` if it succeeded.
-In case of success the value is the gas consumed and in case of failure the value is an object of the type `test_exec_error` that describes the error.
+For greater control, such as to test error conditions and error
+messages, you can use the function `Test.Contract.transfer`.  The
+function takes the same parameters but returns an option of the type
+`test_exec_result`, which is `Fail` if the transaction failed and
+`Success` if it succeeded.  In case of success the value is the gas
+consumed and in case of failure the value is an object of the type
+`test_exec_error` that describes the error.
 
 :::warning
-If you create a transaction with `Test.Next.Contract.transfer` and the transaction fails, the test does not automatically fail.
-You must check the result of the transaction to see if it succeeded or failed.
+If you create a transaction with `Test.Contract.transfer` and the
+transaction fails, the test does not automatically fail.  You must
+check the result of the transaction to see if it succeeded or failed.
 :::
 
 For example, this contract is similar to the contract in an earlier example, but it only allows the number in storage to change by 5 or less with each transaction:
@@ -205,8 +215,6 @@ end
 This test verifies that the error works by passing a number larger than 5 and handling the error:
 
 ```cameligo group=mycontract-failures
-module Test = Test.Next
-
 let test_failure =
   let initial_storage = 10 in
   let orig = Test.Originate.contract (contract_of MyContract) initial_storage 0tez in
@@ -225,28 +233,34 @@ namespace MyContract {
   export type storage = int;
   export type result = [list<operation>, storage];
 
-  @entry const increment = (delta : int, storage : storage) : result =>
-    abs(delta) <= 5n ? [[], storage + delta] : failwith("Pass 5 or less");
-  @entry const decrement = (delta : int, storage : storage) : result =>
-    abs(delta) <= 5n ? [[], storage - delta] : failwith("Pass 5 or less");
-  @entry const reset = (_u : unit, _storage : storage) : result => [[], 0];
+  // @entry
+  const increment = (delta : int, storage : storage) : result =>
+    abs(delta) <= (5 as nat) ? [[], storage + delta] : failwith("Pass 5 or less");
+
+  // @entry
+  const decrement = (delta : int, storage : storage) : result =>
+    abs(delta) <= (5 as nat) ? [[], storage - delta] : failwith("Pass 5 or less");
+
+  // @entry
+  const reset = (_u : unit, _storage : storage) : result => [[], 0];
 }
 ```
 
 This test verifies that the error works by passing a number larger than 5 and handling the error:
 
 ```jsligo group=mycontract-failures
-import Test = Test.Next;
-
 const test_failure = () => {
   const initial_storage = 10 as int;
-  const orig = Test.Originate.contract(contract_of(MyContract), initial_storage, 0tez);
-  const result = Test.Contract.transfer(Test.Typed_address.get_entrypoint("increment", orig.taddr), 50 as int, 0tez);
+  const orig = Test.Originate.contract(contract_of(MyContract),
+                                       initial_storage, 0 as tez);
+  const result =
+    Test.Contract.transfer(Test.Typed_address.get_entrypoint("increment",
+                             orig.taddr), 50 as int, 0 as tez);
 
-  match(result) {
-    when(Fail(_x)): Test.IO.log("Failed as expected");
-    when(Success(_s)): failwith("This should not succeed")
-  };
+  $match(result, {
+    "Fail": _x => Test.IO.log("Failed as expected"),
+    "Success": _s => failwith("This should not succeed")
+  });
 }
 
 const test1 = test_failure();
@@ -294,25 +308,24 @@ namespace Counter {
   type storage = [int, address];
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const increment = (n: int, storage: storage): return_type => {
     const [number, admin_account] = storage;
     return [[], [number + n, admin_account]];
   }
 
-  @entry
+  // @entry
   const decrement = (n: int, storage: storage): return_type => {
     const [number, admin_account] = storage;
     return [[], [number - n, admin_account]];
   }
 
-  @entry
+  // @entry
   const reset = (_: unit, storage: storage): return_type => {
     const [_number, admin_account] = storage;
 
-    if (Tezos.get_sender() != admin_account) {
+    if (Tezos.get_sender() != admin_account)
       return failwith("Only the owner can call this entrypoint");
-    }
 
     return [[], [0, admin_account]];
   }
@@ -321,8 +334,10 @@ namespace Counter {
 
 </Syntax>
 
-To generate test accounts, pass a nat to the `Test.Next.Account.address` function, which returns an address.
-Then use the `Test.Next.State.set_source` function to set the source account for transactions.
+To generate test accounts, pass a nat to the `Test.Account.address`
+function, which returns an address. Then use the
+`Test.State.set_source` function to set the source account for
+transactions.
 
 This example creates an admin account and user account.
 It attempts to call the `reset` entrypoint as the user account and expects it to fail.
@@ -331,8 +346,6 @@ Then it calls the `reset` entrypoint as the admin account and verifies that the 
 <Syntax syntax="cameligo">
 
 ```cameligo group=test-accounts
-module Test = Test.Next
-
 let test_admin =
   let (admin_account, user_account) = (Test.Account.address(0n), Test.Account.address(1n)) in
 
@@ -360,44 +373,47 @@ let test_admin =
 <Syntax syntax="jsligo">
 
 ```jsligo group=test-accounts
-import Test = Test.Next;
-
 const test_admin = (() => {
-  const admin_account = Test.Account.address(0n);
-  const user_account = Test.Account.address(1n);
+  const admin_account = Test.Account.address(0 as nat);
+  const user_account = Test.Account.address(1 as nat);
 
   // Originate the contract with the admin account in storage
   const initial_storage = [10 as int, admin_account];
-  const orig = Test.Originate.contract(contract_of(Counter), initial_storage, 0tez);
+  const orig =
+  Test.Originate.contract(contract_of(Counter), initial_storage, 0 as tez);
 
   // Try to call the reset entrypoint as the user and expect it to fail
   Test.State.set_source(user_account);
-  const result = Test.Contract.transfer(Test.Typed_address.get_entrypoint("reset", orig.taddr), unit, 0tez);
-  match(result) {
-    when(Fail(_err)): Test.IO.log("Test succeeded");
-    when (Success(_s)): failwith("User should not be able to call reset");
-  };
+  const result =
+    Test.Contract.transfer(Test.Typed_address.get_entrypoint("reset",
+                             orig.taddr), unit, 0 as tez);
+  $match(result, {
+    "Fail": _err => Test.IO.log("Test succeeded"),
+    "Success": _s => failwith("User should not be able to call reset")
+  });
 
   // Call the reset entrypoint as the admin and expect it to succeed
   Test.State.set_source(admin_account);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("reset", orig.taddr), unit, 0tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("reset",
+  orig.taddr), unit, 0 as tez);
 
-  const [newNumber, _admin_account] = Test.Typed_address.get_storage(orig.taddr);
+  const [newNumber, _admin_account] =
+    Test.Typed_address.get_storage(orig.taddr);
   Assert.assert(newNumber == 0);
-}) ()
+})()
 ```
 
 </Syntax>
 
-By default, the test simulation has two test accounts.
-To create more, pass the number of accounts and a list of their balances or an empty list to use the default balance to the `Test.Next.State.Reset` function, as in the following example.
-The default balance is 4000000 tez minus %5 that is frozen so the account can act as a validator.
+By default, the test simulation has two test accounts.  To create
+more, pass the number of accounts and a list of their balances or an
+empty list to use the default balance to the `Test.State.reset`
+function, as in the following example.  The default balance is 4000000
+tez minus %5 that is frozen so the account can act as a validator.
 
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=reset
-module Test = Test.Next
-
 let test_accounts =
   let initial_balances : tez list = [] in
   let () = Test.State.reset 3n initial_balances in
@@ -418,20 +434,18 @@ let test_accounts =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=reset
-import Test = Test.Next;
-
 const test_accounts = () => {
-  Test.State.reset(3n, [] as list <tez>);
-  const admin_account = Test.Account.address(0n);
-  const user_account1 = Test.Account.address(1n);
-  const user_account2 = Test.Account.address(2n);
+  Test.State.reset(3 as nat, [] as list<tez>);
+  const admin_account = Test.Account.address(0 as nat);
+  const user_account1 = Test.Account.address(1 as nat);
+  const user_account2 = Test.Account.address(2 as nat);
 
   Test.IO.log(Test.Address.get_balance(admin_account));
-  // 3800000000000mutez
+  // 3800000000000 as mutez
   Test.IO.log(Test.Address.get_balance(user_account1));
-  // 3800000000000mutez
+  // 3800000000000 as mutez
   Test.IO.log(Test.Address.get_balance(user_account2));
-  // 3800000000000mutez
+  // 3800000000000 as mutez
 }
 ```
 
@@ -468,13 +482,13 @@ module Testviews = struct
 end
 ```
 
-This test casts the contract's typed address to an ordinary address type and uses that address to call the view with the function `Tezos.Next.View.call` and pass the parameter `unit`.
-This function returns an option, so the test matches the option to verify the response from the view:
+This test casts the contract's typed address to an ordinary address
+type and uses that address to call the view with the function
+`Tezos.View.call` and pass the parameter `unit`.  This function
+returns an option, so the test matches the option to verify the
+response from the view:
 
 ```cameligo group=test_views
-module Test = Test.Next
-module Tezos = Tezos.Next
-
 let test_view =
   let contract = Test.Originate.contract (contract_of Testviews) "" 0tez in
   let _ : nat = Test.Contract.transfer_exn (Test.Typed_address.get_entrypoint "set" contract.taddr) "hello" 0tez in
@@ -493,41 +507,38 @@ let test_view =
 
 ```jsligo group=test_views
 namespace Testviews {
-
   type storage = string;
-
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const set = (inputStr: storage, _storage: storage): return_type =>
-    [list([]), inputStr];
+    [[], inputStr];
 
-  @entry
+  // @entry
   const reset = (_u: unit, _storage: storage): return_type =>
-    [list([]), ""];
+    [[], ""];
 
-  @view
+  // @view
   const getString = (_u: unit, storage: storage): string =>
     storage;
 }
 ```
 
-This test casts the contract's typed address to an ordinary address type and uses that address to call the view with the function `Tezos.Next.View.call`.
+This test casts the contract's typed address to an ordinary address type and uses that address to call the view with the function `Tezos.View.call`.
 This function returns an option, so the test matches the option to verify the response from the view:
 
 ```jsligo group=test_views
-import Test = Test.Next;
-import Tezos = Tezos.Next;
-
 const test_view = () => {
-  const contract = Test.Originate.contract(contract_of(Testviews), "", 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("set", contract.taddr), "hello", 0tez);
+  const contract = Test.Originate.contract(contract_of(Testviews), "",
+  0 as tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("set",
+  contract.taddr), "hello", 0 as tez);
   const address = Test.Typed_address.to_address(contract.taddr);
   const viewResultOption: option<string> = Tezos.View.call("getString", unit, address);
-  const viewResult = match(viewResultOption) {
-    when(Some(str)): str;
-    when(None()): "";
-  };
+  const viewResult = $match(viewResultOption, {
+    "Some": str => str,
+    "None": () => ""
+  });
   Assert.assert(Test.Compare.eq(viewResult, "hello"));
 };
 const test1 = test_view();
@@ -537,17 +548,20 @@ const test1 = test_view();
 
 ### Testing events
 
-To test events, emit them as usual with the `Tezos.emit` function and use the `Test.Next.State.last_events` function to capture the most recent events, as in this example:
+To test events, emit them as usual with the `Tezos.Operation.emit`
+function and use the `Test.State.last_events` function to capture the
+most recent events, as in this example:
 
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_ex
 module C = struct
-  [@entry] let main (p : int*int) () =
-    [Tezos.emit "%foo" p ; Tezos.emit "%foo" p.0],()
+  [@entry]
+  let main (p : int * int) () =
+    let op1 = Tezos.Operation.emit "%foo" p in
+    let op2 = Tezos.Operation.emit "%foo" p.0 in
+    [op1; op2], ()
 end
-
-module Test = Test.Next
 
 let test_foo =
   let orig = Test.Originate.contract (contract_of C) () 0tez in
@@ -561,19 +575,17 @@ let test_foo =
 
 ```jsligo test-ligo group=test_ex
 namespace C {
-  @entry
-  const main = (p: [int, int], _: unit) => {
-    const op1 = Tezos.emit("%foo", p);
-    const op2 = Tezos.emit("%foo", p[0]);
-    return [([op1, op2] as list<operation>), unit];
+  // @entry
+  const main = (p: [int, int], _: unit) : [list<operation>, unit] => {
+    const op1 = Tezos.Operation.emit("%foo", p);
+    const op2 = Tezos.Operation.emit("%foo", p[0]);
+    return [[op1, op2], unit];
   };
 }
 
-import Test = Test.Next;
-
 const test = () => {
-  const orig = Test.Originate.contract(contract_of(C), unit, 0tez);
-  Test.Typed_address.transfer_exn(orig.taddr, Main ([1,2]), 0tez);
+  const orig = Test.Originate.contract(contract_of(C), unit, 0 as tez);
+  Test.Typed_address.transfer_exn(orig.taddr, ["Main" as "Main", [1,2]], 0 as tez);
   return [Test.State.last_events(orig.taddr, "foo") as list<[int, int]>, Test.State.last_events(orig.taddr, "foo") as list<int>];
 };
 
@@ -610,12 +622,12 @@ let remove_balances_under (b : balances) (threshold : tez) : balances =
 ```jsligo group=remove-balance
 // This is remove-balance.jsligo
 
-type balances = map <address, tez>;
+export type balances = map<address, tez>;
 
-const remove_balances_under = (b: balances, threshold: tez): balances => {
+export function remove_balances_under (b: balances, threshold: tez): balances {
   let f = ([acc, kv]: [balances, [address, tez]] ): balances => {
-    let [k, v] = kv;
-    if (v < threshold) { return Map.remove (k, acc) } else {return acc}
+    const [k, v] = kv;
+    if (v < threshold) return Map.remove (k, acc); else return acc
   };
   return Map.fold (f, b, b);
 }
@@ -634,8 +646,6 @@ First, include the file under test and reset the state with 5 bootstrap accounts
 ```cameligo test-ligo group=unit-remove-balance-mixed
 #include "./gitlab-pages/docs/testing/src/testing/remove-balance.mligo"
 
-module Test = Test.Next
-
 let test_remove_balance =
   let () = Test.State.reset 5n ([]: tez list) in
 ```
@@ -645,12 +655,14 @@ let test_remove_balance =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=unit-remove-balance-mixed
-#include "./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo"
+import * as RemoveBalance from
+"./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo";
 
-import Test = Test.Next;
+type balances = RemoveBalance.balances
+const remove_balances_under = RemoveBalance.remove_balances_under
 
 const test_remove_balance = (() => {
-  Test.State.reset(5n, [] as list <tez>);
+  Test.State.reset(5 as nat, [] as list<tez>);
 ```
 
 </Syntax>
@@ -666,25 +678,28 @@ let balances: balances =
 ```
 
 </Syntax>
+
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=unit-remove-balance-mixed
 const balances: balances =
-  Map.literal([[Test.Account.address(1n), 10tez],
-              [Test.Account.address(2n), 100tez],
-              [Test.Account.address(3n), 1000tez]]);
+  Map.literal([[Test.Account.address(1 as nat), 10 as tez],
+              [Test.Account.address(2 as nat), 100 as tez],
+              [Test.Account.address(3 as nat), 1000 as tez]]);
 ```
 
 </Syntax>
 
-The test loop will call the function with the compiled map
-defined above, get the size of the resulting map, and compare it to an
-expected value with `Test.Next.Compare.eq`.
+The test loop will call the function with the compiled map defined
+above, get the size of the resulting map, and compare it to an
+expected value with `Test.Compare.eq`.
 
-The call to `remove_balances_under` and the computation of the size of the resulting map is achieved through the primitive `Test.Next.Michelson.run`.
-This primitive runs a function on an input, translating both (function and input)
-to Michelson before running on the Michelson interpreter.
-More concretely `Test.Next.Michelson.run f v` performs the following:
+The call to `remove_balances_under` and the computation of the size of
+the resulting map is achieved through the primitive
+`Test.Michelson.run`.  This primitive runs a function on an input,
+translating both (function and input) to Michelson before running on
+the Michelson interpreter.  More concretely `Test.Michelson.run f v`
+performs the following:
 
 1. Compiles the function argument `f` to Michelson `f_mich`
 2. Compiles the value argument `v` (which was already evaluated) to Michelson `v_mich`
@@ -710,6 +725,7 @@ List.iter
 ```
 
 </Syntax>
+
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=unit-remove-balance-mixed
@@ -722,8 +738,10 @@ return List.iter(([threshold, expected_size]: [tez, nat]): unit => {
     Test.IO.log(["actual", size]);
     return (Assert.assert (Test.Compare.eq(size, expected_size_)))
   },
-  list ([ [15tez, 2n], [130tez, 1n], [1200tez, 0n]]) );
-}) ()
+  list ([ [15 as tez, 2 as nat],
+          [130 as tez, 1 as nat],
+          [1200 as tez, 0 as nat]]));
+})()
 ```
 
 </Syntax>
@@ -734,8 +752,6 @@ Here is the complete test file:
 
 ```cameligo test-ligo group=unit-remove-balance-complete
 #include "./gitlab-pages/docs/testing/src/testing/remove-balance.mligo"
-
-module Test = Test.Next
 
 let test_remove_balance =
   let () = Test.State.reset 5n ([]: tez list) in
@@ -759,16 +775,18 @@ let balances: balances =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=unit-remove-balance-complete
-#include "./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo"
+import * as RemoveBalance from
+"./gitlab-pages/docs/testing/src/testing/remove-balance.jsligo";
 
-import Test = Test.Next;
+type balances = RemoveBalance.balances
+const remove_balances_under = RemoveBalance.remove_balances_under
 
 const test_remove_balance = (() => {
-  Test.State.reset(5n, [] as list <tez>);
+  Test.State.reset(5 as nat, [] as list <tez>);
   const balances: balances =
-    Map.literal([[Test.Account.address(1n), 10tez],
-                 [Test.Account.address(2n), 100tez],
-                 [Test.Account.address(3n), 1000tez]]);
+    Map.literal([[Test.Account.address(1 as nat), 10 as tez],
+                 [Test.Account.address(2 as nat), 100 as tez],
+                 [Test.Account.address(3 as nat), 1000 as tez]]);
   return List.iter(([threshold, expected_size]: [tez, nat]): unit => {
       const tester = ([balances, threshold]: [balances, tez]): nat =>
         Map.size (remove_balances_under (balances, threshold));
@@ -778,7 +796,8 @@ const test_remove_balance = (() => {
       Test.IO.log(["actual", size]);
       return (Assert.assert (Test.Compare.eq(size, expected_size_)))
     },
-    list ([ [15tez, 2n], [130tez, 1n], [1200tez, 0n]]) );
+    list ([ [15 as tez, 2 as nat], [130 as tez, 1 as nat],
+    [1200 as tez, 0 as nat]]) );
 }) ()
 ```
 
@@ -843,9 +862,8 @@ let encodeEntry (a : int) (b : string): myDataType =
 // This is interpret.jsligo
 type myDataType = map<int, string>;
 
-const encodeEntry = (a: int, b: string): myDataType => {
-  return Map.literal([[a, b]]);
-}
+const encodeEntry = (a: int, b: string): myDataType =>
+  Map.literal([[a, b]]);
 ```
 
 </Syntax>
@@ -931,7 +949,7 @@ namespace Counter {
   type storage_type = int;
   type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const main = (_action: unit, storage: storage_type): return_type =>
     [[], storage + 1]
 }
@@ -988,7 +1006,7 @@ namespace MyContract {
   type storage_type = map<nat, string>;
   type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const update = (param: [nat, string], storage: storage_type): return_type => {
     const [index, value] = param;
     const updated_map = Map.add(index, value, storage);
@@ -1003,7 +1021,7 @@ type as the contract storage as the initial value of the storage:
 
 ```bash
 ligo run dry-run -m MyContract gitlab-pages/docs/testing/src/testing/dry-run-complex.jsligo \
-  'Update(1n, "new value")' \
+  '["Update" as "Update", [1 as nat, "new value"]]' \
   'Map.empty as map<nat, string>'
 ```
 

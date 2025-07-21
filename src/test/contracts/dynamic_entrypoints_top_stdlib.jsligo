@@ -1,18 +1,18 @@
 export type storage = {
   storage: unit;
-  dynamic_entrypoints
+  dynamic_entrypoints: dynamic_entrypoints
 };
 
 type return_ = [list<operation>, storage];
 
-@dyn_entry
+// @dyn_entry
 const poke = (_: unit, store: storage): return_ => {
-  let _a = Tezos.get_balance();
+  const _a = Tezos.get_balance();
   return [[], store];
 };
 
-@entry
+// @entry
 const bar = (_: unit, store: storage): return_ => {
-  let _a = Tezos.get_balance();
+  const _a = Tezos.get_balance();
   return [[], store];
 };

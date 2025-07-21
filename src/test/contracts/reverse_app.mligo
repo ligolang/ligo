@@ -26,7 +26,7 @@ let test =
   in
   let b = x |> f
   in
-  assert (a = b)
+  Assert.assert (a = b)
 
 (* Chaining reverse-app operators *)
 let test =
@@ -34,7 +34,7 @@ let test =
   in
   let b = x |> f |> g |> h
   in
-  assert (a = b)
+  Assert.assert (a = b)
 
 (* Combining revere-app and partial application *)
 let test =
@@ -42,7 +42,7 @@ let test =
   in
   let b = x |> f |> gg 42n |> h
   in
-  assert (a = b)
+  Assert.assert (a = b)
 
 (* Checking precedence with classical function application *)
 let test =
@@ -50,5 +50,4 @@ let test =
   in
   let b = f x |> g
   in
-  assert (a = b)
-
+  Assert.assert (a = b)

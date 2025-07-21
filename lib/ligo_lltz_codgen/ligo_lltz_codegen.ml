@@ -624,7 +624,7 @@ let rec compile_expression (expr : I.expression) : O.Expr.t =
     (*TODO: let args = List.map args ~f:compile_expression in
     return @@ Global_constant { hash; args }
 
-    (* { ...  
+    (* { ...
         PUSH args onto stack
        ; (constant <hash>)
 

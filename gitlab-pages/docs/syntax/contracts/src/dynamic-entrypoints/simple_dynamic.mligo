@@ -56,10 +56,7 @@ module DynamicContract = struct
     }
 
 end
-module Test = Test.Next
-
 let test_dyn =
-
   // Generate storage with dynamic entrypoints
   let initial_storage = Test.Dynamic_entrypoints.storage (contract_of DynamicContract) 3 in
   let contract = Test.Originate.contract (contract_of DynamicContract) initial_storage 0mutez in

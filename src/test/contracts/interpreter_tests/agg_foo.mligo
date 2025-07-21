@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 type case =
   {
    case_name : string;

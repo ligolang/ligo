@@ -1,33 +1,30 @@
 namespace Testviews {
-
   type storage = string;
-
   type return_type = [list<operation>, storage];
 
-  @entry
+  // @entry
   const set = (inputStr: storage, _storage: storage): return_type =>
-    [list([]), inputStr];
+    [[], inputStr];
 
-  @entry
+  // @entry
   const reset = (_u: unit, _storage: storage): return_type =>
-    [list([]), ""];
+    [[], ""];
 
-  @view
+  // @view
   const getString = (_u: unit, storage: storage): string =>
     storage;
 }
-import Test = Test.Next;
-import Tezos = Tezos.Next;
-
 const test_view = () => {
-  const contract = Test.Originate.contract(contract_of(Testviews), "", 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("set", contract.taddr), "hello", 0tez);
+  const contract = Test.Originate.contract(contract_of(Testviews), "",
+  0 as tez);
+  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("set",
+  contract.taddr), "hello", 0 as tez);
   const address = Test.Typed_address.to_address(contract.taddr);
   const viewResultOption: option<string> = Tezos.View.call("getString", unit, address);
-  const viewResult = match(viewResultOption) {
-    when(Some(str)): str;
-    when(None()): "";
-  };
+  const viewResult = $match(viewResultOption, {
+    "Some": str => str,
+    "None": () => ""
+  });
   Assert.assert(Test.Compare.eq(viewResult, "hello"));
 };
 const test1 = test_view();

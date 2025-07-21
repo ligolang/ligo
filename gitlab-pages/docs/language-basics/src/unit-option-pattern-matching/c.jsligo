@@ -1,9 +1,0 @@
-type id = nat;
-
-type user =
-  ["Admin", id]
-| ["Manager", id]
-| ["Guest"];
-
-const u : user = Admin(1000n);
-const g : user = Guest();

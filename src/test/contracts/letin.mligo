@@ -15,11 +15,11 @@ let letin_nesting (_: unit) =
   begin
     let s = "test" in
     let p0 = f0 s in
-    assert p0;
+    Assert.assert p0;
     let p1 = f1 s in
-    assert p1;
+    Assert.assert p1;
     let p2 = f2 s in
-    assert p2;
+    Assert.assert p2;
     s
   end
 

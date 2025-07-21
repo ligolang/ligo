@@ -1,8 +1,7 @@
-#import "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo" "C"
+import * as C from "gitlab-pages/docs/syntax/contracts/src/entrypoints/contract_main.jsligo";
 
 namespace Proxy {
-  @entry
-  const proxy =
-    (p: C.parameter, s: C.storage): [list<operation>, C.storage] =>
+  // @entry
+  const proxy = (p: C.parameter, s: C.storage): [list<operation>, C.storage] =>
     C.main(p, s)
 }

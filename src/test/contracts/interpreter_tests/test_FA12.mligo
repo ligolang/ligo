@@ -1,8 +1,6 @@
-#import "../FA1.2.mligo" "C"
+module C = Super__.FA1_2
 
 let assert = Assert.assert
-
-module Test = Test.Next
 
 let test_transfer =
   let () = Test.State.reset 10n ([] : tez list) in

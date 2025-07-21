@@ -1,8 +1,8 @@
-const a = 0x1001;
-const b = 0x1000;
-const c = (a == b);
-const d = (a > b);
-const e = (a < b);
-const f = (a <= b);
-const g = (a >= b);
-const h = (a != b);
+const a : bytes = 0x1001;
+const b : bytes = 0x1000;
+const c : bool = (a == b);
+const d : bool = (a > b);
+const e : bool = (a < b);
+const f : bool = (a <= b);
+const g : bool = (a >= b);
+const h : bool = (a != b);

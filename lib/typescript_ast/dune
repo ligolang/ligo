@@ -1,0 +1,86 @@
+;; LIBRARIES
+
+;; Lexers
+
+(ocamllex number decorator loc_map)
+
+;; Library exporting the TypeScript CST and our AST
+
+(library
+ (name typescript_ast)
+ (public_name ligo.typescript_ast)
+ (modules syntax_err ast ts_wrap loc_map lexeme number)
+ (libraries
+  tree_sitter
+  tree_sitter_typescript
+  simple-utils ;; For source regions ([Region])
+  cst_shared ;; For printing the TS CST ([Print_cst])
+  lexing_shared ;; For metadata ([Wrap])
+  hex
+  zarith
+  core
+  core_kernel.nonempty_list))
+
+;; Library for decoding the TypeScript CST
+
+(library
+ (name typescript_decoder)
+ (public_name ligo.typescript_decoder)
+ (modules decode decode_err)
+ (libraries typescript_ast))
+
+;; Library for stripping the TypeScript AST
+
+(library
+ (name typescript_stripper)
+ (public_name ligo.typescript_stripper)
+ (modules ast_stripped decorator strip strip_err)
+ (libraries typescript_ast typescript_decoder))
+
+;; STANDALONES
+
+;; Printing the CST (debug)
+
+(executable
+ (name print_cst_main)
+ (libraries typescript_ast)
+ (modules print_cst print_cst_main))
+
+;; Collecting all errors from the CST (debug)
+
+(executable
+ (name check_main)
+ (libraries typescript_ast)
+ (modules check check_main))
+
+;; Decoding the CST into the AST
+
+(executable
+ (name decode_main)
+ (libraries typescript_decoder)
+ (modules decode_main))
+
+;; Decoding the cST and stripping the resulting AST
+
+(executable
+ (name strip_main)
+ (libraries typescript_stripper)
+ (modules strip_main))
+
+;; Local build of a standalone parser for node-types.json
+
+(executable
+ (name static_nodes_reader)
+ (libraries
+  cst_shared ;; For printing the TS CST
+  core
+  core_kernel.nonempty_list
+  yojson)
+ (modules static_nodes_reader))
+
+;; Testing the map from line numbers to beginnings-of-line offsets
+
+(executable
+ (name loc_map_main)
+ (libraries typescript_ast)
+ (modules loc_map_main))

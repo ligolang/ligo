@@ -1,32 +1,35 @@
 namespace Interfaces {
+  export type storage = int;
+  export type ret = [list<operation>, storage];
   export interface IncDec {
-    type storage;
-    type ret = [list<operation>, storage];
-    @entry const increment : (k: int, s: storage) => ret;
-    @entry const decrement : (k: int, s: storage) => ret;
-    @entry const reset : (_u: unit, s: storage) => ret;
+    // @entry
+    increment : (k: int, s: storage) => ret;
+    // @entry
+    decrement : (k: int, s: storage) => ret;
+    // @entry
+    reset : (_u: unit, s: storage) => ret;
   };
 };
 
-namespace IncDec implements Interfaces.IncDec {
-  export type storage = int;
-  export type ret = [list<operation>, storage];
+namespace IncDec {
+  export type storage = Interfaces.storage;
+  export type ret = Interfaces.ret;
 
-  @entry
-  const increment = (delta : int, store : storage) : ret =>
-    [[], store + delta];
+  export class IncDec implements Interfaces.IncDec {
+    @entry
+    increment = (delta : int, store : storage) : ret => [[], store + delta];
 
-  @entry
-  const decrement = (delta : int, store : storage) : ret =>
-    [[], store - delta];
+    @entry
+    decrement = (delta : int, store : storage) : ret => [[], store - delta];
 
-  @entry
-  const reset = (_p : unit, _s : storage) : ret =>
-    [[], 0];
+    @entry
+    reset = (_p : unit, _s : storage) : ret => [[], 0];
+  }
 };
 
-namespace X implements { type t; const x : t } {
-  export type t = int;
-  export const x = 42;
-  const y = 5;
+interface X_only { x : int }
+
+export class X implements X_only {
+  static x = 42;
+  y = 5;
 };

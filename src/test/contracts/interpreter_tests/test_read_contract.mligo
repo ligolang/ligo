@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let test_foo =
   let c : (unit, unit) michelson_contract =
     Test.Michelson.Contract.from_file "contract_under_test/compiled.tz" in

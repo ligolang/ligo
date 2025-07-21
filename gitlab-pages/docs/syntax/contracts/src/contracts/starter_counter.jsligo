@@ -1,24 +1,22 @@
-import Test = Test.Next;
-
 namespace Counter {
   type storage_type = int;
   type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const add = (value: int, store: storage_type): return_type =>
     [[], store + value];
 
-  @entry
+  // @entry
   const sub = (value: int, store: storage_type): return_type =>
     [[], store - value];
-
 }
 
 const test = (() => {
-
-  const contract = Test.Originate.contract(contract_of(Counter), 0, 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("add", contract.taddr), 5, 0tez);
-  Test.Contract.transfer_exn(Test.Typed_address.get_entrypoint("sub", contract.taddr), 2, 0tez);
+  const contract =
+  Test.Originate.contract(contract_of(Counter), 0, 0 as tez);
+  Test.Contract.transfer_exn(
+    Test.Typed_address.get_entrypoint("add", contract.taddr), 5, 0 as tez);
+  Test.Contract.transfer_exn(
+    Test.Typed_address.get_entrypoint("sub", contract.taddr), 2, 0 as tez);
   Assert.assert(Test.Typed_address.get_storage(contract.taddr) == 3);
-
 })();

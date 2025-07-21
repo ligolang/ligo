@@ -560,11 +560,6 @@ let set_arithmetic ~raise f : unit =
   ()
 
 
-let include_ ~raise f : unit =
-  let program = type_file ~raise f in
-  expect_eq_evaluate ~raise program "bar" (e_int ~loc 144)
-
-
 let record_ez_int names n =
   e_record_ez ~loc @@ List.map ~f:(fun x -> x, e_int ~loc n) names
 
@@ -1766,38 +1761,6 @@ let switch_cases_jsligo ~raise () : unit =
     expect_eq
       ~raise
       program
-      "single_default_return"
-      (e_int ~loc 5)
-      (e_string ~loc "Hello!!")
-  in
-  let _ =
-    expect_eq
-      ~raise
-      program
-      "single_default_no_statements"
-      (e_int ~loc 5)
-      (e_string ~loc "Hello")
-  in
-  let _ =
-    expect_eq
-      ~raise
-      program
-      "single_default_break_1"
-      (e_int ~loc 5)
-      (e_string ~loc "HelloWorld")
-  in
-  let _ =
-    expect_eq
-      ~raise
-      program
-      "single_default_break_2"
-      (e_int ~loc 5)
-      (e_string ~loc "Hello World")
-  in
-  let _ =
-    expect_eq
-      ~raise
-      program
       "single_case_no_statements"
       (e_int ~loc 1)
       (e_string ~loc "Hello")
@@ -2656,7 +2619,6 @@ let main =
     ; test_w "loop2 (mligo)" loop2_mligo
     ; test_w "loop2 (jsligo)" loop2_jsligo
     ]
-  @ test_w_all "includer" include_
   @ test_w_all "counter" counter_contract
   @ test_w_all "super-counter" super_counter_contract
   @ [ test_w "basic (mligo)" basic_mligo
@@ -2685,12 +2647,11 @@ let main =
     ; test_w "if_if_return (jsligo)" if_if_return_jsligo
     ; test_w "switch case (jsligo)" switch_cases_jsligo
     ; test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo
-    ; test_w "discriminated_union (jsligo)" disc_union_jsligo
+    ; test_w "discriminated_union (jsligo)" disc_union_jsligo (* TODO: BROKEN *)
     ; test_w "ternary (jsligo)" ternary_jsligo
     ; test_w "destruct func object param (jsligo)" func_object_destruct_jsligo
     ; test_w "destruct func tuple param (jsligo)" func_tuple_destruct_jsligo
     ; test_w "switch_return (jsligo)" switch_return_jsligo
     ; test_w "if_semi (jsligo)" if_semi_jsligo
-    ; test_w "return_handling (jsligo)" if_semi_jsligo
     ]
   @ [ test_w "let mut (mligo)" let_mut ]

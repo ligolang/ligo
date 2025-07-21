@@ -43,7 +43,7 @@ let vote (vote : vote) (store : storage) : return =
      let _ = assert (now >= store.start_time && store.finish_time > now) in *)
 
   let addr = Tezos.get_sender () in
-  (* let _ = assert (not Set.mem addr store.voters) in *)
+  (* let _ = Assert.assert (not Set.mem addr store.voters) in *)
 
   let store =
     match vote with

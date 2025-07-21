@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let rec my_rec_fun (rounds : int) : unit =
   if rounds > 0 then  my_rec_fun (rounds - 1)
 

@@ -11,16 +11,12 @@ const sidebars = {
       "tutorials/getting-started/getting-started",
       "intro/template",
       "intro/upgrade-v1",
+      "intro/upgrade-v2",
     ],
-    "Writing a Contract": [
-      {
-        "type": "category",
-        "label": "First contract",
-        "items": [
-          "tutorials/taco-shop/tezos-taco-shop-smart-contract",
-          "tutorials/taco-shop/tezos-taco-shop-payout"
-        ]
-      },
+    "Tutorial": [
+      "tutorials/taco-shop/selling-tacos",
+      "tutorials/taco-shop/testing-contract",
+      "tutorials/taco-shop/getting-payouts",
     ],
     "Syntax": [
       "syntax/comments",
@@ -44,6 +40,7 @@ const sidebars = {
         },
         "id": "syntax/modules"
       },
+      'syntax/classes',
       {
         "type": "category",
         "label": "Contracts",
@@ -77,6 +74,8 @@ const sidebars = {
       "syntax/keywords"
     ],
     "Data types": [
+      "data-types/types",
+      "data-types/type-annotations",
       {
         "type": "category",
         "label": "Primitive types",
@@ -95,7 +94,14 @@ const sidebars = {
           "data-types/tuples",
           "data-types/variants",
           "data-types/lists",
-          "data-types/records",
+          {
+            "type": "doc",
+            "label": "Records",
+            "customProps": {
+              "jsLigoName": "Objects"
+            },
+            "id": "data-types/records",
+          },
           "data-types/sets",
           "data-types/maps"
         ]
@@ -136,8 +142,8 @@ const sidebars = {
   },
   "API": {
     "Language": [
-      "reference/map-reference",
       "reference/bytes-reference",
+      "reference/map-reference",
       "reference/string-reference",
       "reference/option-reference",
       "reference/big-map-reference",
@@ -148,88 +154,80 @@ const sidebars = {
       "reference/crypto-reference",
       "reference/big-set-reference",
       "reference/dynamic-entrypoints-reference",
-      "reference/tuple2-reference",
+      "reference/pair-reference",
       {
         "type": "category",
         "label": "tezos",
         "items": [
           "reference/tezos-reference",
-          {
-            "type": "category",
-            "label": "next",
-            "items": [
-              "reference/tezos.next.sapling-reference",
-              "reference/tezos.next.view-reference",
-              "reference/tezos.next.operation-reference",
-              "reference/tezos.next.ticket-reference",
-              "reference/tezos.next-reference"
-            ]
-          }
+          "reference/tezos.operation-reference",
+          "reference/tezos.view-reference",
+          "reference/tezos.ticket-reference",
+          "reference/tezos.sapling-reference"
         ]
       },
       {
         "type": "category",
         "label": "test",
         "items": [
-          "reference/test.pbt-reference",
-          "reference/test.proxy-ticket-reference",
           "reference/test-reference",
+          "reference/test.pbt-reference",
+          "reference/test.originate-reference",
+          "reference/test.typed-address-reference",
+          "reference/test.timelock-reference",
+          "reference/test.compare-reference",
+          "reference/test.address-reference",
+          "reference/test.dynamic-entrypoints-reference",
+          "reference/test.io-reference",
+          "reference/test.contract-reference",
+          "reference/test.string-reference",
+          "reference/test.crypto-reference",
           {
             "type": "category",
-            "label": "next",
+            "label": "ticket",
             "items": [
-              "reference/test.next.originate-reference",
-              "reference/test.next.typed-address-reference",
-              "reference/test.next.timelock-reference",
-              "reference/test.next.compare-reference",
-              "reference/test.next.address-reference",
-              "reference/test.next.dynamic-entrypoints-reference",
-              "reference/test.next.io-reference",
-              "reference/test.next.ticket-reference",
-              "reference/test.next-reference",
-              "reference/test.next.contract-reference",
-              "reference/test.next.string-reference",
-              "reference/test.next.crypto-reference",
-              {
-                "type": "category",
-                "label": "state",
-                "items": [
-                  "reference/test.next.state-reference",
-                  "reference/test.next.state.reset-reference"
-                ]
-              },
-              {
-                "type": "category",
-                "label": "michelson",
-                "items": [
-                  "reference/test.next.michelson.contract-reference",
-                  "reference/test.next.michelson-reference"
-                ]
-              },
-              {
-                "type": "category",
-                "label": "mutation",
-                "items": [
-                  "reference/test.next.mutation.all-reference",
-                  "reference/test.next.mutation-reference"
-                ]
-              },
-              {
-                "type": "category",
-                "label": "account",
-                "items": [
-                  "reference/test.next.account.contract-reference",
-                  "reference/test.next.account-reference"
-                ]
-              },
-              {
-                "type": "category",
-                "label": "assert",
-                "items": [
-                  "reference/test.next.assert.error-reference",
-                  "reference/test.next.assert-reference"
-                ]
-              }
+              "reference/test.ticket-reference",
+              "reference/test.ticket.proxy-reference"
+            ]
+          },
+          {
+            "type": "category",
+            "label": "state",
+            "items": [
+              "reference/test.state-reference",
+              "reference/test.state.reset-reference"
+            ]
+          },
+          {
+            "type": "category",
+            "label": "michelson",
+            "items": [
+              "reference/test.michelson-reference",
+              "reference/test.michelson.contract-reference"
+            ]
+          },
+          {
+            "type": "category",
+            "label": "mutation",
+            "items": [
+              "reference/test.mutation-reference",
+              "reference/test.mutation.all-reference"
+            ]
+          },
+          {
+            "type": "category",
+            "label": "account",
+            "items": [
+              "reference/test.account-reference",
+              "reference/test.account.contract-reference"
+            ]
+          },
+          {
+            "type": "category",
+            "label": "assert",
+            "items": [
+              "reference/test.assert-reference",
+              "reference/test.assert.error-reference"
             ]
           }
         ]

@@ -1,0 +1,4268 @@
+(* Printing the tree-sitter CST for TypeScript *)
+
+open Core
+
+[@@@warning "-32"]
+
+let debug = false
+
+(* Dependencies and scopes *)
+
+open Typescript_ast.Ts_wrap
+module Lexeme = Typescript_ast.Lexeme
+module Ts_wrap = Typescript_ast.Ts_wrap
+module Loc_map = Typescript_ast.Loc_map
+module Syntax_err = Typescript_ast.Syntax_err
+module Ast = Typescript_ast.Ast (* Only for numbers *)
+module Number = Typescript_ast.Number
+module Wrap = Lexing_shared.Wrap
+open Syntax_err
+
+(* Skipping strings in a list until a colon is found *)
+
+let rec skip_until_colon = function
+  | [] -> []
+  | node :: nodes ->
+    (match get_name node with
+    | ":" -> nodes
+    | _ -> skip_until_colon nodes)
+
+(* Source map for converting vertical and horizontal offset ranges
+   into regions *)
+
+let get_region : (ts_tree -> Region.t) ref =
+  ref (fun _ -> failwith "Internal error: Print_cst.get_region")
+
+(* The input source (default: a hundred lines) *)
+
+let input : Buffer.t ref = ref (Buffer.create (80 * 100))
+
+(* Formatting an error node *)
+
+let mk_err_msg node err =
+  let region = !get_region node in
+  let region = if Region.is_empty region then "empty region" else region#compact `Byte in
+  sprintf "ERROR: %s (%s)" (Syntax_err.to_string err) region
+
+(* Tayloring the fetching of a field, with an error message in case of
+   failure. *)
+
+let child_with_field field node ~err =
+  match Ts_wrap.child_with_field ~get_region field node with
+  | Ok _ as ok -> ok
+  | Error () ->
+    let region = !get_region node in
+    let region =
+      if Region.is_empty region then "empty region" else region#compact `Byte
+    in
+    let msg =
+      if debug
+      then (
+        let name = get_name node in
+        if String.equal name "NULL"
+        then sprintf "NULL parent of field %S." field
+        else sprintf "Node %S (%s) is missing the field %S." name region field)
+      else sprintf "%s (%s)" (Syntax_err.to_string err) region
+    in
+    Error ("ERROR: " ^ msg)
+
+(* Wrapping the fetching of nodes *)
+
+let first_child_named name node ~err =
+  Ts_wrap.first_child_named name node ~msg:(mk_err_msg node err)
+
+let child_ranked index node ~err =
+  Ts_wrap.child_ranked index node ~msg:(mk_err_msg node err)
+
+let named_child_ranked index node ~err =
+  Ts_wrap.named_child_ranked index node ~msg:(mk_err_msg node err)
+
+let last_child node ~err = Ts_wrap.last_child node ~msg:(mk_err_msg node err)
+let next_sibling node ~err = Ts_wrap.next_sibling node ~msg:(mk_err_msg node err)
+
+(* To print the AST in ASCII art *)
+
+module Tree = Cst_shared.Tree
+
+(* Making trees and nodes with labels (name + location) *)
+
+let mk_child_opt = Tree.mk_child_opt
+let mk_child = Tree.mk_child
+let mk_children_list = Tree.mk_children_list
+
+let make_unary state root printer child =
+  let region = !get_region root
+  and label = get_name root in
+  Tree.make_unary ~region state label printer child
+
+let make_node state node =
+  let region = !get_region node in
+  let lexeme = Lexeme.read !input region in
+  make_unary state node Tree.make_node lexeme
+
+let print_comment state node = make_node state node
+
+let make_tree state node children =
+  let region = !get_region node
+  and label = get_name node in
+  Tree.make ~region state label children
+
+let tree_of_list ?(comments = []) state node printer raw_children =
+  let f raw_child nodes = mk_child (printer ?comments:None) raw_child :: nodes in
+  let children =
+    match raw_children with
+    | [] -> []
+    | first_raw_child :: siblings ->
+      let printer = printer ?comments:(Some comments) in
+      let first_child = mk_child printer first_raw_child in
+      first_child :: List.fold_right ~f ~init:[] siblings
+  in
+  make_tree state node children
+
+let tree_of_named_children ?(comments = []) state node printer =
+  let raw_children = collect_named_children node in
+  tree_of_list ~comments state node printer raw_children
+
+(* We shadow [make_node] above *)
+
+let make_node ?(comments = []) state node =
+  let region = !get_region node in
+  let lexeme = Lexeme.read !input region in
+  let comments = comments @ prev_comments node in
+  let children =
+    mk_children_list print_comment comments @ [ mk_child Tree.make_node lexeme ]
+  in
+  make_tree state node children
+
+(* Error nodes *)
+
+let mk_error_child node ~msg =
+  let region = !get_region node
+  and msg = if debug then sprintf "ERROR: Unexpected node %S." (get_name node) else msg in
+  if arity node = 0
+  then fun state -> Tree.make_node ~region state msg
+  else fun state -> Tree.make_unary ~region state msg Tree.make_node "UNMATCHED children."
+
+let print_error_node state node ~err =
+  mk_error_child node state ~msg:(mk_err_msg node err)
+
+let mk_error_child node ~msg = Some (mk_error_child node ~msg) (* Shadowing *)
+
+(* Keywords *)
+
+let make_kwd ?(comments = []) state node ~err =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err
+  | _ ->
+    let region = !get_region node in
+    let root = Lexeme.read !input region ^ " [keyword]" in
+    let comments = comments @ prev_comments node in
+    Tree.of_list ~region state root print_comment comments
+
+let mk_kwd_infer = make_kwd ~err:Infer
+let mk_kwd_keyof = make_kwd ~err:Keyof
+let mk_kwd_meta = make_kwd ~err:Meta
+let mk_kwd_target = make_kwd ~err:Target
+let mk_kwd_false = make_kwd ~err:False
+let mk_kwd_true = make_kwd ~err:True
+let mk_kwd_super = make_kwd ~err:Super
+let mk_kwd_null = make_kwd ~err:Null
+let mk_kwd_satisfies = make_kwd ~err:Satisfies
+let mk_kwd_yield = make_kwd ~err:Yield
+let mk_kwd_new = make_kwd ~err:New
+let mk_kwd_instanceof = make_kwd ~err:Instanceof
+let mk_kwd_implements = make_kwd ~err:Implements
+let mk_kwd_assert = make_kwd ~err:Assert
+let mk_kwd_as = make_kwd ~err:As
+let mk_kwd_async = make_kwd ~err:Async
+let mk_kwd_function = make_kwd ~err:Function
+let mk_kwd_override = make_kwd ~err:Override
+let mk_kwd_readonly = make_kwd ~err:Readonly
+let mk_kwd_public = make_kwd ~err:Public
+let mk_kwd_private = make_kwd ~err:Private
+let mk_kwd_protected = make_kwd ~err:Protected
+let mk_kwd_set = make_kwd ~err:Set
+let mk_kwd_get = make_kwd ~err:Get
+let mk_kwd_static = make_kwd ~err:Static
+let mk_kwd_this = make_kwd ~err:This
+let mk_kwd_is = make_kwd ~err:Is
+let mk_kwd_class = make_kwd ~err:Class
+let mk_kwd_const = make_kwd ~err:Const
+let mk_kwd_let = make_kwd ~err:Let
+let mk_kwd_undefined = make_kwd ~err:Undefined
+let mk_kwd_abstract = make_kwd ~err:Abstract
+let mk_kwd_declare = make_kwd ~err:Declare
+let mk_kwd_accessor = make_kwd ~err:Accessor
+let mk_kwd_global = make_kwd ~err:Global
+let mk_kwd_module = make_kwd ~err:Module
+let mk_kwd_enum = make_kwd ~err:Enum
+let mk_kwd_import = make_kwd ~err:Import
+let mk_kwd_interface = make_kwd ~err:Interface
+let mk_kwd_extends = make_kwd ~err:Extends
+let mk_kwd_namespace = make_kwd ~err:Namespace
+let mk_kwd_type = make_kwd ~err:Type
+let mk_kwd_using = make_kwd ~err:Using
+let mk_kwd_return = make_kwd ~err:Return
+let mk_kwd_switch = make_kwd ~err:Switch
+let mk_kwd_case = make_kwd ~err:Case
+let mk_kwd_default = make_kwd ~err:Default
+let mk_kwd_throw = make_kwd ~err:Throw
+let mk_kwd_while = make_kwd ~err:While
+let mk_kwd_with = make_kwd ~err:With
+let mk_kwd_any = make_kwd ~err:Any
+let mk_kwd_number = make_kwd ~err:Number
+let mk_kwd_boolean = make_kwd ~err:Boolean
+let mk_kwd_string = make_kwd ~err:String
+let mk_kwd_symbol = make_kwd ~err:Symbol
+let mk_kwd_unique_symbol = make_kwd ~err:Unique_symbol
+let mk_kwd_void = make_kwd ~err:Void
+let mk_kwd_unknown = make_kwd ~err:Unknown
+let mk_kwd_never = make_kwd ~err:Never
+let mk_kwd_object = make_kwd ~err:Object
+let mk_kwd_asserts = make_kwd ~err:Asserts
+let mk_kwd_debugger = make_kwd ~err:Debugger
+let mk_kwd_break = make_kwd ~err:Break
+let mk_kwd_continue = make_kwd ~err:Continue
+let mk_kwd_do = make_kwd ~err:Do
+let mk_kwd_export = make_kwd ~err:Export
+let mk_kwd_for = make_kwd ~err:For
+let mk_kwd_from = make_kwd ~err:From
+let mk_kwd_await = make_kwd ~err:Await
+let mk_kwd_var = make_kwd ~err:Var
+let mk_kwd_in = make_kwd ~err:In
+let mk_kwd_of = make_kwd ~err:Of
+let mk_kwd_if = make_kwd ~err:If
+let mk_kwd_else = make_kwd ~err:Else
+let mk_kwd_typeof = make_kwd ~err:Typeof
+let mk_kwd_try = make_kwd ~err:Try
+let mk_kwd_catch = make_kwd ~err:Catch
+let mk_kwd_require = make_kwd ~err:Require
+let mk_kwd_delete = make_kwd ~err:Delete
+let mk_kwd_finally = make_kwd ~err:Finally
+let mk_kwd_instanceof = make_kwd ~err:Instanceof
+
+(* Symbols *)
+
+let make_sym ?(comments = []) state node ~err =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err
+  | _ ->
+    let region = !get_region node in
+    let root = Lexeme.read !input region in
+    let comments = comments @ prev_comments node in
+    Tree.of_list ~region state root print_comment comments
+
+let mk_sym_asterisk = make_sym ~err:Asterisk
+let mk_sym_equal = make_sym ~err:Equal
+let mk_sym_strict_equal = make_sym ~err:Strict_equal
+let mk_sym_lparen = make_sym ~err:Left_parenthesis
+let mk_sym_rparen = make_sym ~err:Right_parenthesis
+let mk_sym_qmark = make_sym ~err:Question_mark
+let mk_sym_plus_equal = make_sym ~err:Plus_equal
+let mk_sym_minus_equal = make_sym ~err:Minus_equal
+let mk_sym_mult_equal = make_sym ~err:Mult_equal
+let mk_sym_div_equal = make_sym ~err:Div_equal
+let mk_sym_rem_equal = make_sym ~err:Rem_equal
+let mk_sym_xor_equal = make_sym ~err:Xor_equal
+let mk_sym_and_equal = make_sym ~err:And_equal
+let mk_sym_or_equal = make_sym ~err:Or_equal
+let mk_sym_shift_right_equal = make_sym ~err:Right_shift_equal
+let mk_sym_increment = make_sym ~err:Increment
+let mk_sym_decrement = make_sym ~err:Decrement
+let mk_sym_lbrace = make_sym ~err:Left_brace
+let mk_sym_rbrace = make_sym ~err:Right_brace
+let mk_sym_lbracket = make_sym ~err:Left_bracket
+let mk_sym_rbracket = make_sym ~err:Right_bracket
+let mk_sym_optional_chain = make_sym ~err:Optional_chain
+let mk_sym_backquote = make_sym ~err:Backquote
+let mk_sym_colon = make_sym ~err:Colon
+let mk_sym_ellipsis = make_sym ~err:Ellipsis
+let mk_sym_arrow = make_sym ~err:Arrow
+let mk_sym_asterisk = make_sym ~err:Asterisk
+let mk_sym_qmark = make_sym ~err:Question_mark
+let mk_sym_emark = make_sym ~err:Exclamation_mark
+let mk_sym_dot = make_sym ~err:Dot
+let mk_sym_omitting = make_sym ~err:Omitting_type_annotation
+let mk_sym_adding = make_sym ~err:Adding_type_annotation
+let mk_sym_opting = make_sym ~err:Opting_type_annotation
+let mk_sym_and = make_sym ~err:And
+let mk_sym_vbar = make_sym ~err:Vertical_bar
+let mk_sym_unsigned_shift_right_equal = make_sym ~err:Unsigned_shift_right_equal
+let mk_sym_shift_left_equal = make_sym ~err:Left_shift_equal
+let mk_sym_exponent_equal = make_sym ~err:Exponent_equal
+let mk_sym_conjunction_equal = make_sym ~err:Conjunction_equal
+let mk_sym_disjunction_equal = make_sym ~err:Disjunction_equal
+let mk_sym_non_null_equal = make_sym ~err:Non_null_equal
+let mk_sym_tilde = make_sym ~err:Tilde
+let mk_sym_minus = make_sym ~err:Minus
+let mk_sym_plus = make_sym ~err:Plus
+let mk_sym_conjunction = make_sym ~err:Conjunction
+let mk_sym_disjunction = make_sym ~err:Disjunction
+let mk_sym_shift_right = make_sym ~err:Right_shift
+let mk_sym_unsigned_shift_right = make_sym ~err:Unsigned_shift_right
+let mk_sym_shift_left = make_sym ~err:Left_shift
+let mk_sym_and = make_sym ~err:And
+let mk_sym_xor = make_sym ~err:Xor
+let mk_sym_or = make_sym ~err:Or
+let mk_sym_div = make_sym ~err:Div
+let mk_sym_rem = make_sym ~err:Rem
+let mk_sym_exponent = make_sym ~err:Exponent
+let mk_sym_less_than = make_sym ~err:Less_than
+let mk_sym_less_than_or_equal = make_sym ~err:Less_than_or_equal
+let mk_sym_no_conv_equal = make_sym ~err:No_conv_equal
+let mk_sym_different = make_sym ~err:Different
+let mk_sym_no_conv_different = make_sym ~err:No_conv_different
+let mk_sym_greater_than_or_equal = make_sym ~err:Greater_than_or_equal
+let mk_sym_greater_than = make_sym ~err:Greater_than
+let mk_sym_non_null = make_sym ~err:Non_null
+
+(* Making children and unary trees *)
+
+let mk_child_res print = function
+  | Ok child -> mk_child print child
+  | Error name -> mk_child Tree.make_node name
+
+let make_unary_res state node print = function
+  | Ok child -> make_unary state node print child
+  | Error child_name -> make_unary state node Tree.make_node child_name
+
+(* Some literals *)
+
+let print_identifier ?comments state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Identifier
+  | _ -> make_node ?comments state node
+
+let print_string ?comments state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:String_literal
+  | _ -> make_node ?comments state node
+
+let print_regex ?comments state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Regexp
+  | _ -> make_node ?comments state node
+
+let decode_comments ?(comments = []) node : Wrap.comment list =
+  let f node =
+    let region = !get_region node in
+    let value = Lexeme.read !input region in
+    Wrap.Block Region.{ value; region }
+  in
+  List.map ~f (comments @ prev_comments node)
+
+let print_number ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Number_literal
+  | _ ->
+    let region = !get_region node in
+    let lexeme = Lexeme.read !input region in
+    let lexbuf = Lexing.from_string lexeme in
+    let w_comments = decode_comments ~comments node in
+    (match Number.scan w_comments region lexbuf with
+    | Ok num ->
+      let print_hex w = Hex.show (snd w#payload) in
+      let print_dec w = Q.to_string (snd w#payload) in
+      let open Ast in
+      let print_kind state = function
+        | Hex (w, false) -> Tree.make_node state ("hex (" ^ print_hex w ^ ")")
+        | Hex (w, true) -> Tree.make_node state ("bigint/hex (" ^ print_hex w ^ ")")
+        | Bin (w, false) -> Tree.make_node state ("bin (" ^ print_hex w ^ ")")
+        | Bin (w, true) -> Tree.make_node state ("bigint/bin (" ^ print_hex w ^ ")")
+        | Oct (w, false) -> Tree.make_node state ("oct (" ^ print_hex w ^ ")")
+        | Oct (w, true) -> Tree.make_node state ("bigint/oct (" ^ print_hex w ^ ")")
+        | Dec (w, false) -> Tree.make_node state ("dec (" ^ print_dec w ^ ")")
+        | Dec (w, true) -> Tree.make_node state ("bigint/dec (" ^ print_dec w ^ ")")
+      in
+      let comments = comments @ prev_comments node in
+      let children =
+        mk_children_list print_comment comments
+        @ [ mk_child print_kind num; mk_child Tree.make_node lexeme ]
+      in
+      let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+      let children = mk_child_opt make_node error_child :: children in
+      make_tree state node children
+    | Error { region = _; value } -> make_unary state node Tree.make_node value)
+
+(* Printing enclosed constructs *)
+
+let print_enclosed
+    ?(comments = [])
+    state
+    node
+    printer
+    opening
+    closing
+    ~open_err
+    ~close_err
+    ~err
+  =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err
+  | _ ->
+    let comments = comments @ prev_comments node in
+    let opening = first_child_named opening node ~err:open_err
+    and closing = first_child_named closing node ~err:close_err
+    and clauses = collect_named_children node in
+    let children =
+      (mk_child_res (make_sym ~comments ~err:open_err) opening
+      :: mk_children_list printer clauses)
+      @ [ mk_child_res (make_sym ~err:close_err) closing ]
+    in
+    make_tree state node children
+
+let print_braces ?(comments = []) state node printer ~err =
+  print_enclosed
+    ~comments
+    state
+    node
+    printer
+    "{"
+    "}"
+    ~open_err:Left_brace
+    ~close_err:Right_brace
+    ~err
+
+let print_chevrons ?(comments = []) state node printer ~err =
+  print_enclosed
+    ~comments
+    state
+    node
+    printer
+    "<"
+    ">"
+    ~open_err:Left_chevron
+    ~close_err:Right_chevron
+    ~err
+
+let print_brackets ?(comments = []) state node printer ~err =
+  print_enclosed
+    ~comments
+    state
+    node
+    printer
+    "["
+    "]"
+    ~open_err:Left_bracket
+    ~close_err:Right_bracket
+    ~err
+
+let print_parens ?(comments = []) state node printer ~err =
+  print_enclosed
+    ~comments
+    state
+    node
+    printer
+    "("
+    ")"
+    ~open_err:Left_parenthesis
+    ~close_err:Right_parenthesis
+    ~err
+
+(* Printing the CST *)
+
+let rec print_program ~filename ~file (map : Loc_map.t) node =
+  (* Setting up the extracting of source regions *)
+  let () = get_region := Ts_wrap.get_region filename map in
+  (* Setting the input as a top-level string buffer *)
+  let () = Buffer.add_string !input file in
+  (* Empty state for building the AST *)
+  let buffer = Buffer.create 1023 in
+  let state = Tree.mk_state ~buffer ~regions:true ~layout:true ~offsets:true `Byte in
+  (* Printing the CST into a string buffer in [state] *)
+  let () = print_statements state node in
+  (* Making the output string *)
+  Buffer.contents @@ Tree.to_buffer state
+
+(* STATEMENTS
+
+   The JavaScript tree-sitter grammar has the non-terminal
+   "statement" be a supertype, that is, a hidden rule. *)
+
+and print_statements state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Statement
+  | _ -> tree_of_named_children state node print_statement
+
+and print_statement ?(comments = []) state node =
+  match get_name node with
+  | "export_statement" -> print_export_statement ~comments state node
+  | "import_statement" -> print_import_statement ~comments state node
+  | "debugger_statement" -> print_debugger_statement ~comments state node
+  | "expression_statement" -> print_expression_statement ~comments state node
+  | "statement_block" -> print_statement_block ~comments state node
+  | "if_statement" -> print_if_statement ~comments state node
+  | "switch_statement" -> print_switch_statement state node
+  | "for_statement" -> print_for_statement state node
+  | "for_in_statement" -> print_for_in_statement state node
+  | "while_statement" -> print_while_statement state node
+  | "do_statement" -> print_do_statement state node
+  | "try_statement" -> print_try_statement state node
+  | "with_statement" -> print_with_statement state node
+  | "break_statement" -> print_break_statement state node
+  | "continue_statement" -> print_continue_statement state node
+  | "return_statement" -> print_return_statement state node
+  | "throw_statement" -> print_throw_statement state node
+  | "empty_statement" -> print_empty_statement state node
+  | "labeled_statement" -> print_labeled_statement state node
+  (* Inlining declarations cases (hidden rule) *)
+  | "function_declaration" -> print_function_declaration ~comments state node
+  | "generator_function_declaration" -> print_generator_function_declaration state node
+  | "class_declaration" -> print_class_declaration ~comments state node
+  | "lexical_declaration" -> print_lexical_declaration ~comments state node
+  | "variable_declaration" -> print_variable_declaration ~comments state node
+  | "function_signature" -> print_function_signature state node
+  | "abstract_class_declaration" -> print_abstract_class_declaration state node
+  | "module" -> print_module state node
+  | "internal_module" -> print_internal_module ~comments state node
+  | "type_alias_declaration" -> print_type_alias_declaration state node
+  | "enum_declaration" -> print_enum_declaration state node
+  | "interface_declaration" -> print_interface_declaration ~comments state node
+  | "import_alias" -> print_import_alias state node
+  | "ambient_declaration" -> print_ambient_declaration state node
+  | _ -> print_error_node state node ~err:Statement
+
+(* Export statement *)
+
+and print_export_statement ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Export
+  | _ ->
+    let comments = comments @ prev_comments node
+    and decorators = children_named "decorator" node
+    and kwd_export = first_child_named "export" node ~err:Export in
+    let decorators = mk_children_list print_decorator decorators in
+    let children =
+      (* Previous comments are hooked to the keyword "export" *)
+      mk_child_res (mk_kwd_export ~comments) kwd_export
+      ::
+      (match kwd_export with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok kwd_export ->
+        (match next_sibling kwd_export ~err:Export_clause_or_all with
+        | Error msg -> [ mk_error_child node ~msg ]
+        | Ok after_export ->
+          (match get_name after_export with
+          | "*" ->
+            let kwd_from = first_child_named "from" node ~err:From in
+            [ mk_child mk_sym_asterisk after_export; mk_child_from_clause kwd_from node ]
+          | "namespace_export" ->
+            let kwd_from = first_child_named "from" node ~err:From in
+            [ mk_child print_namespace_export after_export
+            ; mk_child_from_clause kwd_from node
+            ]
+          | "export_clause" ->
+            mk_child print_export_clause after_export :: mk_child_from_clause_opt node
+          | "default" ->
+            let declaration_field = child_with_field_opt "declaration" node in
+            decorators
+            @ [ mk_child mk_kwd_default after_export ]
+            @
+            (match declaration_field with
+            | Some declaration_field -> [ mk_child print_declaration declaration_field ]
+            | None ->
+              let value_field = child_with_field "value" node ~err:Expression in
+              [ mk_child_res print_expression value_field ])
+          | "type" ->
+            (match next_sibling after_export ~err:Export_clause with
+            | Error msg -> [ mk_error_child after_export ~msg ]
+            | Ok export_clause ->
+              mk_child mk_kwd_type after_export
+              :: mk_child print_export_clause export_clause
+              :: mk_child_from_clause_opt node)
+          | "=" ->
+            (match next_sibling after_export ~err:Expression with
+            | Error msg -> [ mk_error_child after_export ~msg ]
+            | Ok expression ->
+              [ mk_child mk_sym_equal after_export; mk_child print_expression expression ])
+          | "as" ->
+            let kwd_namespace = first_child_named "namespace" node ~err:Namespace
+            and identifier = first_child_named "identifier" node ~err:Identifier in
+            [ mk_child mk_kwd_as after_export
+            ; mk_child_res mk_kwd_namespace kwd_namespace
+            ; mk_child_res print_identifier identifier
+            ]
+          | _ -> decorators @ [ mk_child print_declaration after_export ])))
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_namespace_export ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Namespace_export
+  | _ ->
+    let comments = comments @ prev_comments node
+    and sym_asterisk = first_child_named "*" node ~err:Asterisk
+    and kwd_as = first_child_named "as" node ~err:As in
+    let children =
+      [ mk_child_res (mk_sym_asterisk ~comments) sym_asterisk
+      ; mk_child_res mk_kwd_as kwd_as
+      ]
+      @
+      match kwd_as with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok kwd_as ->
+        let module_export_name = next_sibling kwd_as ~err:Identifier_or_string in
+        [ mk_child_res print_module_export_name module_export_name ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Argument [node] cannot be an ERROR/MISSING node. See [print_export_statement]. *)
+
+and mk_child_from_clause kwd_from node =
+  let source_field = child_with_field "source" node ~err:File_path in
+  let children =
+    [ mk_child_res mk_kwd_from kwd_from; mk_child_res print_string source_field ]
+  in
+  Some (fun state -> Tree.make_tree state "from_clause" children)
+
+(* Argument [node] cannot be an ERROR/MISSING node. See [print_export_statement]. *)
+
+and mk_child_from_clause_opt node =
+  match first_child_named_opt "from" node with
+  | None -> []
+  | Some kwd_from -> [ mk_child_from_clause (Ok kwd_from) node ]
+
+and print_export_clause state node =
+  print_braces state node print_export_specifier ~err:Export_clause
+
+and print_module_export_name ?(comments = []) state node =
+  match get_name node with
+  | "identifier" -> print_identifier ~comments state node
+  | "string" -> print_string ~comments state node
+  | _ -> print_error_node state node ~err:Identifier_or_string
+
+and print_export_specifier ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Identifier_or_string
+  | _ ->
+    let comments = comments @ prev_comments node in
+    let name_field = child_with_field "name" node ~err:Identifier_or_string in
+    let children =
+      mk_child_res (print_module_export_name ~comments) name_field
+      ::
+      (match child_with_field_opt "alias" node with
+      | None -> []
+      | Some alias_field ->
+        let kwd_as = first_child_named "as" node ~err:As in
+        [ mk_child_res mk_kwd_as kwd_as; mk_child print_module_export_name alias_field ])
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Import statement *)
+
+and print_import_statement ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Import
+  | _ ->
+    let comments = comments @ prev_comments node
+    and kwd_import = first_child_named "import" node ~err:Import
+    and kind_node =
+      match first_child_named_opt "type" node with
+      | None -> first_child_named_opt "typeof" node
+      | some -> some
+    and import_attribute = first_child_named_opt "import_attribute" node in
+    let middle_children =
+      match first_child_named_opt "import_clause" node with
+      | Some import_clause ->
+        let kwd_from = first_child_named "from" node ~err:From in
+        [ mk_child print_import_clause import_clause; mk_child_from_clause kwd_from node ]
+      | None ->
+        (match first_child_named_opt "import_require_clause" node with
+        | Some clause -> [ mk_child print_import_require_clause clause ]
+        | None ->
+          let source_field = child_with_field "source" node ~err:String in
+          [ mk_child_res print_string source_field ])
+    in
+    let children =
+      (* Previous comments are hooked to the keyword "import" *)
+      (mk_child_res (mk_kwd_import ~comments) kwd_import
+      :: mk_child_opt (make_kwd ~err:Type_or_typeof) kind_node
+      :: middle_children)
+      @ [ mk_child_opt print_import_attribute import_attribute ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_import_clause ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Import_clause
+  | _ ->
+    let comments = comments @ prev_comments node in
+    let print_rest state node =
+      match get_name node with
+      | "namespace_import" -> print_namespace_import state node
+      | "named_imports" -> print_named_imports state node
+      | _ -> print_error_node state node ~err:Namespace_or_named_imports
+    in
+    let children =
+      match child_ranked 0 node ~err:Named_imports_or_all_or_id with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok first_child ->
+        (match get_name first_child with
+        | "namespace_import" ->
+          [ mk_child (print_namespace_import ~comments) first_child ]
+        | "named_imports" -> [ mk_child (print_named_imports ~comments) first_child ]
+        | "identifier" ->
+          mk_child (print_identifier ~comments) first_child
+          ::
+          (match next_sibling_opt first_child with
+          | None -> []
+          | Some comma ->
+            (match next_sibling comma ~err:Named_imports_or_all with
+            | Error msg -> [ mk_error_child comma ~msg ]
+            | Ok next -> [ mk_child print_rest next ]))
+        | _ ->
+          let msg = mk_err_msg first_child Namespace_or_named_imports_or_ident in
+          [ mk_error_child first_child ~msg ])
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_namespace_import ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Namespace_import
+  | _ ->
+    let comments = comments @ prev_comments node
+    and sym_asterisk = first_child_named "*" node ~err:Asterisk
+    and kwd_as = first_child_named "as" node ~err:As in
+    let children =
+      [ mk_child_res (mk_sym_asterisk ~comments) sym_asterisk
+      ; mk_child_res mk_kwd_as kwd_as
+      ]
+      @
+      match kwd_as with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok kwd_as ->
+        let identifier = next_sibling kwd_as ~err:Identifier in
+        [ mk_child_res print_identifier identifier ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_named_imports ?(comments = []) state node =
+  print_braces ~comments state node print_import_specifier ~err:Named_imports
+
+and print_import_specifier ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Import_specifier
+  | _ ->
+    let comments = comments @ prev_comments node in
+    let kind_node =
+      match first_child_named_opt "type" node with
+      | None -> first_child_named_opt "typeof" node
+      | some -> some
+    in
+    let first_child_comments, snd_child_comments =
+      match kind_node with
+      | None -> [], comments
+      | Some _ -> comments, []
+    and name_field = child_with_field "name" node ~err:Identifier
+    and alias_field = child_with_field_opt "alias" node in
+    let children =
+      mk_child_opt (make_kwd ~comments:first_child_comments ~err:Type_or_typeof) kind_node
+      ::
+      (match alias_field with
+      | None ->
+        [ mk_child_res (print_identifier ~comments:snd_child_comments) name_field ]
+      | Some alias_field ->
+        let kwd_as = first_child_named "as" node ~err:As in
+        [ mk_child_res (print_module_export_name ~comments:snd_child_comments) name_field
+        ; mk_child_res mk_kwd_as kwd_as
+        ; mk_child print_identifier alias_field
+        ])
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_import_require_clause ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Import_require_clause
+  | _ ->
+    let comments = comments @ prev_comments node
+    and identifier = child_ranked 0 node ~err:Identifier
+    and sym_equal = first_child_named "=" node ~err:Equal
+    and id_require = first_child_named "require" node ~err:Require
+    and sym_lparen = first_child_named "(" node ~err:Left_parenthesis
+    and source_field = child_with_field "source" node ~err:String
+    and sym_rparen = first_child_named ")" node ~err:Right_parenthesis in
+    let children =
+      [ mk_child_res (print_identifier ~comments) identifier
+      ; mk_child_res mk_sym_equal sym_equal
+      ; mk_child_res print_identifier id_require
+      ; mk_child_res mk_sym_lparen sym_lparen
+      ; mk_child_res print_string source_field
+      ; mk_child_res mk_sym_rparen sym_rparen
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_import_attribute state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Import_attribute
+  | _ ->
+    let kind_node = child_ranked 0 node ~err:Import_attribute
+    and object_node = child_ranked 1 node ~err:Object_expression
+    and print_kind state node =
+      match get_name node with
+      | "with" -> mk_kwd_with state node
+      | "assert" -> mk_kwd_assert state node
+      | _ -> print_error_node state node ~err:Import_attribute
+    in
+    let children =
+      [ mk_child_res print_kind kind_node; mk_child_res print_object_expr object_node ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Debugger statement *)
+
+and print_debugger_statement ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Debugger
+  | _ ->
+    let kwd_debugger = first_child_named "debugger" node ~err:Debugger in
+    let children = [ mk_child_res (mk_kwd_debugger ~comments) kwd_debugger ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Expression statements
+
+   {@js[
+   expression_statement: $ => seq($._expressions, $._semicolon),
+   _expressions: $ => choice($.expression, $.sequence_expression),
+   sequence_expression: $ => prec.right(commaSep1($.expression))
+   ]}
+
+   See [print_expression]. *)
+
+and print_expression_statement ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
+  | _ ->
+    let comments = comments @ prev_comments node
+    and child = named_child_ranked 0 node ~err:Expression in
+    let children = [ mk_child_res (print_expressions ~comments) child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_expressions ?(comments = []) state (node : ts_tree) =
+  match get_name node with
+  | "sequence_expression" -> print_sequence_expression ~comments state node
+  | _ -> print_expression ~comments state node
+
+(* Statement blocks *)
+
+and print_statement_block ?(comments = []) state node =
+  print_braces ~comments state node print_statement ~err:Block
+
+(* If statement *)
+
+and print_if_statement ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:If
+  | _ ->
+    let kwd_if = first_child_named "if" node ~err:If
+    and condition_field = child_with_field "condition" node ~err:Parenthesized_expression
+    and consequence_field = child_with_field "consequence" node ~err:Statement
+    and alternative_field = child_with_field_opt "alternative" node in
+    let children =
+      [ mk_child_res (mk_kwd_if ~comments) kwd_if
+      ; mk_child_res print_parenthesized_expression condition_field
+      ; mk_child_res print_statement consequence_field
+      ; mk_child_opt print_else_clause alternative_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_else_clause ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Else
+  | _ ->
+    let comments = comments @ prev_comments node in
+    let kwd_else = first_child_named "else" node ~err:Else in
+    let children =
+      mk_child_res (mk_kwd_else ~comments) kwd_else
+      ::
+      (match kwd_else with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok kwd_else ->
+        let statement = next_sibling kwd_else ~err:Statement in
+        [ mk_child_res print_statement statement ])
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Switch statement *)
+
+and print_switch_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Switch
+  | _ ->
+    let kwd_switch = first_child_named "switch" node ~err:Switch
+    and value_field = child_with_field "value" node ~err:Parenthesized_expression
+    and body_field = child_with_field "body" node ~err:Switch_body in
+    let children =
+      [ mk_child_res mk_kwd_switch kwd_switch
+      ; mk_child_res print_parenthesized_expression value_field
+      ; mk_child_res print_switch_body body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_switch_body state node =
+  print_braces state node print_switch_entry ~err:Switch_body
+
+and print_switch_entry state node =
+  match get_name node with
+  | "switch_case" -> print_switch_case state node
+  | "switch_default" -> print_switch_default state node
+  | _ -> print_error_node state node ~err:Switch_body
+
+and print_switch_case state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Case
+  | _ ->
+    let kwd_case = first_child_named "case" node ~err:Case
+    and children = collect_children node in
+    let stmt_children = skip_until_colon children
+    and value_field = child_with_field "value" node ~err:Expression in
+    let children =
+      mk_child_res mk_kwd_case kwd_case
+      :: mk_child_res print_expressions value_field
+      :: mk_children_list print_statement stmt_children
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_switch_default state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Default
+  | _ ->
+    let kwd_default = first_child_named "default" node ~err:Default
+    and statements = collect_named_children node in
+    let children =
+      mk_child_res mk_kwd_default kwd_default
+      :: mk_children_list print_statement statements
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* For statement *)
+
+and print_for_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:For
+  | _ ->
+    let kwd_for = first_child_named "for" node ~err:For
+    and sym_lparen = first_child_named "(" node ~err:Left_parenthesis
+    and initializer_field = child_with_field "initializer" node ~err:Initial_assignment
+    and condition_field = child_with_field "condition" node ~err:Expression_or_semicolon
+    and increment_field = child_with_field_opt "increment" node
+    and sym_rparen = first_child_named ")" node ~err:Right_parenthesis
+    and body_field = child_with_field "body" node ~err:Statement in
+    let children =
+      [ mk_child_res mk_kwd_for kwd_for
+      ; mk_child_res mk_sym_lparen sym_lparen
+      ; mk_child_res print_for_initializer initializer_field
+      ; mk_child_res print_for_condition condition_field
+      ; mk_child_opt print_expressions increment_field
+      ; mk_child_res mk_sym_rparen sym_rparen
+      ; mk_child_res print_statement body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_for_initializer state node =
+  match get_name node with
+  | "lexical_declaration" -> print_lexical_declaration state node
+  | "variable_declaration" -> print_variable_declaration state node
+  | "expression_statement" -> print_expression_statement state node
+  | "empty_statement" -> print_empty_statement state node
+  | _ -> print_error_node state node ~err:Initial_assignment
+
+and print_for_condition state node =
+  match get_name node with
+  | "expression_statement" -> print_expression_statement state node
+  | "empty_statement" -> print_empty_statement state node
+  | _ -> print_error_node state node ~err:Expression_or_semicolon
+
+(* For-in statement *)
+
+and print_for_in_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:For_or_await
+  | _ ->
+    let kwd_await = first_child_named_opt "await" node
+    and kwd_for = first_child_named "for" node ~err:For
+    and sym_lparen = first_child_named "(" node ~err:Left_parenthesis
+    and left_field = child_with_field "left" node ~err:Expression
+    and sym_rparen = first_child_named ")" node ~err:Right_parenthesis
+    and body_field = child_with_field "body" node ~err:Statement
+    and operator_field = child_with_field "operator" node ~err:In_or_of
+    and right_field = child_with_field "right" node ~err:Expression
+    and kind_field = child_with_field_opt "kind" node in
+    let print_operator state node =
+      match get_name node with
+      | "in" -> mk_kwd_in state node
+      | "of" -> mk_kwd_of state node
+      | _ -> print_error_node state node ~err:In_or_of
+    in
+    let header_children =
+      match kind_field with
+      | None ->
+        let print_left state node =
+          match get_name node with
+          | "parenthesized_expression" -> print_parenthesized_expression state node
+          | _ -> print_lhs_expression state node
+        in
+        [ mk_child_res print_left left_field ]
+      | Some kind_field ->
+        let print_left state node =
+          match get_name node with
+          | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Pattern
+          | "identifier" -> print_identifier state node
+          | _ -> print_destructuring_pattern state node (* Hidden *)
+        in
+        (match get_name kind_field with
+        | "var" ->
+          let value_field = child_with_field_opt "value" node in
+          [ mk_child mk_kwd_var kind_field
+          ; mk_child_res print_left left_field
+          ; mk_child_opt print_expression value_field
+          ]
+        | "let" -> [ mk_child mk_kwd_let kind_field; mk_child_res print_left left_field ]
+        | "const" ->
+          [ mk_child mk_kwd_const kind_field; mk_child_res print_left left_field ]
+        | _ -> [ mk_child (print_error_node ~err:Let_or_const_or_var) kind_field ])
+    in
+    let children =
+      (mk_child_res mk_kwd_for kwd_for
+      :: mk_child_opt mk_kwd_await kwd_await
+      :: mk_child_res mk_sym_lparen sym_lparen
+      :: header_children)
+      @ [ mk_child_res print_operator operator_field
+        ; mk_child_res print_expressions right_field
+        ; mk_child_res mk_sym_rparen sym_rparen
+        ; mk_child_res print_statement body_field
+        ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* While statement *)
+
+and print_while_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:While
+  | _ ->
+    let kwd_while = first_child_named "while" node ~err:While
+    and condition_field = child_with_field "condition" node ~err:Parenthesized_expression
+    and body_field = child_with_field "body" node ~err:Statement in
+    let children =
+      [ mk_child_res mk_kwd_while kwd_while
+      ; mk_child_res print_parenthesized_expression condition_field
+      ; mk_child_res print_statement body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Do statement *)
+
+and print_do_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Do
+  | _ ->
+    let kwd_do = first_child_named "do" node ~err:Do
+    and body_field = child_with_field "body" node ~err:Statement
+    and kwd_while = first_child_named "while" node ~err:While
+    and condition_field =
+      child_with_field "condition" node ~err:Parenthesized_expression
+    in
+    let children =
+      [ mk_child_res mk_kwd_do kwd_do
+      ; mk_child_res print_statement body_field
+      ; mk_child_res mk_kwd_while kwd_while
+      ; mk_child_res print_parenthesized_expression condition_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Try statement *)
+
+and print_try_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Try
+  | _ ->
+    let kwd_try = first_child_named "try" node ~err:Try
+    and body_field = child_with_field "body" node ~err:Block
+    and handler_field = child_with_field_opt "handler" node
+    and finalizer_field = child_with_field_opt "finalizer" node in
+    let children =
+      [ mk_child_res mk_kwd_try kwd_try
+      ; mk_child_res print_statement_block body_field
+      ; mk_child_opt print_catch_clause handler_field
+      ; mk_child_opt print_finally_clause finalizer_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_catch_clause state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Catch
+  | _ ->
+    let kwd_catch = first_child_named "catch" node ~err:Catch
+    and body_field = child_with_field "body" node ~err:Block
+    and parameter_field = child_with_field_opt "parameter" node in
+    let children =
+      match parameter_field with
+      | Some parameter_field ->
+        let sym_lparen = first_child_named "(" node ~err:Left_parenthesis
+        and type_field = child_with_field_opt "type" node
+        and sym_rparen = first_child_named ")" node ~err:Right_parenthesis in
+        [ mk_child_res mk_sym_lparen sym_lparen
+        ; mk_child print_catch_parameter_kind parameter_field
+        ; mk_child_opt print_type_annotation type_field
+        ; mk_child_res mk_sym_rparen sym_rparen
+        ]
+      | None -> []
+    in
+    let children = mk_child_res mk_kwd_catch kwd_catch :: children in
+    let children = children @ [ mk_child_res print_statement_block body_field ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_catch_parameter_kind state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Pattern
+  | "identifier" -> print_identifier state node
+  | _ -> print_destructuring_pattern state node
+
+and print_finally_clause state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Finally
+  | _ ->
+    let kwd_finally = first_child_named "finally" node ~err:Finally
+    and body_field = child_with_field "body" node ~err:Block in
+    let children =
+      [ mk_child_res mk_kwd_finally kwd_finally
+      ; mk_child_res print_statement_block body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* With statement *)
+
+and print_with_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:With
+  | _ ->
+    let kwd_with = first_child_named "with" node ~err:With
+    and object_field = child_with_field "object" node ~err:Parenthesized_expression
+    and body_field = child_with_field "body" node ~err:Statement in
+    let children =
+      [ mk_child_res mk_kwd_with kwd_with
+      ; mk_child_res print_parenthesized_expression object_field
+      ; mk_child_res print_statement body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Break statement *)
+
+and print_break_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Break
+  | _ ->
+    let kwd_break = first_child_named "break" node ~err:Break
+    and label_field = child_with_field_opt "label" node in
+    let children =
+      [ mk_child_res mk_kwd_break kwd_break; mk_child_opt print_identifier label_field ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Continue statement *)
+
+and print_continue_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Continue
+  | _ ->
+    let kwd_continue = first_child_named "continue" node ~err:Continue
+    and label_field = child_with_field_opt "label" node in
+    let children =
+      [ mk_child_res mk_kwd_continue kwd_continue
+      ; mk_child_opt print_identifier label_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Return statement
+
+   NOTE: The Javascript grammar states:
+
+   {@js[
+   return_statement: $ =>
+   seq('return', optional($._expressions), $._semicolon),
+
+   _semicolon: $ => choice($._automatic_semicolon, ';')
+   ]}
+
+   but the child of rank 1 is sometimes missing, as if
+   "_automatic_semicolon" can be the empty word. Other rules use
+   `optional(_automatic_semicolon)`, which adds to the mystery. *)
+
+and print_return_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Return
+  | _ ->
+    let kwd_return = first_child_named "return" node ~err:Return in
+    (match child_ranked_opt 1 node with
+    | None ->
+      let children = [ mk_child_res mk_kwd_return kwd_return ] in
+      let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+      let children = mk_child_opt make_node error_child :: children in
+      make_tree state node children
+    | Some snd_child ->
+      (match get_name snd_child with
+      | ";" ->
+        let children = [ mk_child_res mk_kwd_return kwd_return ] in
+        let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+        let children = mk_child_opt make_node error_child :: children in
+        make_tree state node children
+      | _ ->
+        let children =
+          [ mk_child_res mk_kwd_return kwd_return; mk_child print_expressions snd_child ]
+        in
+        let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+        let children = mk_child_opt make_node error_child :: children in
+        make_tree state node children))
+
+(* Throw statement *)
+
+and print_throw_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Throw
+  | _ ->
+    let kwd_throw = first_child_named "throw" node ~err:Throw
+    and expr = child_ranked 1 node ~err:Expression in
+    let children =
+      [ mk_child_res mk_kwd_throw kwd_throw; mk_child_res print_expressions expr ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Empty statement *)
+
+and print_empty_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Empty_statement
+  | _ ->
+    let region = !get_region node
+    and label = get_name node in
+    Tree.make ~region state label []
+
+(* Labeled statement *)
+
+and print_labeled_statement state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Label
+  | _ ->
+    let label_field = child_with_field "label" node ~err:Label
+    and body_field = child_with_field "body" node ~err:Statement in
+    let children =
+      [ mk_child_res print_identifier label_field
+      ; mk_child_res print_statement body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* DECLARATION
+
+   The JavaScript tree-sitter grammar has the non-terminal
+   "declaration" be a supertype, that is, a hidden rule. *)
+
+and print_declaration ?(comments = []) state node =
+  let comments = comments @ prev_comments node in
+  match get_name node with
+  | "function_declaration" -> print_function_declaration state node
+  | "generator_function_declaration" -> print_generator_function_declaration state node
+  | "class_declaration" -> print_class_declaration ~comments state node
+  | "lexical_declaration" -> print_lexical_declaration ~comments state node
+  | "variable_declaration" -> print_variable_declaration state node
+  | "function_signature" -> print_function_signature state node
+  | "abstract_class_declaration" -> print_abstract_class_declaration state node
+  | "module" -> print_module state node
+  | "internal_module" -> print_internal_module ~comments state node
+  | "type_alias_declaration" -> print_type_alias_declaration ~comments state node
+  | "enum_declaration" -> print_enum_declaration state node
+  | "interface_declaration" -> print_interface_declaration state node
+  | "import_alias" -> print_import_alias state node
+  | "ambient_declaration" -> print_ambient_declaration state node
+  | _ -> print_error_node state node ~err:Declaration
+
+(* Function declaration (see [print_function_signature]) *)
+
+and print_function_declaration ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Function_declaration
+  | _ ->
+    let comments = comments @ prev_comments node
+    and kwd_async = first_child_named_opt "async" node
+    and kwd_function = first_child_named "function" node ~err:Function
+    and name_field = child_with_field "name" node ~err:Function_name
+    (* "_call_signature" inlined: *)
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and return_type_field = child_with_field_opt "return_type" node
+    (* "statement_block" *)
+    and body_field = child_with_field "body" node ~err:Block in
+    let async_comments, function_comments =
+      match kwd_async with
+      | None -> [], comments
+      | Some _ -> comments, []
+    in
+    let children =
+      [ mk_child_opt (mk_kwd_async ~comments:async_comments) kwd_async
+      ; mk_child_res (mk_kwd_function ~comments:function_comments) kwd_function
+      ; mk_child_res print_identifier name_field
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_opt print_return_type return_type_field
+      ; mk_child_res print_statement_block body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_return_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_expression
+  | "type_annotation" -> print_type_annotation state node
+  | "asserts_annotation" -> print_asserts_annotation state node
+  | _ -> print_type_predicate_annotation state node
+
+(* Generator function declaration (see function declaration) *)
+
+and print_generator_function_declaration state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Generator_function_declaration
+  | _ ->
+    let kwd_async = first_child_named_opt "async" node
+    and kwd_function = first_child_named "function" node ~err:Function
+    and sym_asterisk = first_child_named "*" node ~err:Asterisk
+    and name_field = child_with_field "name" node ~err:Function_name
+    (* "_call_signature" inlined: *)
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and return_type_field = child_with_field_opt "return_type" node
+    (* "statement_block" *)
+    and body_field = child_with_field "body" node ~err:Block in
+    let children =
+      [ mk_child_opt mk_kwd_async kwd_async
+      ; mk_child_res mk_kwd_function kwd_function
+      ; mk_child_res mk_sym_asterisk sym_asterisk
+      ; mk_child_res print_identifier name_field
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_opt print_return_type return_type_field
+      ; mk_child_res print_statement_block body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Class declaration (see [print_class]) *)
+
+and print_class_declaration ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Class_declaration
+  | _ ->
+    let comments = comments @ prev_comments node
+    and decorators = children_named "decorator" node
+    and kwd_class = first_child_named "class" node ~err:Class
+    and name_field = child_with_field "name" node ~err:Class_name
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and heritage_child = first_child_named_opt "class_heritage" node
+    and body_field = child_with_field "body" node ~err:Class_body in
+    let children =
+      mk_children_list print_decorator decorators
+      @ [ mk_child_res (mk_kwd_class ~comments) kwd_class
+        ; mk_child_res print_type_identifier name_field
+        ; mk_child_opt print_type_parameters type_parameters_field
+        ; mk_child_opt print_class_heritage heritage_child
+        ; mk_child_res print_class_body body_field
+        ]
+    in
+    make_tree state node children
+
+(* Lexical declaration (see [print_variable_declaration]) *)
+
+and print_lexical_declaration ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Let_or_const
+  | _ ->
+    let comments = comments @ prev_comments node
+    and kind_field = child_with_field "kind" node ~err:Let_or_const
+    and var_decls = children_named "variable_declarator" node in
+    let print_set_or_const state node =
+      match get_name node with
+      | "let" -> mk_kwd_let ~comments state node
+      | "const" -> mk_kwd_const ~comments state node
+      | _ -> print_error_node state node ~err:Let_or_const
+    in
+    let children =
+      mk_child_res print_set_or_const kind_field
+      :: mk_children_list print_variable_declarator var_decls
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_variable_declarator state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Variable
+  | _ ->
+    let name_field = child_with_field "name" node ~err:Variable in
+    let sym_qmark = first_child_named_opt "!" node in
+    let children =
+      match sym_qmark with
+      | None ->
+        let type_field = child_with_field_opt "type" node in
+        mk_child_res print_lhs_pattern name_field
+        :: mk_child_opt print_type_annotation type_field
+        :: mk_child_initializer_opt node (* "_initializer" inlined *)
+      | Some sym_qmark ->
+        let type_field = child_with_field "type" node ~err:Type_annotation in
+        mk_child_res print_identifier name_field
+        :: mk_child mk_sym_qmark sym_qmark
+        :: [ mk_child_res print_type_annotation type_field ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_lhs_pattern state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Pattern
+  | "identifier" -> print_identifier state node
+  | _ -> print_destructuring_pattern state node
+
+(* Variable declaration (see [print_lexical_declaration]) *)
+
+and print_variable_declaration ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Variable_declaration
+  | _ ->
+    let comments = comments @ prev_comments node
+    and kwd_var = first_child_named "var" node ~err:Var
+    and var_decls = children_named "variable_declarator" node in
+    let children =
+      mk_child_res (mk_kwd_var ~comments) kwd_var
+      :: mk_children_list print_variable_declarator var_decls
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Function signature (See [print_function_declaration]) *)
+
+and print_function_signature state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Async_or_function
+  | _ ->
+    let kwd_async = first_child_named_opt "async" node
+    and kwd_function = first_child_named "function" node ~err:Function
+    and name_field = child_with_field "name" node ~err:Function_name
+    (* "_call_signature" inlined: *)
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and return_type_field = child_with_field_opt "return_type" node in
+    (* "statement_block" *)
+    let children =
+      [ mk_child_opt mk_kwd_async kwd_async
+      ; mk_child_res mk_kwd_function kwd_function
+      ; mk_child_res print_identifier name_field
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_opt print_return_type return_type_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Abstract class declaration ( see [print_class_declaration]) *)
+
+and print_abstract_class_declaration state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Abstract
+  | _ ->
+    let decorators = children_named "decorator" node
+    and kwd_abstract = first_child_named "abstract" node ~err:Abstract
+    and kwd_class = first_child_named "class" node ~err:Class
+    and name_field = child_with_field "name" node ~err:Class_name
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and heritage_child = first_child_named_opt "class_heritage" node
+    and body_field = child_with_field "body" node ~err:Class_body in
+    let children =
+      mk_children_list print_decorator decorators
+      @ [ mk_child_res mk_kwd_abstract kwd_abstract
+        ; mk_child_res mk_kwd_class kwd_class
+        ; mk_child_res print_type_identifier name_field
+        ; mk_child_opt print_type_parameters type_parameters_field
+        ; mk_child_opt print_class_heritage heritage_child
+        ; mk_child_res print_class_body body_field
+        ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Module *)
+
+and print_module ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Module_declaration
+  | _ ->
+    let comments = comments @ prev_comments node
+    and kwd_module = first_child_named "module" node ~err:Module
+    and name_field = child_with_field "name" node ~err:Module_name
+    and body_field = child_with_field_opt "body" node
+    and print_name state node =
+      match get_name node with
+      | "string" -> print_string state node
+      | "identifier" -> print_identifier state node
+      | "nested_identifier" -> print_nested_identifier state node
+      | _ -> print_error_node state node ~err:Module_name
+    in
+    let children =
+      [ mk_child_res (mk_kwd_module ~comments) kwd_module
+      ; mk_child_res print_name name_field
+      ; mk_child_opt print_statement_block body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Internal module (a.k.a. namespaces) *)
+
+and print_internal_module ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Namespace_declaration
+  | _ ->
+    let comments = comments @ prev_comments node
+    and kwd_namespace = first_child_named "namespace" node ~err:Namespace
+    and name_field = child_with_field "name" node ~err:Namespace_name
+    and body_field = child_with_field_opt "body" node
+    and print_name state node =
+      match get_name node with
+      | "string" -> print_string state node
+      | "identifier" -> print_identifier state node
+      | "nested_identifier" -> print_nested_identifier state node
+      | _ -> print_error_node state node ~err:Namespace_name
+    in
+    let children =
+      [ mk_child_res (mk_kwd_namespace ~comments) kwd_namespace
+      ; mk_child_res print_name name_field
+      ; mk_child_opt print_statement_block body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Type alias declaration *)
+
+and print_type_alias_declaration ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Type_alias_declaration
+  | _ ->
+    let comments = comments @ prev_comments node
+    and kwd_type = first_child_named "type" node ~err:Type
+    and name_field = child_with_field "name" node ~err:Type_name
+    and sym_equal = first_child_named "=" node ~err:Equal
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and value_field = child_with_field "value" node ~err:Type_expression in
+    let children =
+      [ mk_child_res (mk_kwd_type ~comments) kwd_type
+      ; mk_child_res print_identifier name_field
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res mk_sym_equal sym_equal
+      ; mk_child_res print_type value_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_type_parameters state node =
+  print_chevrons state node print_type_parameter ~err:Type_parameters
+
+and print_type_parameter state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Const_or_type_name
+  | _ ->
+    let kwd_const = first_child_named_opt "const" node
+    and name_field = child_with_field "name" node ~err:Type_parameter
+    and constraint_field = child_with_field_opt "constraint" node
+    and value_field = child_with_field_opt "value" node in
+    let children =
+      [ mk_child_opt mk_kwd_const kwd_const
+      ; mk_child_res print_identifier name_field
+      ; mk_child_opt print_constraint constraint_field
+      ; mk_child_opt print_default_type value_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_constraint state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Extends
+  | _ ->
+    (* The grammar says:
+
+         constraint: $ => seq(choice('extends', ':'), $.type),
+
+       What is ':'? *)
+    let kwd_extends = first_child_named "extends" node ~err:Extends
+    and type_child = child_ranked 1 node ~err:Type_expression in
+    let children =
+      [ mk_child_res mk_kwd_extends kwd_extends; mk_child_res print_type type_child ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_default_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Equal
+  | _ ->
+    let sym_equal = first_child_named "=" node ~err:Equal
+    and type_node = child_ranked 1 node ~err:Type_expression in
+    let children =
+      [ mk_child_res mk_sym_equal sym_equal; mk_child_res print_type type_node ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Enum declaration *)
+
+and print_enum_declaration state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Const_or_enum
+  | _ ->
+    let kwd_const = first_child_named_opt "const" node
+    and kwd_enum = first_child_named "enum" node ~err:Enum
+    and name_field = child_with_field "name" node ~err:Enumeration_name
+    and body_field = child_with_field "body" node ~err:Enumeration in
+    let children =
+      [ mk_child_opt mk_kwd_const kwd_const
+      ; mk_child_res mk_kwd_enum kwd_enum
+      ; mk_child_res print_identifier name_field
+      ; mk_child_res print_enum_body body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_enum_body state node =
+  print_braces state node print_in_enum_body ~err:Enumeration
+
+and print_in_enum_body state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Enumeration_name
+  | "enum_assignment" -> print_enum_assignment state node
+  | _ -> print_property_name state node
+
+and print_enum_assignment state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Enumeration_name
+  | _ ->
+    let name_field = child_with_field "name" node ~err:Enumeration_name in
+    let children =
+      mk_child_res print_property_name name_field
+      :: mk_child_initializer_opt node (* "_initializer" inlined *)
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Interface declaration *)
+
+and print_interface_declaration ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Interface
+  | _ ->
+    let comments = comments @ prev_comments node in
+    let kwd_interface = first_child_named "interface" node ~err:Interface
+    and name_field = child_with_field "name" node ~err:Interface_name
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and extends_type_clause = first_child_named_opt "extends_type_clause" node
+    and body_field = child_with_field "body" node ~err:Interface_body in
+    let children =
+      [ mk_child_res (mk_kwd_interface ~comments) kwd_interface
+      ; mk_child_res print_type_identifier name_field
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_opt print_extends_type_clause extends_type_clause
+      ; mk_child_res print_interface_body body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_interface_body state node = print_object_type state node
+
+and print_extends_type_clause state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Extends
+  | _ ->
+    let kwd_extends = first_child_named "extends" node ~err:Extends in
+    let children =
+      mk_child_res mk_kwd_extends kwd_extends
+      :: mk_children_list print_type_extension (collect_named_children node)
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_type_extension state node =
+  match get_name node with
+  | "type_identifier" -> print_type_identifier state node
+  | "nested_type_identifier" -> print_nested_type_identifier state node
+  | "generic_type" -> print_generic_type state node
+  | _ -> print_error_node state node ~err:Type_expression
+
+(* Import alias *)
+
+and print_import_alias state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Import
+  | _ ->
+    let kwd_import = first_child_named "import" node ~err:Import
+    and lhs = child_ranked 1 node ~err:Identifier
+    and rhs = child_ranked 3 node ~err:Identifier_or_path
+    and sym_equal = first_child_named "=" node ~err:Equal in
+    let children =
+      [ mk_child_res mk_kwd_import kwd_import
+      ; mk_child_res print_identifier lhs
+      ; mk_child_res mk_sym_equal sym_equal
+      ; mk_child_res print_aliased rhs
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_aliased state node =
+  match get_name node with
+  | "identifier" -> print_identifier state node
+  | "nested_identifier" -> print_nested_identifier state node
+  | _ -> print_error_node state node ~err:Identifier_or_path
+
+(* Ambient declaration *)
+
+and print_ambient_declaration state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Declare
+  | _ ->
+    let kwd_declare = first_child_named "declare" node ~err:Declare in
+    let first_child = named_child_ranked 0 node ~err:Block_or_ident_or_decl in
+    let children =
+      mk_child_res mk_kwd_declare kwd_declare
+      ::
+      (match first_child with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok first_child ->
+        (match get_name first_child with
+        | "statement_block" ->
+          let kwd_global = first_child_named "global" node ~err:Global in
+          [ mk_child_res mk_kwd_global kwd_global
+          ; mk_child print_statement_block first_child
+          ]
+        | "property_identifier" ->
+          let kwd_module = first_child_named "module" node ~err:Module
+          and type_child = child_ranked 5 node ~err:Type_expression in
+          [ mk_child_res mk_kwd_module kwd_module
+          ; mk_child print_identifier first_child
+          ; mk_child_res print_type type_child
+          ]
+        | _ -> [ mk_child print_declaration first_child ]))
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* EXPRESSION
+
+   The JavaScript tree-sitter grammar has the non-terminals
+   "expression" and "primary_expression" be supertypes, that is,
+   hidden rules. Therefore we have to match all the RHS of those
+   non-terminals in [print_expression]. *)
+
+and print_expression ?(comments = []) state (node : ts_tree) =
+  match get_name node with
+  | "glimmer_template" -> print_glimmer_template state node
+  | "assignment_expression" -> print_assignment_expression state node
+  | "augmented_assignment_expression" -> print_augmented_assignment_expression state node
+  | "await_expression" -> print_await_expression state node
+  | "unary_expression" -> print_unary_expression state node
+  | "binary_expression" -> print_binary_expression ~comments state node
+  | "ternary_expression" -> print_ternary_expression state node
+  | "update_expression" -> print_update_expression state node
+  | "new_expression" -> print_new_expression state node
+  | "yield_expression" -> print_yield_expression state node
+  | "as_expression" -> print_as_expression state node
+  | "satisfies_expression" -> print_satisfies_expression state node
+  | "instantiation_expression" -> print_instantiation_expression state node
+  | "internal_module" -> print_internal_module ~comments state node
+  | "type_assertion" -> print_type_assertion state node
+  | _ -> print_primary_expression ~comments state node
+
+(* Primary expression *)
+
+and print_primary_expression ?(comments = []) state node =
+  match get_name node with
+  | "subscript_expression" -> print_subscript_expression state node
+  | "member_expression" -> print_member_expression state node
+  | "parenthesized_expression" -> print_parenthesized_expression state node
+  | "identifier" -> print_identifier ~comments state node
+  | "undefined" -> mk_kwd_undefined state node
+  | "this" -> mk_kwd_this state node
+  | "super" -> mk_kwd_super state node
+  | "number" -> print_number ~comments state node
+  | "string" -> print_string state node
+  | "template_string" -> print_template_string state node
+  | "regex" -> print_regex state node
+  | "true" -> mk_kwd_true state node
+  | "false" -> mk_kwd_false state node
+  | "null" -> mk_kwd_null state node
+  | "object" -> print_object_expr state node
+  | "array" -> print_array state node
+  | "function_expression" -> print_function_expression state node
+  | "arrow_function" -> print_arrow_function state node
+  | "generator_function" -> print_generator_function state node
+  | "class" -> print_class_expression state node
+  | "meta_property" -> print_meta_property state node
+  | "call_expression" -> print_call_expression state node
+  | "non_null_expression" -> print_non_null_expression state node
+  | _ -> print_error_node state node ~err:Expression
+
+(* Glimmer template (not supported) *)
+
+and print_glimmer_template state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Glimmer_template
+  | _ -> make_node state node
+
+(* Assignment expression *)
+
+and print_assignment_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Using_or_expression
+  | _ ->
+    let kwd_using = first_child_named_opt "using" node
+    and left_field = child_with_field "left" node ~err:Expression
+    and sym_equal = first_child_named "=" node ~err:Equal
+    and right_field = child_with_field "right" node ~err:Expression in
+    let children =
+      [ mk_child_opt mk_kwd_using kwd_using
+      ; mk_child_res print_assignment_lhs left_field
+      ; mk_child_res mk_sym_equal sym_equal
+      ; mk_child_res print_expression right_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_assignment_lhs state node =
+  match get_name node with
+  | "parenthesized_expression" -> print_parenthesized_expression state node
+  | _ -> print_lhs_expression state node
+
+(* Augmented assignment expression *)
+
+and print_augmented_assignment_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:LHS_of_augmented_assgmnt
+  | _ ->
+    let left_field = child_with_field "left" node ~err:Expression
+    and operator = child_with_field "operator" node ~err:Augmented_assignment
+    and right_field = child_with_field "right" node ~err:Expression in
+    let children =
+      [ mk_child_res print_assignment_operator operator
+      ; mk_child_res print_augmented_assignment_lhs left_field
+      ; mk_child_res print_expression right_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_assignment_operator state node =
+  match get_name node with
+  | "+=" -> mk_sym_plus_equal state node
+  | "-=" -> mk_sym_minus_equal state node
+  | "*=" -> mk_sym_mult_equal state node
+  | "/=" -> mk_sym_div_equal state node
+  | "%=" -> mk_sym_rem_equal state node
+  | "^=" -> mk_sym_xor_equal state node
+  | "&=" -> mk_sym_and_equal state node
+  | "|=" -> mk_sym_or_equal state node
+  | ">>=" -> mk_sym_shift_right_equal state node
+  | ">>>=" -> mk_sym_unsigned_shift_right_equal state node
+  | "<<=" -> mk_sym_shift_left_equal state node
+  | "**=" -> mk_sym_exponent_equal state node
+  | "&&=" -> mk_sym_conjunction_equal state node
+  | "||=" -> mk_sym_disjunction_equal state node
+  | "??=" -> mk_sym_non_null_equal state node
+  | _ -> print_error_node state node ~err:Augmented_assignment
+
+and print_augmented_assignment_lhs state node =
+  (* "_augmented_assignment_lhs" is inlined here (hidden rule): *)
+  match get_name node with
+  | "member_expression" -> print_member_expression state node
+  | "subscript_expression" -> print_subscript_expression state node
+  | "identifier" -> print_identifier state node
+  | "parenthesized_expression" -> print_parenthesized_expression state node
+  | _ -> print_error_node state node ~err:Expression
+
+(* Await expression *)
+
+and print_await_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Await
+  | _ ->
+    let kwd_await = first_child_named "await" node ~err:Await
+    and expression = child_ranked 1 node ~err:Expression in
+    let children =
+      [ mk_child_res mk_kwd_await kwd_await; mk_child_res print_expression expression ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Unary expression *)
+
+and print_unary_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Unary_operator
+  | _ ->
+    let operator_field = child_with_field "operator" node ~err:Unary_operator
+    and argument_field = child_with_field "argument" node ~err:Expression in
+    let children =
+      [ mk_child_res print_unary_operator operator_field
+      ; mk_child_res print_expression argument_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_unary_operator state node =
+  match get_name node with
+  | "!" -> mk_sym_emark state node
+  | "~" -> mk_sym_tilde state node
+  | "-" -> mk_sym_minus state node
+  | "+" -> mk_sym_plus state node
+  | "typeof" -> mk_kwd_typeof state node
+  | "void" -> mk_kwd_void state node
+  | "delete" -> mk_kwd_delete state node
+  | _ -> print_error_node state node ~err:Unary_operator
+
+(* Binary expression *)
+
+and print_binary_expression ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
+  | _ ->
+    let comments = comments @ prev_comments node
+    and left_field = child_with_field "left" node ~err:Expression
+    and operator = child_with_field "operator" node ~err:Binary_operator
+    and right_field = child_with_field "right" node ~err:Expression in
+    let children =
+      [ mk_child_res (print_lhs_bin_expression ~comments) left_field
+      ; mk_child_res print_binary_operator operator
+      ; mk_child_res print_expression right_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_lhs_bin_expression ?(comments = []) state node =
+  match get_name node with
+  | "private_property_identifier" -> print_identifier ~comments state node
+  | _ -> print_expression ~comments state node
+
+and print_binary_operator state node =
+  match get_name node with
+  | "&&" -> mk_sym_conjunction state node
+  | "||" -> mk_sym_disjunction state node
+  | ">>" -> mk_sym_shift_right state node
+  | ">>>" -> mk_sym_unsigned_shift_right state node
+  | "<<" -> mk_sym_shift_left state node
+  | "&" -> mk_sym_and state node
+  | "^" -> mk_sym_xor state node
+  | "|" -> mk_sym_or state node
+  | "+" -> mk_sym_plus state node
+  | "-" -> mk_sym_minus state node
+  | "*" -> mk_sym_asterisk state node
+  | "/" -> mk_sym_div state node
+  | "%" -> mk_sym_rem state node
+  | "**" -> mk_sym_exponent state node
+  | "<" -> mk_sym_less_than state node
+  | "<=" -> mk_sym_less_than_or_equal state node
+  | "==" -> mk_sym_strict_equal state node
+  | "===" -> mk_sym_no_conv_equal state node
+  | "!=" -> mk_sym_different state node
+  | "!==" -> mk_sym_no_conv_different state node
+  | ">=" -> mk_sym_greater_than_or_equal state node
+  | ">" -> mk_sym_greater_than state node
+  | "??" -> mk_sym_non_null state node
+  | "instanceof" -> mk_kwd_instanceof state node
+  | "in" -> mk_kwd_in state node
+  | _ -> print_error_node state node ~err:Binary_operator
+
+(* Ternary expression *)
+
+and print_ternary_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
+  | _ ->
+    let condition_field = child_with_field "condition" node ~err:Expression
+    and consequence_field = child_with_field "consequence" node ~err:Expression
+    and alternative_field = child_with_field "alternative" node ~err:Expression in
+    let children =
+      [ mk_child_res print_expression condition_field
+      ; mk_child_res print_expression consequence_field
+      ; mk_child_res print_expression alternative_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Update expression *)
+
+and print_update_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
+  | _ ->
+    let argument_field = child_with_field "argument" node ~err:Expression
+    and first_child = child_ranked 0 node ~err:Incr_or_decr_or_expr in
+    let children =
+      match first_child with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok first_child ->
+        (match get_name first_child with
+        | "++" ->
+          (* Prefix *)
+          [ mk_child mk_sym_increment first_child
+          ; mk_child_res print_expression argument_field
+          ]
+        | "--" ->
+          (* Prefix *)
+          [ mk_child mk_sym_decrement first_child
+          ; mk_child_res print_expression argument_field
+          ]
+        | _ ->
+          let snd_child = child_ranked 1 node ~err:Increment_or_decrement in
+          (match snd_child with
+          | Error msg -> [ mk_error_child first_child ~msg ]
+          | Ok snd_child ->
+            (match get_name snd_child with
+            | "++" ->
+              (* Postfix *)
+              [ mk_child_res print_expression argument_field
+              ; mk_child mk_sym_increment snd_child
+              ]
+            | "--" ->
+              (* Postfix *)
+              [ mk_child_res print_expression argument_field
+              ; mk_child mk_sym_decrement snd_child
+              ]
+            | _ -> [] (* Should not happen. *))))
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* New expression
+
+   Note that the constructor field is a primary expression, but
+   "primary_expression" is a supertype, that is, a hidden rule. We
+   assume it is an "expression", since primary expressions are a subset
+   of them. *)
+
+and print_new_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:New
+  | _ ->
+    let kwd_new = first_child_named "new" node ~err:New
+    and constructor_field = child_with_field "constructor" node ~err:Expression
+    and type_arguments_field = child_with_field_opt "type_arguments" node
+    and arguments_field = child_with_field_opt "arguments" node in
+    let children =
+      [ mk_child_res mk_kwd_new kwd_new
+      ; mk_child_res print_expression constructor_field
+      ; mk_child_opt print_type_arguments type_arguments_field
+      ; mk_child_opt print_arguments arguments_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Yield expression *)
+
+and print_yield_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Yield
+  | _ ->
+    let kwd_yield = first_child_named "yield" node ~err:Yield in
+    (match child_ranked_opt 1 node with
+    | None ->
+      let children = [ mk_child_res mk_kwd_yield kwd_yield ] in
+      let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+      let children = mk_child_opt make_node error_child :: children in
+      make_tree state node children
+    | Some snd_child ->
+      let snd_child =
+        match get_name snd_child with
+        | "*" -> child_ranked 2 node ~err:Expression
+        | _ -> Ok snd_child
+      in
+      let children =
+        [ mk_child_res mk_kwd_yield kwd_yield; mk_child_res print_expression snd_child ]
+      in
+      let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+      let children = mk_child_opt make_node error_child :: children in
+      make_tree state node children)
+
+(* As-expression *)
+
+and print_as_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
+  | _ ->
+    let expression = child_ranked 0 node ~err:Expression
+    and kwd_as = first_child_named "as" node ~err:As
+    and as_what = child_ranked 2 node ~err:Const_or_type
+    and print_as state node =
+      match get_name node with
+      | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Const_or_type
+      | "const" -> mk_kwd_const state node
+      | _ -> print_type state node
+    in
+    let children =
+      [ mk_child_res print_expression expression
+      ; mk_child_res mk_kwd_as kwd_as
+      ; mk_child_res print_as as_what
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Statisfies-expression *)
+
+and print_satisfies_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
+  | _ ->
+    let expression = child_ranked 0 node ~err:Expression
+    and kwd_satisfies = first_child_named "satisfies" node ~err:Satisfies
+    and type_child = child_ranked 2 node ~err:Type_expression in
+    let children =
+      [ mk_child_res print_expression expression
+      ; mk_child_res mk_kwd_satisfies kwd_satisfies
+      ; mk_child_res print_type type_child
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Instantiation expression *)
+
+and print_instantiation_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
+  | _ ->
+    let expression = named_child_ranked 0 node ~err:Expression
+    and type_arguments_field =
+      child_with_field "type_arguments" node ~err:Type_arguments
+    in
+    let children =
+      [ mk_child_res print_expression expression
+      ; mk_child_res print_type_arguments type_arguments_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Type assertion *)
+
+and print_type_assertion state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_arguments
+  | _ ->
+    let type_arguments = named_child_ranked 0 node ~err:Type_arguments
+    and expression = named_child_ranked 1 node ~err:Expression in
+    let children =
+      [ mk_child_res print_type_arguments type_arguments
+      ; mk_child_res print_expression expression
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Subscript expression (see [print_member_expression]) *)
+
+and print_subscript_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
+  | _ ->
+    let object_field = child_with_field "object" node ~err:Expression
+    and optional_chain_field = child_with_field_opt "optional_chain" node
+    and index_field = child_with_field "index" node ~err:Expression
+    and sym_lbracket = first_child_named "[" node ~err:Left_bracket
+    and sym_rbracket = first_child_named "]" node ~err:Right_bracket in
+    let children =
+      [ mk_child_res print_expression object_field
+      ; mk_child_opt print_optional_chain optional_chain_field
+      ; mk_child_res mk_sym_lbracket sym_lbracket
+      ; mk_child_res print_index index_field
+      ; mk_child_res mk_sym_rbracket sym_rbracket
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_optional_chain state node =
+  match get_name node with
+  | "optional_chain" -> make_node state node
+  | _ -> print_error_node state node ~err:Optional_chain
+
+and print_index state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Index_expression
+  | "sequence_expression" -> print_sequence_expression state node
+  | _ -> print_expression state node
+
+(* Member expression *)
+
+and print_member_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Member_expression
+  | _ ->
+    let object_field = child_with_field "object" node ~err:Expression
+    and optional_chain_field = child_with_field_opt "optional_chain" node
+    and property_field = child_with_field "property" node ~err:Property_identifier
+    and print_selector state = function
+      | None -> () (* "." *)
+      | Some node ->
+        (* "?." *)
+        mk_sym_optional_chain state node
+    in
+    let children =
+      [ mk_child_res print_object_member object_field
+      ; mk_child print_selector optional_chain_field
+      ; mk_child_res print_property_field property_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_object_member state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Object_denotation
+  | "import" -> mk_kwd_import state node
+  | _ -> print_expression state node
+
+(* Parenthesised expression *)
+
+and print_parenthesized_expression ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Parenthesized_expression
+  | _ ->
+    let comments = comments @ prev_comments node in
+    let opening = first_child_named "(" node ~err:Left_parenthesis
+    and closing = first_child_named ")" node ~err:Right_parenthesis
+    and second_child = child_ranked 1 node ~err:Expression
+    and type_field = child_with_field_opt "type" node in
+    let children =
+      match type_field with
+      | Some type_field ->
+        [ mk_child_res print_expression second_child
+        ; mk_child print_type_annotation type_field
+        ]
+      | None ->
+        let print state node =
+          match get_name node with
+          | "sequence_expression" -> print_sequence_expression state node
+          | _ -> print_expression state node
+        in
+        [ mk_child_res print second_child ]
+    in
+    let children =
+      (mk_child_res (mk_sym_lparen ~comments) opening :: children)
+      @ [ mk_child_res mk_sym_rparen closing ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Template strings *)
+
+and print_template_string ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Template_string
+  | _ ->
+    let opening = child_ranked 0 node ~err:Backquote in
+    let closing = last_child node ~err:Backquote in
+    let raw_children = collect_named_children node in
+    let children =
+      (mk_child_res (mk_sym_backquote ~comments) opening
+      :: mk_children_list print_template_string_fragment raw_children)
+      @ [ mk_child_res mk_sym_backquote closing ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_template_string_fragment ?comments state node =
+  match get_name node with
+  | "string_fragment" -> make_node ?comments state node
+  | "escape_sequence" -> make_node ?comments state node
+  | "template_substitution" -> make_node ?comments state node
+  | _ -> print_error_node state node ~err:Template_string
+
+(* Object *)
+
+and print_object_expr state node =
+  print_braces state node print_object_entry ~err:Object_expression
+
+and print_object_entry state node =
+  match get_name node with
+  | "pair" -> print_pair state node
+  | "spread_element" -> print_spread_element state node
+  | "method_definition" -> print_method_definition state node
+  | "shorthand_property_identifier" ->
+    print_shorthand_property_identifier_pattern state node
+  | _ -> print_error_node state node ~err:Object_field
+
+(* Pairs *)
+
+and print_pair state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Key_value_pair
+  | _ ->
+    let key_field = child_with_field "key" node ~err:Property_name
+    and sym_colon = first_child_named ":" node ~err:Colon
+    and value_field = child_with_field "value" node ~err:Expression in
+    let children =
+      [ mk_child_res print_property_name key_field
+      ; mk_child_res mk_sym_colon sym_colon
+      ; mk_child_res print_expression value_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Array (expression) *)
+
+and print_array state node = print_brackets state node print_array_cell ~err:Array
+
+and print_array_cell state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Array_cell
+  | "spread_element" -> print_spread_element state node
+  | _ -> print_expression state node (* Hidden *)
+
+and print_spread_element state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Spread
+  | _ ->
+    let sym_ellipsis = first_child_named "..." node ~err:Ellipsis
+    and expr_node = named_child_ranked 0 node ~err:Expression in
+    let children =
+      [ mk_child_res mk_sym_ellipsis sym_ellipsis
+      ; mk_child_res print_expression expr_node
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Function (expression) *)
+
+and print_function_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Function_expression
+  | _ ->
+    let kwd_async = first_child_named_opt "async" node
+    and kwd_function = first_child_named "function" node ~err:Function
+    and name_field = child_with_field_opt "name" node
+    (* "_call_signature" inlined: *)
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and return_type_field = child_with_field_opt "return_type" node
+    (* "statement_block" *)
+    and body_field = child_with_field "body" node ~err:Block in
+    let children =
+      [ mk_child_opt mk_kwd_async kwd_async
+      ; mk_child_res mk_kwd_function kwd_function
+      ; mk_child_opt print_identifier name_field
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_opt print_return_type return_type_field
+      ; mk_child_res print_statement_block body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Arrow function *)
+
+and print_arrow_function state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Arrow_function
+  | _ ->
+    let kwd_async = first_child_named_opt "async" node
+    and parameter_field = child_with_field_opt "parameter" node
+    and sym_arrow = first_child_named "=>" node ~err:Arrow
+    and body_field = child_with_field "body" node ~err:Block_or_expression in
+    let children =
+      match parameter_field with
+      | Some parameter_field ->
+        [ mk_child_opt mk_kwd_async kwd_async
+        ; mk_child print_identifier parameter_field
+        ; mk_child_res mk_sym_arrow sym_arrow
+        ; mk_child_res print_arrow_function_body body_field
+        ]
+      | None ->
+        (* "_call_signature" inlined: *)
+        let type_parameters_field = child_with_field_opt "type_parameters" node
+        and parameters_field = child_with_field "parameters" node ~err:Parameters
+        and return_type_field = child_with_field_opt "return_type" node in
+        [ mk_child_opt mk_kwd_async kwd_async
+        ; mk_child_opt print_type_parameters type_parameters_field
+        ; mk_child_res print_formal_parameters parameters_field
+        ; mk_child_opt print_return_type return_type_field
+        ; mk_child_res mk_sym_arrow sym_arrow
+        ; mk_child_res print_arrow_function_body body_field
+        ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_arrow_function_body state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Block_or_expression
+  | "statement_block" -> print_statement_block state node
+  | _ -> print_expression state node (* Hidden *)
+
+(* Generator function *)
+
+and print_generator_function state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Generator_function
+  | _ ->
+    let kwd_async = first_child_named_opt "async" node
+    and kwd_function = first_child_named "function" node ~err:Function
+    and sym_asterisk = first_child_named "*" node ~err:Asterisk
+    and name_field = child_with_field_opt "name" node
+    (* "_call_signature" inlined: *)
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and return_type_field = child_with_field_opt "return_type" node
+    (* "statement_block" *)
+    and body_field = child_with_field "body" node ~err:Block in
+    let children =
+      [ mk_child_opt mk_kwd_async kwd_async
+      ; mk_child_res mk_kwd_function kwd_function
+      ; mk_child_res mk_sym_asterisk sym_asterisk
+      ; mk_child_opt print_identifier name_field
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_opt print_return_type return_type_field
+      ; mk_child_res print_statement_block body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Class expression ("class_" in the grammar) *)
+
+and print_class_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Class_expression
+  | _ ->
+    let decorators = children_named "decorator" node
+    and kwd_class = first_child_named "class" node ~err:Class
+    and name_field = child_with_field_opt "name" node
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and heritage_child = first_child_named_opt "class_heritage" node
+    and body_field = child_with_field "body" node ~err:Class_body in
+    let children =
+      mk_children_list print_decorator decorators
+      @ [ mk_child_res mk_kwd_class kwd_class
+        ; mk_child_opt print_type_identifier name_field
+        ; mk_child_opt print_type_parameters type_parameters_field
+        ; mk_child_opt print_class_heritage heritage_child
+        ; mk_child_res print_class_body body_field
+        ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_class_heritage state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Extends_or_implements
+  | _ ->
+    let children =
+      match child_ranked 0 node ~err:Extends_or_implements with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok first_child ->
+        (match get_name first_child with
+        | "extends_clause" ->
+          let implements_clause = first_child_named_opt "implements_clause" node in
+          [ mk_child print_extends_clause first_child
+          ; mk_child_opt print_implements_clause implements_clause
+          ]
+        | "implements_clause" -> [ mk_child print_implements_clause first_child ]
+        | _ ->
+          let msg = mk_err_msg node Extends_or_implements in
+          [ mk_error_child node ~msg ])
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_extends_clause state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Extends_clause
+  | _ ->
+    let kwd_extends = first_child_named "extends" node ~err:Extends
+    and children =
+      match collect_children node with
+      | [] | [ _ ] -> []
+      | _extends :: clauses -> clauses
+    in
+    let not_comma child = String.(get_name child <> ",") in
+    let children = List.filter children ~f:not_comma in
+    let rec pair_up acc = function
+      | value :: snd :: nodes ->
+        if String.equal (get_name snd) "type_arguments"
+        then pair_up ((value, Some snd) :: acc) nodes
+        else pair_up ((value, None) :: acc) (snd :: nodes)
+      | [ value ] -> List.rev ((value, None) :: acc)
+      | [] -> List.rev acc
+    in
+    let pairs = pair_up [] children in
+    let mk_children (value, type_arguments_opt) acc =
+      let value_child = mk_child print_expression value in
+      match type_arguments_opt with
+      | None -> value_child :: acc
+      | Some type_arguments ->
+        value_child :: mk_child print_type_arguments type_arguments :: acc
+    in
+    let children =
+      mk_child_res mk_kwd_extends kwd_extends
+      :: List.fold_right ~f:mk_children pairs ~init:[]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_implements_clause state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Implements_clause
+  | _ ->
+    let kwd_implements = first_child_named "implements" node ~err:Implements
+    and named_children = collect_named_children node in
+    let children =
+      mk_child_res mk_kwd_implements kwd_implements
+      :: mk_children_list print_type named_children
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_class_body ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Class_body
+  | _ ->
+    let comments = comments @ prev_comments node in
+    let opening = first_child_named "{" node ~err:Left_brace
+    and closing = first_child_named "}" node ~err:Right_brace
+    and named_children = collect_named_children node in
+    let pair (decorators, acc) child =
+      match get_name child with
+      | "decorator" -> child :: decorators, acc
+      | _ -> [], (List.rev decorators, child) :: acc
+    in
+    let _, pairs = List.fold_left ~f:pair ~init:([], []) named_children in
+    let pairs = List.rev pairs in
+    let children =
+      (mk_child_res (mk_sym_lbracket ~comments) opening
+      :: mk_children_list print_class_member pairs)
+      @ [ mk_child_res mk_sym_rbracket closing ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_class_member state (decorators, node) =
+  match get_name node with
+  | "method_definition" -> print_method_definition_with_decorators decorators state node
+  | "method_signature" -> print_method_signature state node
+  | "class_static_block" -> print_class_static_block state node
+  | "abstract_method_signature" -> print_abstract_method_signature state node
+  | "index_signature" -> print_index_signature state node
+  | "public_field_definition" -> print_public_field_definition state node
+  | _ -> print_error_node state node ~err:Class_member
+
+(* Method definition *)
+
+and print_method_definition_with_decorators decorators state node =
+  List.iter ~f:(print_decorator state) decorators;
+  print_method_definition state node
+
+and print_method_definition state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Method_definition
+  | _ ->
+    let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
+    and kwd_static = first_child_named_opt "static" node
+    and override_modifier = first_child_named_opt "override_modifier" node
+    and kwd_readonly = first_child_named_opt "readonly" node
+    and kwd_async = first_child_named_opt "async" node
+    and kwd_set = first_child_named_opt "set" node
+    and kwd_get = first_child_named_opt "get" node
+    and sym_asterisk = first_child_named_opt "*" node
+    and name_field = child_with_field "name" node ~err:Property_name
+    and qmark = first_child_named_opt "?" node
+    (* "_call_signature" inlined: *)
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and return_type_field = child_with_field_opt "return_type" node
+    (* "statement_block" *)
+    and body_field = child_with_field "body" node ~err:Block in
+    let children =
+      [ mk_child_opt print_accessibility_modifier accessibility_modifier
+      ; mk_child_opt mk_kwd_static kwd_static
+      ; mk_child_opt print_override_modifier override_modifier
+      ; mk_child_opt mk_kwd_readonly kwd_readonly
+      ; mk_child_opt mk_kwd_async kwd_async
+      ; mk_child_opt mk_kwd_set kwd_set
+      ; mk_child_opt mk_kwd_get kwd_get
+      ; mk_child_opt mk_sym_asterisk sym_asterisk
+      ; mk_child_res print_property_name name_field
+      ; mk_child_opt make_node qmark
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_opt print_return_type return_type_field
+      ; mk_child_res print_statement_block body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_class_static_block state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Static_block
+  | _ ->
+    let kwd_static = first_child_named "static" node ~err:Static
+    and body_field = child_with_field "body" node ~err:Block in
+    let children =
+      [ mk_child_res mk_kwd_static kwd_static
+      ; mk_child_res print_statement_block body_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Abstract method signature *)
+
+and print_abstract_method_signature state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Abstract_method_signature
+  | _ ->
+    let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
+    and kwd_abstract = first_child_named "abstract" node ~err:Abstract
+    and override_modifier = first_child_named_opt "override_modifier" node
+    and kwd_set = first_child_named_opt "set" node
+    and kwd_get = first_child_named_opt "get" node
+    and sym_asterisk = first_child_named_opt "*" node
+    and name_field = child_with_field "name" node ~err:Property_name
+    and sym_qmark = first_child_named_opt "?" node
+    (* "_call_signature" inlined: *)
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and return_type_field = child_with_field_opt "return_type" node in
+    let children =
+      [ mk_child_opt print_accessibility_modifier accessibility_modifier
+      ; mk_child_res mk_kwd_abstract kwd_abstract
+      ; mk_child_opt print_override_modifier override_modifier
+      ; mk_child_opt mk_kwd_set kwd_set
+      ; mk_child_opt mk_kwd_get kwd_get
+      ; mk_child_opt make_node sym_asterisk
+      ; mk_child_res print_property_name name_field
+      ; mk_child_opt mk_sym_qmark sym_qmark
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_opt print_return_type return_type_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_public_field_definition state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Public_field_definition
+  | _ ->
+    let decorators = children_named "decorator" node
+    and accessibility_modifier = first_child_named_opt "accessibility_modifier" node
+    and override_modifier = first_child_named_opt "override_modifier" node
+    and kwd_declare = first_child_named_opt "declare" node
+    and kwd_static = first_child_named_opt "static" node
+    and kwd_readonly = first_child_named_opt "readonly" node
+    and kwd_accessor = first_child_named_opt "accessor" node
+    and kwd_abstract = first_child_named_opt "abstract" node
+    and name_field = child_with_field "name" node ~err:Property_name
+    and type_field = child_with_field_opt "type" node
+    and sym_qmark = first_child_named_opt "?" node
+    and sym_emark = first_child_named_opt "!" node in
+    let children =
+      mk_children_list print_decorator decorators
+      @ [ mk_child_opt mk_kwd_declare kwd_declare
+        ; mk_child_opt print_accessibility_modifier accessibility_modifier
+        ; mk_child_opt print_override_modifier override_modifier
+        ; mk_child_opt mk_kwd_static kwd_static
+        ; mk_child_opt mk_kwd_readonly kwd_readonly
+        ; mk_child_opt mk_kwd_accessor kwd_accessor
+        ; mk_child_opt mk_kwd_abstract kwd_abstract
+        ; mk_child_res print_property_name name_field
+        ; mk_child_opt mk_sym_qmark sym_qmark
+        ; mk_child_opt mk_sym_emark sym_emark
+        ; mk_child_opt print_type_annotation type_field
+        ]
+      @ mk_child_initializer_opt node (* "_initializer" inlined *)
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Meta-property *)
+
+and print_meta_property state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Meta_property
+  | _ ->
+    let first_child = child_ranked 0 node ~err:New_or_import
+    and snd_child = child_ranked 2 node ~err:Target_or_meta in
+    let children =
+      [ mk_child_res (make_kwd ~err:New_or_import) first_child
+      ; mk_child_res (make_kwd ~err:Target_or_meta) snd_child
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Call expression *)
+
+and print_call_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Call_expression
+  | _ ->
+    let function_field = child_with_field "function" node ~err:Expression
+    and member_selection = first_child_named_opt "?." node
+    and type_arguments_field = child_with_field_opt "type_arguments" node
+    and arguments_field = child_with_field "arguments" node ~err:Arguments in
+    let children =
+      match member_selection with
+      | None ->
+        let print_function state node =
+          match get_name node with
+          | "ERROR" | "MISSING" | "NULL" ->
+            print_error_node state node ~err:Import_or_expression
+          | "import" -> mk_kwd_import state node
+          | _ -> print_expression state node
+        and print_arguments state node =
+          match get_name node with
+          | "template_string" -> print_template_string state node
+          | _ -> print_arguments state node
+        in
+        [ mk_child_res print_function function_field
+        ; mk_child_opt print_type_arguments type_arguments_field
+        ; mk_child_res print_arguments arguments_field
+        ]
+      | Some _ ->
+        [ mk_child_res print_primary_expression function_field
+        ; mk_child_opt print_type_arguments type_arguments_field
+        ; mk_child_res print_arguments arguments_field
+        ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_type_arguments state node =
+  print_chevrons state node print_type ~err:Type_arguments
+
+and print_arguments state node = print_parens state node print_argument ~err:Arguments
+
+and print_argument state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Argument
+  | "spread_element" -> print_spread_element state node
+  | _ -> print_expression state node (* Hidden *)
+
+(* Non-null expression *)
+
+and print_non_null_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Non_null_expression
+  | _ ->
+    let child = named_child_ranked 0 node ~err:Non_null_expression in
+    let children = [ mk_child_res print_expression child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Sequence expression *)
+
+and print_sequence_expression ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Expression
+  | _ -> tree_of_named_children ~comments state node print_expression
+
+(* TYPES
+
+   The non-terminals "type" and "primary_type" are supertypes in the
+   TypeScript grammar, which means that they are hidden rules. *)
+
+and print_type ?(comments = []) state node =
+  match get_name node with
+  | "function_type" -> print_function_type state node
+  | "readonly_type" -> print_readonly_type state node
+  | "constructor_type" -> print_constructor_type state node
+  | "infer_type" -> print_infer_type state node
+  (* A couple of aliases *)
+  | "member_expression" ->
+    print_type_query_member_expression_in_type_annotation state node
+  | "call_expression" -> print_type_query_call_expression_in_type_annotation state node
+  (* "primary_type" is hidden *)
+  | _ -> print_primary_type ~comments state node
+
+(* Primary type *)
+
+and print_primary_type ?(comments = []) state node =
+  match get_name node with
+  | "parenthesized_type" -> print_parenthesized_type state node
+  | "predefined_type" -> print_predefined_type state node
+  | "type_identifier" -> print_type_identifier state node (* Including "const" *)
+  | "nested_type_identifier" -> print_nested_type_identifier state node
+  | "generic_type" -> print_generic_type state node
+  | "object_type" -> print_object_type state node
+  | "array_type" -> print_array_type state node
+  | "tuple_type" -> print_tuple_type state node
+  | "flow_maybe_type" -> print_flow_maybe_type state node
+  | "type_query" -> print_type_query state node
+  | "index_type_query" -> print_index_type_query state node
+  | "this_type" -> mk_kwd_this state node
+  | "existential_type" -> print_existential_type state node
+  | "literal_type" -> print_literal_type state node
+  | "lookup_type" -> print_lookup_type state node
+  | "conditional_type" -> print_conditional_type state node
+  | "template_literal_type" -> print_template_literal_type state node
+  | "intersection_type" -> print_intersection_type state node
+  | "union_type" -> print_union_type ~comments state node
+  | _ -> print_error_node state node ~err:Type_expression
+
+(* Type queries in type annotations (expressions) *)
+
+and print_type_query_member_expression_in_type_annotation state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Member_or_call
+  | _ ->
+    let object_field = child_with_field "object" node ~err:Member_or_call
+    and selector = first_child_named "." node ~err:Dot
+    and property_field = child_with_field "property" node ~err:Property_identifier
+    and print_object_field state node =
+      match get_name node with
+      | "import" -> mk_kwd_import state node
+      | "member_expression" ->
+        print_type_query_member_expression_in_type_annotation state node
+      | "call_expression" ->
+        print_type_query_call_expression_in_type_annotation state node
+      | _ -> print_error_node state node ~err:Object_field
+    in
+    let children =
+      [ mk_child_res print_object_field object_field
+      ; mk_child_res mk_sym_dot selector
+      ; mk_child_res print_type_query_property property_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_type_query_property state node =
+  match get_name node with
+  | "property_identifier" -> print_identifier state node
+  | "private_property_identifier" -> print_identifier state node
+  | _ -> print_error_node state node ~err:Property_identifier
+
+and print_type_query_call_expression_in_type_annotation state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Member_expression
+  | _ ->
+    let function_field = child_with_field "function" node ~err:Member_expression
+    and arguments_field = child_with_field "arguments" node ~err:Arguments in
+    let children =
+      [ mk_child_res print_type_query_call_lambda function_field
+      ; mk_child_res print_arguments arguments_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_type_query_call_lambda state node =
+  match get_name node with
+  | "import" -> mk_kwd_import state node
+  | "member_expression" ->
+    print_type_query_member_expression_in_type_annotation state node
+  | _ -> print_error_node state node ~err:Member_expression
+
+(* Flow maybe type
+
+   flow_maybe_type: $ => prec.right(seq('?', $.primary_type))
+ *)
+
+and print_flow_maybe_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type
+  | _ ->
+    let child = named_child_ranked 0 node ~err:Type_expression in
+    let children = [ mk_child_res print_primary_type child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Type identifier *)
+
+and print_type_identifier ?comments state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_name
+  | _ -> print_identifier ?comments state node
+
+(* Parenthesized type *)
+
+and print_parenthesized_type state node =
+  print_parens state node print_type ~err:Parenthesized_type
+
+(* Predefined type *)
+
+and print_predefined_type ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Predefined_type
+  | _ ->
+    let comments = comments @ prev_comments node in
+    (match collect_children node with
+    | [] -> () (* Should not happen *)
+    | child :: _ ->
+      (* The tree-sitter parser for TypeScript has a bug: a child node
+        "unique symbol" occurs repeated, for some mysterious
+        reason. This case of the pattern matching is a hack to work
+        around the issue. For reference, here is the production:
+
+        predefined_type: _ => choice(
+        ...
+        alias(seq('unique', 'symbol'), 'unique symbol')
+        ...)
+      *)
+      let print state node =
+        match get_name node with
+        | "any" -> mk_kwd_any ~comments state node
+        | "number" -> mk_kwd_number ~comments state node
+        | "boolean" -> mk_kwd_boolean ~comments state node
+        | "string" -> mk_kwd_string ~comments state node
+        | "symbol" -> mk_kwd_symbol ~comments state node
+        | "unique symbol" -> mk_kwd_unique_symbol ~comments state node
+        | "void" -> mk_kwd_void ~comments state node
+        | "unknown" -> mk_kwd_unknown ~comments state node
+        | "never" -> mk_kwd_never ~comments state node
+        | "object" -> mk_kwd_object ~comments state node
+        | _ -> print_error_node state node ~err:Predefined_type
+      in
+      let children = [ mk_child print child ] in
+      let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+      let children = mk_child_opt make_node error_child :: children in
+      make_tree state node children)
+
+(* Nested type identifier *)
+
+and print_nested_type_identifier ?comments state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Nested_type_identifier
+  | _ ->
+    let module_field = child_with_field "module" node ~err:Identifier_or_path
+    and name_field = child_with_field "name" node ~err:Type_name in
+    let children =
+      [ mk_child_res (print_module_path ?comments) module_field
+      ; mk_child_res print_type_identifier name_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_module_path ?comments state node =
+  match get_name node with
+  | "identifier" -> print_identifier ?comments state node
+  | "nested_identifier" -> print_nested_identifier ?comments state node
+  | _ -> print_error_node state node ~err:Identifier_or_path
+
+(* Nested identifier *)
+
+and print_nested_identifier ?comments state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Identifier_or_member
+  | _ ->
+    let object_field = child_with_field "object" node ~err:Identifier_or_member
+    and property_field = child_with_field "property" node ~err:Property_identifier in
+    let children =
+      [ mk_child_res (print_object_path ?comments) object_field
+      ; mk_child_res print_property property_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_object_path ?comments state node =
+  match get_name node with
+  | "identifier" -> print_identifier ?comments state node
+  | "member_expression" -> print_nested_identifier ?comments state node
+  | _ -> print_error_node state node ~err:Identifier_or_member
+
+and print_property state node =
+  match get_name node with
+  | "property_identifier" -> print_identifier state node
+  | _ -> print_error_node state node ~err:Property_identifier
+
+(* Generic type *)
+
+and print_generic_type ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Generic_type
+  | _ ->
+    let comments = comments @ prev_comments node in
+    let name_field = child_with_field "name" node ~err:Type_identifier_or_path
+    and type_arguments_field =
+      child_with_field "type_arguments" node ~err:Type_arguments
+    in
+    let children =
+      [ mk_child_res (print_generic_name ~comments) name_field
+      ; mk_child_res print_type_arguments type_arguments_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_generic_name ?(comments = []) state node =
+  match get_name node with
+  | "type_identifier" -> print_type_identifier ~comments state node
+  | "nested_type_identifier" -> print_nested_type_identifier ~comments state node
+  | _ -> print_error_node state node ~err:Type_identifier_or_path
+
+(* Object type *)
+
+and print_object_type state node =
+  print_braces state node print_member_type ~err:Object_type
+
+and print_member_type state node =
+  match get_name node with
+  | "export_statement" -> print_export_statement state node
+  | "property_signature" -> print_property_signature state node
+  | "call_signature" -> print_call_signature state node
+  | "construct_signature" -> print_construct_signature state node
+  | "index_signature" -> print_index_signature state node
+  | "method_signature" -> print_method_signature state node
+  | _ -> print_error_node state node ~err:Object_type_field
+
+(* Property signature *)
+
+and print_property_signature state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Property_signature
+  | _ ->
+    let comments = prev_comments node in
+    let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
+    and kwd_static = first_child_named_opt "static" node
+    and override_modifier = first_child_named_opt "override_modifier" node
+    and kwd_readonly = first_child_named_opt "readonly" node
+    and name_field = child_with_field "name" node ~err:Identifier
+    and sym_qmark = first_child_named_opt "?" node
+    and type_field = child_with_field_opt "type" node in
+    let children =
+      [ mk_child_opt print_accessibility_modifier accessibility_modifier
+      ; mk_child_opt mk_kwd_static kwd_static
+      ; mk_child_opt print_override_modifier override_modifier
+      ; mk_child_opt mk_kwd_readonly kwd_readonly
+      ; mk_child_res (print_identifier ~comments) name_field
+      ; mk_child_opt mk_sym_qmark sym_qmark
+      ; mk_child_opt print_type_annotation type_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Call signature *)
+
+and print_call_signature state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Call_signature
+  | _ ->
+    let type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and return_type_field = child_with_field_opt "return_type" node in
+    let children =
+      [ mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_opt print_return_type return_type_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Asserts annotation *)
+
+and print_asserts_annotation state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Asserts_annotation
+  | _ ->
+    let child = first_child_named "asserts" node ~err:Asserts in
+    let children = [ mk_child_res print_asserts child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_asserts state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Asserts
+  | _ ->
+    let kwd_asserts = first_child_named "asserts" node ~err:Asserts
+    and child = child_ranked 1 node ~err:Asserted
+    and print state node =
+      match get_name node with
+      | "type_predicate" -> print_type_predicate state node
+      | "identifier" -> print_identifier state node
+      | "this" -> mk_kwd_this state node
+      | _ -> print_error_node state node ~err:Asserted
+    in
+    let children =
+      [ mk_child_res mk_kwd_asserts kwd_asserts; mk_child_res print child ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Type predicate annotation *)
+
+and print_type_predicate_annotation state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_predicate
+  | _ ->
+    let child = child_ranked 1 node ~err:Type_predicate in
+    let children = [ mk_child_res print_type_predicate child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Construct signature *)
+
+and print_construct_signature state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Construct_signature
+  | _ ->
+    let kwd_abstract = first_child_named_opt "abstract" node
+    and kwd_new = first_child_named "new" node ~err:New
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and type_field = child_with_field_opt "type" node in
+    let children =
+      [ mk_child_opt mk_kwd_abstract kwd_abstract
+      ; mk_child_res mk_kwd_new kwd_new
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_opt print_type_annotation type_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Index signature *)
+
+and print_index_signature state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Index_signature
+  | _ ->
+    let kwd_readonly = first_child_named_opt "readonly" node
+    and sign_field = child_with_field_opt "sign" node
+    and name_field = child_with_field_opt "name" node
+    and type_field = child_with_field "type" node ~err:Type_annotation
+    and sym_lbracket = first_child_named "[" node ~err:Left_bracket
+    and sym_rbracket = first_child_named "]" node ~err:Right_bracket in
+    let prefix =
+      [ mk_child_opt print_plus_minus sign_field
+      ; mk_child_opt mk_kwd_readonly kwd_readonly
+      ]
+    in
+    let children =
+      prefix
+      @ [ mk_child_res mk_sym_lbracket sym_lbracket ]
+      @ (match name_field with
+        | Some name_field ->
+          let sym_colon = first_child_named ":" node ~err:Colon
+          and index_type_field = child_with_field "index_type" node ~err:Type in
+          [ mk_child print_identifier name_field
+          ; mk_child_res mk_sym_colon sym_colon
+          ; mk_child_res print_type index_type_field
+          ; mk_child_res print_index_annotation type_field
+          ]
+        | None ->
+          let mapped_type_clause = named_child_ranked 0 node ~err:Mapped_type_signature in
+          [ mk_child_res print_mapped_type_clause mapped_type_clause
+          ; mk_child_res print_index_annotation type_field
+          ])
+      @ [ mk_child_res mk_sym_rbracket sym_rbracket ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_index_annotation state node =
+  match get_name node with
+  | "type_annotation" -> print_type_annotation state node
+  | "omitting_type_annotation" -> print_omitting_type_annotation state node
+  | "adding_type_annotation" -> print_adding_type_annotation state node
+  | "opting_type_annotation" -> print_opting_type_annotation state node
+  | _ -> print_error_node state node ~err:Type_of_index_signature
+
+and print_plus_minus state node =
+  match get_name node with
+  | "+" -> mk_sym_plus state node
+  | "-" -> mk_sym_minus state node
+  | _ -> print_error_node state node ~err:Plus_or_minus
+
+and print_mapped_type_clause state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Mapped_type_signature
+  | _ ->
+    let name_field = child_with_field "name" node ~err:Type_name
+    and kwd_in = first_child_named "in" node ~err:In
+    and type_field = child_with_field "type" node ~err:Type
+    and alias_field = child_with_field_opt "alias" node in
+    let alias_children =
+      match alias_field with
+      | None -> []
+      | Some alias ->
+        let kwd_as = first_child_named "as" node ~err:As in
+        [ mk_child_res mk_kwd_as kwd_as; mk_child print_type alias ]
+    in
+    let children =
+      [ mk_child_res print_type_identifier name_field
+      ; mk_child_res mk_kwd_in kwd_in
+      ; mk_child_res print_type type_field
+      ]
+      @ alias_children
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_omitting_type_annotation state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Omitting_type_annotation
+  | _ ->
+    let sym_kind = first_child_named "-?:" node ~err:Omitting_type_annotation
+    and type_child = named_child_ranked 0 node ~err:Type_expression in
+    let children =
+      [ mk_child_res mk_sym_omitting sym_kind; mk_child_res print_type type_child ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_adding_type_annotation state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Adding_type_annotation
+  | _ ->
+    let sym_kind = first_child_named "+?:" node ~err:Adding_type_annotation
+    and type_child = named_child_ranked 0 node ~err:Type_expression in
+    let children =
+      [ mk_child_res mk_sym_adding sym_kind; mk_child_res print_type type_child ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_opting_type_annotation state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Opting_type_annotation
+  | _ ->
+    let sym_kind = first_child_named "?:" node ~err:Adding_type_annotation
+    and type_child = named_child_ranked 0 node ~err:Type_expression in
+    let children =
+      [ mk_child_res mk_sym_opting sym_kind; mk_child_res print_type type_child ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Method signature *)
+
+and print_method_signature state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Method_signature
+  | _ ->
+    let comments = prev_comments node in
+    let accessibility_modifier = first_child_named_opt "accessibility_modifier" node
+    and kwd_static = first_child_named_opt "static" node
+    and override_modifier = first_child_named_opt "override_modifier" node
+    and kwd_readonly = first_child_named_opt "readonly" node
+    and kwd_async = first_child_named_opt "async" node
+    and kwd_set = first_child_named_opt "set" node
+    and kwd_get = first_child_named_opt "get" node
+    and sym_asterisk = first_child_named_opt "*" node
+    and name_field = child_with_field "name" node ~err:Property_name
+    and sym_qmark = first_child_named_opt "?" node
+    (* "_call_signature" inlined: *)
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and return_type_field = child_with_field_opt "return_type" node in
+    let children =
+      [ mk_child_opt print_accessibility_modifier accessibility_modifier
+      ; mk_child_opt mk_kwd_static kwd_static
+      ; mk_child_opt print_override_modifier override_modifier
+      ; mk_child_opt mk_kwd_readonly kwd_readonly
+      ; mk_child_opt mk_kwd_async kwd_async
+      ; mk_child_opt mk_kwd_set kwd_set
+      ; mk_child_opt mk_kwd_get kwd_get
+      ; mk_child_opt mk_sym_asterisk sym_asterisk
+      ; mk_child_res (print_property_name ~comments) name_field
+      ; mk_child_opt mk_sym_qmark sym_qmark
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_opt print_return_type return_type_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Array type *)
+
+and print_array_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Array_type
+  | _ ->
+    let type_child = child_ranked 0 node ~err:Type_expression
+    and sym_lbracket = first_child_named "[" node ~err:Left_bracket
+    and sym_rbracket = first_child_named "]" node ~err:Right_bracket in
+    let children =
+      [ mk_child_res print_type type_child
+      ; mk_child_res mk_sym_lbracket sym_lbracket
+      ; mk_child_res mk_sym_rbracket sym_rbracket
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Tuple type *)
+
+and print_tuple_type state node =
+  print_brackets state node print_tuple_type_member ~err:Tuple_type
+
+and print_tuple_type_member state node =
+  match get_name node with
+  | "required_parameter" -> print_tuple_parameter state node (* Alias *)
+  | "optional_parameter" -> print_optional_tuple_parameter state node (* Alias *)
+  | "optional_type" -> print_optional_type state node
+  | "rest_type" -> print_rest_type state node
+  | _ -> print_type state node (* "type" is a hidden rule *)
+
+and print_tuple_parameter state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Tuple_parameter
+  | _ ->
+    let name_field = child_with_field "name" node ~err:Identifier_or_rest
+    and type_field = child_with_field "type" node ~err:Type_annotation in
+    let children =
+      [ mk_child_res print_tuple_parameter_name name_field
+      ; mk_child_res print_type_annotation type_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_tuple_parameter_name state node =
+  match get_name node with
+  | "identifier" -> print_identifier state node
+  | "rest_pattern" -> print_rest_pattern state node
+  | _ -> print_error_node state node ~err:Identifier_or_rest
+
+and print_optional_tuple_parameter state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Optional_tuple_parameter
+  | _ ->
+    let name_field = child_with_field "name" node ~err:Identifier
+    and type_field = child_with_field "type" node ~err:Type_annotation in
+    let children =
+      [ mk_child_res print_identifier name_field
+      ; mk_child_res print_type_annotation type_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Type annotation *)
+
+and print_type_annotation state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_annotation
+  | _ ->
+    let sym_colon = first_child_named ":" node ~err:Colon
+    and type_child = named_child_ranked 0 node ~err:Type_expression in
+    let children =
+      [ mk_child_res mk_sym_colon sym_colon; mk_child_res print_type type_child ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Rest pattern *)
+
+and print_rest_pattern state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Rest_pattern
+  | _ ->
+    let sym_ellipsis = first_child_named "..." node ~err:Ellipsis
+    and expr_child = named_child_ranked 0 node ~err:Expression in
+    let children =
+      [ mk_child_res mk_sym_ellipsis sym_ellipsis
+      ; mk_child_res print_lhs_expression expr_child
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Optional type *)
+
+and print_optional_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Optional_type
+  | _ ->
+    let child = named_child_ranked 0 node ~err:Optional_type in
+    let children = [ mk_child_res print_type child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Rest type *)
+
+and print_rest_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Rest_type
+  | _ ->
+    let sym_ellipsis = first_child_named "..." node ~err:Ellipsis
+    and type_child = named_child_ranked 0 node ~err:Type_expression in
+    let children =
+      [ mk_child_res mk_sym_ellipsis sym_ellipsis; mk_child_res print_type type_child ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* LHS expression *)
+
+and print_lhs_expression state node =
+  match get_name node with
+  | "member_expression" -> print_member_expression state node
+  | "subscript_expression" -> print_subscript_expression state node
+  | "identifier" -> print_identifier state node
+  | "undefined" -> mk_kwd_undefined state node
+  | "object_pattern" -> print_object_pattern state node
+  | "array_pattern" -> print_array_pattern state node
+  | "non_null_expression" -> print_non_null_expression state node
+  | _ -> print_error_node state node ~err:Pattern
+
+(* Type query *)
+
+and print_type_query state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_query
+  | _ ->
+    let kwd_typeof = first_child_named "typeof" node ~err:Typeof
+    and child = child_ranked 1 node ~err:Type_query
+    and print state node =
+      match get_name node with
+      | "subscript_expression" -> print_type_query_subscript_expression state node
+      | "member_expression" -> print_type_query_member_expression state node
+      | "call_expression" -> print_type_query_call_expression state node
+      | "instantiation_expression" -> print_type_query_instantiation_expression state node
+      | "identifier" -> print_identifier state node
+      | "this" -> mk_kwd_this state node
+      | _ -> print_error_node state node ~err:Type_query
+    in
+    let children = [ mk_child_res mk_kwd_typeof kwd_typeof; mk_child_res print child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_type_query_subscript_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_query_subscript
+  | _ ->
+    let object_field = child_with_field "object" node ~err:Object_denotation
+    and sym_lbracket = first_child_named "[" node ~err:Left_bracket
+    and index_field = child_with_field "index" node ~err:Type_or_string_or_number
+    and sym_rbracket = first_child_named "]" node ~err:Right_bracket in
+    let children =
+      [ mk_child_res print_type_query_object object_field
+      ; mk_child_res mk_sym_lbracket sym_lbracket
+      ; mk_child_res print_type_query_index index_field
+      ; mk_child_res mk_sym_rbracket sym_rbracket
+      ]
+    in
+    make_tree state node children
+
+and print_type_query_index state node =
+  match get_name node with
+  | "predefined_type" -> print_predefined_type state node
+  | "string" -> print_string state node
+  | "number" -> print_number state node
+  | _ -> print_error_node state node ~err:Predefined_type
+
+and print_type_query_member_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_query_member
+  | _ ->
+    let object_field = child_with_field "object" node ~err:Object_denotation
+    and property_field = child_with_field "property" node ~err:Property_identifier in
+    let children =
+      [ mk_child_res print_type_query_object object_field
+      ; mk_child_res print_property_field property_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_type_query_object state node =
+  match get_name node with
+  | "identifier" -> print_identifier state node
+  | "this" -> mk_kwd_this state node
+  | "subscript_expression" -> print_type_query_subscript_expression state node
+  | "member_expression" -> print_type_query_member_expression state node
+  | "call_expression" -> print_type_query_call_expression state node
+  | _ -> print_error_node state node ~err:Object_denotation
+
+and print_property_field state node = print_type_query_property state node
+
+and print_type_query_instantiation_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Type_query_instantiation
+  | _ ->
+    let function_field = child_with_field "function" node ~err:Function_denotation
+    and type_arguments_field =
+      child_with_field "type_arguments" node ~err:Type_arguments
+    in
+    let children =
+      [ mk_child_res print_type_query_call_function function_field
+      ; mk_child_res print_type_arguments type_arguments_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_type_query_call_function state node =
+  match get_name node with
+  | "import" -> mk_kwd_import state node
+  | "identifier" -> print_identifier state node
+  | "member_expression" -> print_type_query_member_expression state node
+  | "subscript_expression" -> print_type_query_subscript_expression state node
+  | _ -> print_error_node state node ~err:Function_denotation
+
+and print_type_query_call_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_query_call
+  | _ ->
+    let function_field = child_with_field "function" node ~err:Function_denotation
+    and arguments_field = child_with_field "arguments" node ~err:Arguments in
+    let children =
+      [ mk_child_res print_type_query_call_function function_field
+      ; mk_child_res print_arguments arguments_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Index type query *)
+
+and print_index_type_query state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Index_type_query
+  | _ ->
+    let child = named_child_ranked 0 node ~err:Index_type_query in
+    let children = [ mk_child_res print_primary_type child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Existential type *)
+
+and print_existential_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Existential_type
+  | _ -> make_node state node
+
+(* Literal type *)
+
+and print_literal_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Literal_type
+  | _ ->
+    let child = named_child_ranked 0 node ~err:Literal_type
+    and print state node =
+      match get_name node with
+      | "unary_expression" -> print_unary_expression state node
+      | "number" -> print_number state node
+      | "string" -> print_string state node
+      | "true" -> mk_kwd_true state node
+      | "false" -> mk_kwd_false state node
+      | "null" -> mk_kwd_null state node
+      | "undefined" -> mk_kwd_undefined state node
+      | _ -> print_error_node state node ~err:Literal_type
+    in
+    let children = [ mk_child_res print child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Look up type
+
+   The non-terminals "type" and "primary_type" are supertypes in the
+   TypeScript grammar, which means that they are hidden rules. *)
+
+and print_lookup_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Lookup_type
+  | _ ->
+    let primary_type_child = named_child_ranked 0 node ~err:Type_expression
+    and sym_lbracket = first_child_named "[" node ~err:Left_bracket
+    and type_child = named_child_ranked 1 node ~err:Type_expression
+    and sym_rbracket = first_child_named "]" node ~err:Right_bracket in
+    let children =
+      [ mk_child_res print_primary_type primary_type_child
+      ; mk_child_res mk_sym_lbracket sym_lbracket
+      ; mk_child_res print_type type_child
+      ; mk_child_res mk_sym_rbracket sym_rbracket
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Conditional type *)
+
+and print_conditional_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Conditional_type
+  | _ ->
+    let left_field = child_with_field "left" node ~err:Type
+    and kwd_extends = first_child_named "extends" node ~err:Extends
+    and right_field = child_with_field "right" node ~err:Type_expression
+    and sym_qmark = first_child_named "?" node ~err:Question_mark
+    and consequence_field = child_with_field "consequence" node ~err:Type_expression
+    and sym_colon = first_child_named ":" node ~err:Colon
+    and alternative_field = child_with_field "alternative" node ~err:Type_expression in
+    let children =
+      [ mk_child_res print_type left_field
+      ; mk_child_res mk_kwd_extends kwd_extends
+      ; mk_child_res print_type right_field
+      ; mk_child_res mk_sym_qmark sym_qmark
+      ; mk_child_res print_type consequence_field
+      ; mk_child_res mk_sym_colon sym_colon
+      ; mk_child_res print_type alternative_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Template literal type *)
+
+and print_template_literal_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Template_literal_type
+  | _ -> make_node state node
+
+(* Intersection type *)
+
+and print_intersection_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Intersection_type
+  | _ ->
+    let sym_and = first_child_named "&" node ~err:And in
+    let children =
+      match child_ranked 0 node ~err:Type_or_conjunction with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok left_type ->
+        (match get_name left_type with
+        | "&" ->
+          let type_node = child_ranked 1 node ~err:Type_expression in
+          [ mk_child_res mk_sym_and sym_and; mk_child_res print_type type_node ]
+        | _ ->
+          (* "type" is a supertype, therefore a hidden rule *)
+          let right_type = child_ranked 2 node ~err:Type_expression in
+          [ mk_child print_type left_type
+          ; mk_child_res mk_sym_and sym_and
+          ; mk_child_res print_type right_type
+          ])
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Union type *)
+
+and print_union_type ?(comments = []) state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Union_type
+  | _ ->
+    let comments = comments @ prev_comments node in
+    let sym_vbar = first_child_named "|" node ~err:Vertical_bar in
+    let children =
+      match child_ranked 0 node ~err:Type_or_disjunction with
+      | Error msg -> [ mk_error_child node ~msg ]
+      | Ok left_type ->
+        (match get_name left_type with
+        | "|" ->
+          let type_node = child_ranked 1 node ~err:Type_expression in
+          [ mk_child_res (mk_sym_vbar ~comments) sym_vbar
+          ; mk_child_res print_type type_node
+          ]
+        | _ ->
+          (* "type" is a supertype, therefore a hidden rule *)
+          let right_type = child_ranked 2 node ~err:Type_expression in
+          [ mk_child (print_type ~comments) left_type
+          ; mk_child_res mk_sym_vbar sym_vbar
+          ; mk_child_res print_type right_type
+          ])
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Function type *)
+
+and print_function_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Function_type
+  | _ ->
+    let type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and return_type_field = child_with_field "return_type" node ~err:Type_expression
+    and sym_arrow = first_child_named "=>" node ~err:Arrow
+    and print_return_type state node =
+      match get_name node with
+      | "asserts" -> print_asserts state node
+      | "type_predicate" -> print_type_predicate state node
+      | _ -> print_type state node
+    in
+    let children =
+      [ mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_res mk_sym_arrow sym_arrow
+      ; mk_child_res print_return_type return_type_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Type predicate *)
+
+and print_type_predicate state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Type_predicate
+  | _ ->
+    let name_field = child_with_field "name" node ~err:Identifier_or_type
+    and kwd_is = first_child_named "is" node ~err:Is
+    and type_field = child_with_field "type" node ~err:Type_expression in
+    let print_name_field state node =
+      match get_name node with
+      | "identifier" -> print_identifier state node
+      | "this" -> mk_kwd_this state node
+      | _ -> print_predefined_type state node
+    in
+    let children =
+      [ mk_child_res print_name_field name_field
+      ; mk_child_res mk_kwd_is kwd_is
+      ; mk_child_res print_type type_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Readonly type *)
+
+and print_readonly_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Readonly_type
+  | _ ->
+    let kwd_readonly = first_child_named "readonly" node ~err:Readonly
+    and type_child = child_ranked 1 node ~err:Type_expression in
+    let children =
+      [ mk_child_res mk_kwd_readonly kwd_readonly; mk_child_res print_type type_child ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Constructor type *)
+
+and print_constructor_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Constructor_type
+  | _ ->
+    let kwd_abstract = first_child_named_opt "abstract" node
+    and kwd_new = first_child_named "new" node ~err:New
+    and type_parameters_field = child_with_field_opt "type_parameters" node
+    and parameters_field = child_with_field "parameters" node ~err:Parameters
+    and sym_arrow = first_child_named "=>" node ~err:Arrow
+    and type_field = child_with_field "type" node ~err:Type_expression in
+    let children =
+      [ mk_child_opt mk_kwd_abstract kwd_abstract
+      ; mk_child_res mk_kwd_new kwd_new
+      ; mk_child_opt print_type_parameters type_parameters_field
+      ; mk_child_res print_formal_parameters parameters_field
+      ; mk_child_res mk_sym_arrow sym_arrow
+      ; mk_child_res print_type type_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_formal_parameters state node =
+  print_parens state node print_formal_parameter ~err:Parameters
+
+and print_formal_parameter state node =
+  match get_name node with
+  | "required_parameter" -> print_required_parameter state node
+  | "optional_parameter" -> print_optional_parameter state node
+  | _ -> print_error_node state node ~err:Parameter
+
+and print_optional_parameter state node = print_required_parameter state node
+
+and print_required_parameter state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Required_parameter
+  | _ ->
+    (* "_parameter_name" inlined: *)
+    let decorators = children_named "decorator" node
+    and accessibility_modifier = first_child_named_opt "accessibility_modifier" node
+    and override_modifier = first_child_named_opt "override_modifier" node
+    and kwd_readonly = first_child_named_opt "readonly" node
+    and pattern_field = child_with_field "pattern" node ~err:Pattern
+    (* *)
+    and type_field = child_with_field_opt "type" node
+    and print_pattern_field state node =
+      match get_name node with
+      | "this" -> mk_kwd_this state node
+      | _ -> print_pattern state node
+    in
+    let children =
+      mk_children_list print_decorator decorators
+      @ [ mk_child_opt print_accessibility_modifier accessibility_modifier
+        ; mk_child_opt print_override_modifier override_modifier
+        ; mk_child_opt mk_kwd_readonly kwd_readonly
+        ; mk_child_res print_pattern_field pattern_field
+        ; mk_child_opt print_type_annotation type_field
+        ]
+      @ mk_child_initializer_opt node (* "_initializer" inlined *)
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and mk_child_initializer sym_equal node =
+  let value_field = child_with_field "value" node ~err:Expression in
+  let children =
+    [ mk_child_res mk_sym_equal sym_equal; mk_child_res print_expression value_field ]
+  in
+  let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+  let children = mk_child_opt make_node error_child :: children in
+  Some (fun state -> Tree.make_tree state "initializer" children)
+
+and mk_child_initializer_opt node =
+  match first_child_named_opt "=" node with
+  | None -> []
+  | Some sym_equal -> [ mk_child_initializer (Ok sym_equal) node ]
+
+(* Infer type *)
+
+and print_infer_type state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Infer
+  | _ ->
+    let kwd_infer = first_child_named "infer" node ~err:Infer
+    and type_identifier_child =
+      child_ranked 1 node ~err:Identifier (* name "type_identifier"? *)
+    and kwd_extends = first_child_named_opt "extends" node
+    and type_child = child_ranked_opt 3 node in
+    (* Should not be an optional value. *)
+    let children =
+      [ mk_child_res mk_kwd_infer kwd_infer
+      ; mk_child_res print_identifier type_identifier_child
+      ; mk_child_opt mk_kwd_extends kwd_extends
+      ; mk_child_opt print_type type_child
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Decorator *)
+
+and print_decorator state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Decorator
+  | _ ->
+    let child = named_child_ranked 0 node ~err:Decorator
+    and print state node =
+      match get_name node with
+      | "identifier" -> print_identifier state node
+      | "member_expression" -> print_decorator_member_expression state node
+      | "call_expression" -> print_decorator_call_expression state node
+      | "parenthesized_expression" -> print_decorator_parenthesized_expression state node
+      | _ -> print_error_node state node ~err:Decorator
+    in
+    let children = [ mk_child_res print child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_decorator_member_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Decorator_member
+  | _ ->
+    let object_field = child_with_field "object" node ~err:Identifier_or_member
+    and selector = first_child_named "." node ~err:Dot
+    and property_field = child_with_field "property" node ~err:Property_identifier
+    and print_object state node =
+      match get_name node with
+      | "identifier" -> print_identifier state node
+      | _ -> print_decorator_member_expression state node
+    in
+    let children =
+      [ mk_child_res print_object object_field
+      ; mk_child_res mk_sym_dot selector
+      ; mk_child_res print_identifier property_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_decorator_call_expression state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Decorator_call
+  | _ ->
+    let function_field = child_with_field "function" node ~err:Identifier_or_member
+    and type_arguments_field = child_with_field_opt "type_arguments" node
+    and arguments_field = child_with_field "arguments" node ~err:Arguments
+    and print_function state node =
+      match get_name node with
+      | "identifier" -> print_identifier state node
+      | "member_expression" -> print_decorator_member_expression state node
+      | _ -> print_error_node state node ~err:Decorator_call
+    in
+    let children =
+      [ mk_child_res print_function function_field
+      ; mk_child_opt print_type_arguments type_arguments_field
+      ; mk_child_res print_arguments arguments_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_decorator_parenthesized_expression ?comments state node =
+  print_parens ?comments state node print_decorator_in_parens ~err:Parenthesized_decorator
+
+and print_decorator_in_parens state node =
+  match get_name node with
+  | "identifier" -> print_identifier state node
+  | "member_expression" -> print_decorator_member_expression state node
+  | _ -> print_call_expression state node
+
+(* Accessibility modifier *)
+
+and print_accessibility_modifier state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Public_private_protected
+  | _ ->
+    let child = child_ranked 0 node ~err:Public_private_protected
+    and print state node =
+      match get_name node with
+      | "public" -> mk_kwd_public state node
+      | "private" -> mk_kwd_private state node
+      | "protected" -> mk_kwd_protected state node
+      | _ -> print_error_node state node ~err:Public_private_protected
+    in
+    let children = [ mk_child_res print child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Override modifier *)
+
+and print_override_modifier state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Override
+  | _ ->
+    let child = child_ranked 0 node ~err:Override in
+    let children = [ mk_child_res mk_kwd_override child ] in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* PATTERN
+
+   The JavasScript tree-sitter grammar have the non-terminal
+   "pattern" be a supertype, that is, a hidden rule. *)
+
+(* Object pattern *)
+
+and print_object_pattern state node =
+  print_braces state node print_member_pattern ~err:Object_pattern
+
+and print_member_pattern state node =
+  match get_name node with
+  | "pair_pattern" -> print_pair_pattern state node
+  | "rest_pattern" -> print_rest_pattern state node
+  | "object_assignment_pattern" -> print_object_assignment_pattern state node
+  | "shorthand_property_identifier_pattern" ->
+    print_shorthand_property_identifier_pattern state node
+  | _ -> print_error_node state node ~err:Object_pattern_field
+
+(* Pair pattern *)
+
+and print_pair_pattern state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Pair_pattern
+  | _ ->
+    let key_field = child_with_field "key" node ~err:Property_name
+    and sym_colon = first_child_named ":" node ~err:Colon
+    and value_field = child_with_field "value" node ~err:Pattern in
+    let children =
+      [ mk_child_res print_property_name key_field
+      ; mk_child_res mk_sym_colon sym_colon
+      ; mk_child_res print_pair_value_pattern value_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_pair_value_pattern state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Value_of_pair_pattern
+  | "assignment_pattern" -> print_assignment_pattern state node
+  | _ -> print_pattern state node (* Hidden rule *)
+
+(* Assignment pattern *)
+
+and print_assignment_pattern state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Assignment_pattern
+  | _ ->
+    let left_field = child_with_field "left" node ~err:Pattern
+    and sym_equal = first_child_named "=" node ~err:Equal
+    and right_field = child_with_field "right" node ~err:Expression in
+    let children =
+      [ mk_child_res print_pattern left_field
+      ; mk_child_res mk_sym_equal sym_equal
+      ; mk_child_res print_expression right_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+(* Property names *)
+
+and print_property_name ?(comments = []) state node =
+  match get_name node with
+  | "property_identifier" -> print_identifier ~comments state node
+  | "private_property_identifier" -> print_identifier ~comments state node
+  | "string" -> print_string ~comments state node
+  | "number" -> print_number ~comments state node
+  | "computed_property_name" -> print_computed_property_name ~comments state node
+  | _ -> print_error_node state node ~err:Property_name
+
+and print_computed_property_name ?comments state node =
+  print_brackets state node (print_expression ?comments) ~err:Computed_property_name
+
+and print_shorthand_property_identifier_pattern state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Identifier
+  | _ -> make_node state node
+
+(* Object assignment pattern *)
+
+and print_object_assignment_pattern state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" ->
+    print_error_node state node ~err:Object_assignment_pattern
+  | _ ->
+    let left_field = child_with_field "left" node ~err:Pattern
+    and sym_equal = first_child_named "=" node ~err:Equal
+    and right_field = child_with_field "right" node ~err:Expression in
+    let children =
+      [ mk_child_res print_object_lhs_pattern left_field
+      ; mk_child_res mk_sym_equal sym_equal
+      ; mk_child_res print_expression right_field
+      ]
+    in
+    let error_child = Ts_wrap.first_child_named_opt "ERROR" node in
+    let children = mk_child_opt make_node error_child :: children in
+    make_tree state node children
+
+and print_object_lhs_pattern state node =
+  match get_name node with
+  | "shorthand_property_identifier_pattern" ->
+    print_shorthand_property_identifier_pattern state node
+  | _ -> print_destructuring_pattern state node
+
+(* Rule "_destructuring_pattern" is inlined. *)
+
+and print_destructuring_pattern state node =
+  match get_name node with
+  | "object_pattern" -> print_object_pattern state node
+  | "array_pattern" -> print_array_pattern state node
+  | _ -> print_error_node state node ~err:Object_or_array_pattern
+
+(* Array pattern *)
+
+and print_array_pattern state node =
+  print_brackets state node print_array_pattern_cell ~err:Array_pattern
+
+and print_array_pattern_cell state node =
+  match get_name node with
+  | "ERROR" | "MISSING" | "NULL" -> print_error_node state node ~err:Array_cell_pattern
+  | "assignment_pattern" -> print_assignment_pattern state node
+  | _ -> print_pattern state node (* hidden rule *)
+
+(* General patterns (hidden rule) *)
+
+and print_pattern state node =
+  match get_name node with
+  | "rest_pattern" -> print_rest_pattern state node
+  | _ -> print_lhs_expression state node

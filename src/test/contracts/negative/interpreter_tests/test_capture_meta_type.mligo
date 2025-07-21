@@ -1,7 +1,6 @@
-module Test = Test.Next
-
 module C = struct
-  [@entry] let main (_ : unit) (_ : unit) : operation list * unit = [], ()
+  [@entry]
+  let main (_ : unit) (_ : unit) : operation list * unit = [], ()
 end
 
 type t = { x : int ; y : (C parameter_of, unit) typed_address }

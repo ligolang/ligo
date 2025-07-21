@@ -6,8 +6,6 @@ hide_table_of_contents: true
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-
-
 <SyntaxTitle syntax="cameligo">
 type string
 </SyntaxTitle>
@@ -341,7 +339,7 @@ Type of optional values. They are useful, for example, when a
 val unit : unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let unit: unit
+unit: unit
 </SyntaxTitle>
 Unit type. It is useful for typing side-effects, for example
   failures, some iterators and implicit accounts.
@@ -351,108 +349,44 @@ Unit type. It is useful for typing side-effects, for example
 val ignore : &#39;a.&#39;a -&gt; unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let ignore: &lt;a&gt;(&#95;: a) =&gt; unit
+ignore: &lt;a&gt;(&#95;: a) =&gt; unit
 </SyntaxTitle>
 <Syntax syntax="cameligo">
 
 The call `ignore v` evaluates `v` and ignores its value, returning
-  instead the unit value. This is useful when the argument of `ignore`
-  performs side-effects.
+instead the unit value. This is useful when the argument of `ignore`
+performs side-effects.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `ignore(v)` evaluates `v` and ignores its value, returning
-  instead the unit value. This is useful when the argument of `ignore`
-  performs side-effects.
+instead the unit value. This is useful when the argument of `ignore`
+performs side-effects.
 
 </Syntax>
-
-
-<SyntaxTitle syntax="cameligo">
-val curry : &#39;a &#39;b &#39;c.((&#39;a * &#39;b) -&gt; &#39;c) -&gt; &#39;a -&gt; &#39;b -&gt; &#39;c
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let curry: &lt;a, b, c&gt;(&#95;: (&#95;: [a, b]) =&gt; c) =&gt; (&#95;: a) =&gt; (&#95;: b) =&gt; c
-</SyntaxTitle>
-**Deprecated:** In a future version, this function will be deprecated, and using `Tuple2.curry` is encouraged for a smoother migration.
-
-<Syntax syntax="cameligo">
-
-The call `curry f x y` has the same value as `f (x,y)`.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `curry(f,x,y)` has the same value as `f(x,y)`.
-
-</Syntax>
-
-
-<SyntaxTitle syntax="cameligo">
-val uncurry : &#39;a &#39;b &#39;c.(&#39;a -&gt; &#39;b -&gt; &#39;c) -&gt; (&#39;a * &#39;b) -&gt; &#39;c
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let uncurry: &lt;a, b, c&gt;(&#95;: (&#95;: a) =&gt; (&#95;: b) =&gt; c) =&gt; (&#95;: [a, b]) =&gt; c
-</SyntaxTitle>
-**Deprecated:** In a future version, this function will be deprecated, and using `Tuple2.uncurry` is encouraged for a smoother migration.
-
-<Syntax syntax="cameligo">
-
-The call `uncurry f (x,y)` has the same value as `f x y`.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `uncurry(f,[x,y])` has the same value as `f(x)(y)`.
-
-</Syntax>
-
-
-<SyntaxTitle syntax="cameligo">
-val fst : &#39;a &#39;b.(&#39;a * &#39;b) -&gt; &#39;a
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let fst: &lt;a, b&gt;(&#95;: [a, b]) =&gt; a
-</SyntaxTitle>
-**Deprecated:** In a future version, this function will be deprecated, and using `Tuple2.get1` is encouraged for a smoother migration.
-
-Projecting the first component of a pair
-
-
-<SyntaxTitle syntax="cameligo">
-val snd : &#39;a &#39;b.(&#39;a * &#39;b) -&gt; &#39;b
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let snd: &lt;a, b&gt;(&#95;: [a, b]) =&gt; b
-</SyntaxTitle>
-**Deprecated:** In a future version, this function will be deprecated, and using `Tuple2.get2` is encouraged for a smoother migration.
-
-Projecting the second component of a pair.
-
 
 <SyntaxTitle syntax="cameligo">
 val failwith : &#39;err &#39;a.&#39;err -&gt; &#39;a
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let failwith: &lt;err, a&gt;(&#95;: err) =&gt; a
+failwith: &lt;err, a&gt;(&#95;: err) =&gt; a
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `failwith e` terminates the execution with the value `e`,
-  standing for an error. Note: Using a string for an error message can
-  be costly in terms of size.
+standing for an error. Note: Using a string for an error message can
+be costly in terms of size.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `failwith(e)` terminates the execution with the value `e`,
-  standing for an error. Note: Using a string for an error message can
-  be costly in terms of size.
+standing for an error. Note: Using a string for an error message can
+be costly in terms of size.
 
 </Syntax>
 
@@ -461,165 +395,21 @@ The call `failwith(e)` terminates the execution with the value `e`,
 val bytes : &#39;a.&#39;a -&gt; &#39;a external&#95;bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let bytes: &lt;a&gt;(&#95;: a) =&gt; external&#95;bytes&lt;a&gt;
+bytes: &lt;a&gt;(&#95;: a) =&gt; external&#95;bytes&lt;a&gt;
 </SyntaxTitle>
-The function `bytes` encodes an integer or a natural number to
-  bytes using the big-endian encoding. For integers, negative numbers
-  are considered in two's complement representation.
 
-
-<SyntaxTitle syntax="cameligo">
-val assert&#95;with&#95;error : bool -&gt; string -&gt; unit
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let assert&#95;with&#95;error: (&#95;: bool) =&gt; (&#95;: string) =&gt; unit
-</SyntaxTitle>
-**Deprecated:** In a future version, this function will be deprecated, and using `Assert.Error.assert` is encouraged for a smoother migration.
-
-<Syntax syntax="cameligo">
-
-The call `assert_with_error cond error` terminates the execution
-  with the string `error` (that is, an error message) if, and only if,
-  the boolean condition `cond` is false.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `assert_with_error(cond, error)` terminates the execution
-  with the string `error` (that is, an error message) if, and only if,
-  the boolean condition `cond` is false.
-
-</Syntax>
-
-
-<SyntaxTitle syntax="cameligo">
-val assert : bool -&gt; unit
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let assert: (&#95;: bool) =&gt; unit
-</SyntaxTitle>
-**Deprecated:** In a future version, this function will be deprecated, and using `Assert.assert` is encouraged for a smoother migration.
-
-<Syntax syntax="cameligo">
-
-The call `assert cond` terminates the execution with the string
-  `"failed assertion"` if, and only if, the boolean condition `cond`
-  is false.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `assert(cond)` terminates the execution with the string
-  `"failed assertion"` if, and only if, the boolean condition `cond`
-  is false.
-
-</Syntax>
-
-
-<SyntaxTitle syntax="cameligo">
-val assert&#95;some&#95;with&#95;error : &#39;a.&#39;a option -&gt; string -&gt; unit
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let assert&#95;some&#95;with&#95;error: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; (&#95;: string) =&gt; unit
-</SyntaxTitle>
-**Deprecated:** In a future version, this function will be deprecated, and using `Assert.Error.some` is encouraged for a smoother migration.
-
-<Syntax syntax="cameligo">
-
-The call `assert_some_with_error opt err` terminates the execution
-  with the string `err` (that is, an error message) if, and only if,
-  `opt` is `None`.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `assert_some_with_error(opt, err)` terminates the execution
-  with the string `err` (that is, an error message) if, and only if,
-  `opt` is `None()`.
-
-</Syntax>
-
-
-<SyntaxTitle syntax="cameligo">
-val assert&#95;some : &#39;a.&#39;a option -&gt; unit
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let assert&#95;some: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; unit
-</SyntaxTitle>
-**Deprecated:** In a future version, this function will be deprecated, and using `Assert.some` is encouraged for a smoother migration.
-
-<Syntax syntax="cameligo">
-
-The call `assert_some opt` terminates the execution with the
-  string `"failed assert some"` if, and only if, `opt` is `None`.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `assert_some(opt)` terminates the execution with the
-  string `"failed assert some"` if, and only if, `opt` is `None()`.
-
-</Syntax>
-
-
-<SyntaxTitle syntax="cameligo">
-val assert&#95;none&#95;with&#95;error : &#39;a.&#39;a option -&gt; string -&gt; unit
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let assert&#95;none&#95;with&#95;error: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; (&#95;: string) =&gt; unit
-</SyntaxTitle>
-**Deprecated:** In a future version, this function will be deprecated, and using `Assert.Error.none` is encouraged for a smoother migration.
-
-<Syntax syntax="cameligo">
-
-The call `assert_none_with_error opt err` terminates the execution
-  with the string `err` (that is, an error message) if, and only if,
-  `opt` is an optional value different from `None`.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `assert_none_with_error(opt, err)` terminates the execution
-  with the string `err` (that is, an error message) if, and only if,
-  `opt` is an optional value different from `None()`.
-
-</Syntax>
-
-
-<SyntaxTitle syntax="cameligo">
-val assert&#95;none : &#39;a.&#39;a option -&gt; unit
-</SyntaxTitle>
-<SyntaxTitle syntax="jsligo">
-let assert&#95;none: &lt;a&gt;(&#95;: option&lt;a&gt;) =&gt; unit
-</SyntaxTitle>
-**Deprecated:** In a future version, this function will be deprecated, and using `Assert.none` is encouraged for a smoother migration.
-
-<Syntax syntax="cameligo">
-
-The call `assert_none opt` terminates the execution with the string
-  `"failed assert none"` if, and only if, `opt` is not `None`.
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-The call `assert_none(opt)` terminates the execution with the string
-  `"failed assert none"` if, and only if, `opt` is not `None()`.
-
-</Syntax>
+The function `bytes` encodes an integer or a natural number to bytes
+using the big-endian encoding. For integers, negative numbers are
+considered in two's complement representation.
 
 
 <SyntaxTitle syntax="cameligo">
 val abs : int -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let abs: (&#95;: int) =&gt; nat
+abs: (&#95;: int) =&gt; nat
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `abs i` is the absolute value of `i`.
@@ -637,19 +427,20 @@ The call `abs(i)` is the absolute value of `i`.
 val is&#95;nat : int -&gt; nat option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let is&#95;nat: (&#95;: int) =&gt; option&lt;nat&gt;
+is&#95;nat: (&#95;: int) =&gt; option&lt;nat&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
-The call `is_nat i` is `Some n`, where `n` is the absolute
-  value of `i`, if, and only if, `i` is positive or zero.
+The call `is_nat i` is `Some n`, where `n` is the absolute value of
+`i`, if, and only if, `i` is positive or zero.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `is_nat(i)` is `Some(n)`, where `n` is the absolute
-  value of `i`, if, and only if, `i` is positive or zero.
+The call `is_nat(i)` is `["Some" as "Some", n]`, where `n` is the
+absolute value of `i`, if, and only if, `i` is positive or zero.
 
 </Syntax>
 
@@ -658,18 +449,19 @@ The call `is_nat(i)` is `Some(n)`, where `n` is the absolute
 val int : &#39;a.&#39;a -&gt; int
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let int: &lt;a&gt;(&#95;: a) =&gt; int
+int: &lt;a&gt;(&#95;: a) =&gt; int
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `int v` casts the value `v` to an integer.
 
-  For natural numbers, the function `int` is the identity cast from
-  `nat` to `int`. For BLS12-381 field elements, the returned value is
-  always between 0 (inclusive) and the order of the BLS12-381 field
-  (exclusive). For bytes, the function `int` decodes the bytes using
-  the big-endian encoding, where negative numbers are considered in
-  two's complement representation.
+For natural numbers, the function `int` is the identity cast from
+`nat` to `int`. For BLS12-381 field elements, the returned value is
+always between 0 (inclusive) and the order of the BLS12-381 field
+(exclusive). For bytes, the function `int` decodes the bytes using the
+big-endian encoding, where negative numbers are considered in two's
+complement representation.
 
 </Syntax>
 
@@ -677,12 +469,12 @@ The call `int v` casts the value `v` to an integer.
 
 The call `int(v)` casts the value `v` to an integer.
 
-  For natural numbers, the function `int` is the identity cast from
-  `nat` to `int`. For BLS12-381 field elements, the returned value is
-  always between 0 (inclusive) and the order of the BLS12-381 field
-  (exclusive). For bytes, the function `int` decodes the bytes using
-  the big-endian encoding, where negative numbers are considered in
-  two's complement representation.
+For natural numbers, the function `int` is the identity cast from
+`nat` to `int`. For BLS12-381 field elements, the returned value is
+always between 0 (inclusive) and the order of the BLS12-381 field
+(exclusive). For bytes, the function `int` decodes the bytes using the
+big-endian encoding, where negative numbers are considered in two's
+complement representation.
 
 </Syntax>
 
@@ -691,8 +483,9 @@ The call `int(v)` casts the value `v` to an integer.
 val nat : bytes -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let nat: (&#95;: bytes) =&gt; nat
+nat: (&#95;: bytes) =&gt; nat
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `nat b` casts the bytes `b` into a natural number.
@@ -710,33 +503,34 @@ The call `nat(b)` casts the bytes `b` into a natural number.
 val ediv : &#39;a &#39;b.&#39;a -&gt; &#39;b -&gt; (&#39;a, &#39;b) external&#95;ediv
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let ediv: &lt;a, b&gt;(&#95;: a) =&gt; (&#95;: b) =&gt; external&#95;ediv&lt;a, b&gt;
+ediv: &lt;a, b&gt;(left: a, right: b) =&gt; external&#95;ediv&lt;a, b&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
-The call `ediv z1 z2`, where `z1` and `z2` are either of type
-    `int` or `nat`, returns `None` if `z2` is zero; otherwise, it
-    returns the pair `(q,r)`, where `q` is the quotient and `r` the
-    positive remainder, as is the convention of the mathematical
-    Euclidian division. The function `ediv` is also overloaded to work
-    on values of type `tez`. When `z1` and `z2` are of type `tez` and
-    `z2` is nonzero, we get a `nat` quotient and a `tez`
-    remainder. When `z1` is a `tez` and `z2` is a nonzero `nat`, the
-    calls yields a quotient and a remainder both of type `tez`.
+The call `ediv z1 z2`, where `z1` and `z2` are either of type `int` or
+`nat`, returns `None` if `z2` is zero; otherwise, it returns the pair
+`(q,r)`, where `q` is the quotient and `r` the positive remainder, as
+is the convention of the mathematical Euclidian division. The function
+`ediv` is also overloaded to work on values of type `tez`. When `z1`
+and `z2` are of type `tez` and `z2` is nonzero, we get a `nat`
+quotient and a `tez` remainder. When `z1` is a `tez` and `z2` is a
+nonzero `nat`, the calls yields a quotient and a remainder both of
+type `tez`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `ediv(z1, z2)`, where `z1` and `z2` are either of type
-    `int` or `nat`, returns `None()` if `z2` is zero; otherwise, it
-    returns the pair `[q,r]`, where `q` is the quotient and `r` the
-    positive remainder, as is the convention of the mathematical
-    Euclidian division. The function `ediv` is also overloaded to work
-    on values of type `tez`. When `z1` and `z2` are of type `tez` and
-    `z2` is nonzero, we get a `nat` quotient and a `tez`
-    remainder. When `z1` is a `tez` and `z2` is a nonzero `nat`, the
-    calls yields a quotient and a remainder both of type `tez`.
+The call `ediv(z1, z2)`, where `z1` and `z2` are either of type `int`
+or `nat`, returns `None()` if `z2` is zero; otherwise, it returns the
+pair `[q,r]`, where `q` is the quotient and `r` the positive
+remainder, as is the convention of the mathematical Euclidian
+division. The function `ediv` is also overloaded to work on values of
+type `tez`. When `z1` and `z2` are of type `tez` and `z2` is nonzero,
+we get a `nat` quotient and a `tez` remainder. When `z1` is a `tez`
+and `z2` is a nonzero `nat`, the calls yields a quotient and a
+remainder both of type `tez`.
 
 </Syntax>
 
@@ -747,6 +541,7 @@ type &#39;elt big&#95;set = &#39;elt Big&#95;set.t
 <SyntaxTitle syntax="jsligo">
 type big&#95;set&lt;elt&gt; = Big&#95;set.t&lt;elt&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The type of the big sets is based on `big_map`.

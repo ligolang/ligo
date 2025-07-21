@@ -1,5 +1,0 @@
-// All below equal Some (7,2)
-const ediv1: option<[int, nat]> = ediv(37,  5);
-const ediv2: option<[int, nat]> = ediv(37n, 5);
-const ediv3: option<[nat, nat]> = ediv(37n, 5n);
-const ediv4: option<[int, nat]> = ediv(37,  5n);

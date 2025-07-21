@@ -39,7 +39,7 @@ Inlining also makes it cheap to create aliases of functions. For
 example:
 
 ```jsligo group=inline
-@inline
+// @inline
 const size = <elt>(list: List.t<elt>) : nat => List.length(list);
 ```
 

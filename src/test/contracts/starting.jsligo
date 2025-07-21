@@ -11,5 +11,5 @@ namespace IncDec {
   const decrement = (delta : int, store : storage) : ret => [[], store - delta];
 
   @entry
-  const reset = (_ : unit, _ : storage) : ret => [[], 0];
+  const reset = (_param : unit, _storage : storage) : ret => [[], 0];
 };

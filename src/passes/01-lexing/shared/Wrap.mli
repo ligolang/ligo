@@ -29,6 +29,7 @@ type 'payload wrap = <
   comments     : comment list;
   line_comment : string Region.reg option;
 
+  set_payload      : 'payload          -> 'payload wrap;
   set_attributes   : attributes        -> 'payload wrap;
   add_attribute    : attribute         -> 'payload wrap;
   add_comment      : comment           -> 'payload wrap;
@@ -40,7 +41,7 @@ type 'a t = 'a wrap
 type 'a ctor =
   ?attributes:attributes ->
   ?directive:Directive.t ->
-  ?comment:comment ->
+  ?comments:comment list ->
   ?line_com:string Region.reg ->
   'a -> Region.t -> 'a wrap
 
@@ -55,3 +56,5 @@ type json = Yojson.Safe.t
 
 val yojson_of_wrap : ('a -> json) -> 'a wrap -> json
 val yojson_of_t    : ('a -> json) -> 'a wrap -> json (* [yojson_of_wrap] *)
+
+val to_region : 'a wrap -> 'a Region.reg

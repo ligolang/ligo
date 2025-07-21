@@ -1,6 +1,3 @@
-module Tezos = Tezos.Next
-module Test = Test.Next
-
 module C = struct
   module Storage =
     struct

@@ -1,4 +1,4 @@
-#import "../e/g/h/bar.mligo" "Bar"
+module Bar = Super__.E.G.H.Bar
 
 let originate () =
     Bar.originate ()

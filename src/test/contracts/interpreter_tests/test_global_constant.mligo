@@ -1,5 +1,3 @@
-let assert = Assert.assert
-
 module C = struct
   type storage = int
   type parameter = unit
@@ -8,7 +6,7 @@ module C = struct
   let f (x : int) = x * 3 + 2
 
   let ct : string =
-    Test.Next.State.register_constant (Test.Next.Michelson.eval f)
+    Test.State.register_constant (Test.Michelson.eval f)
 
   [@entry]
   let main (() : parameter) (store : storage) : return =
@@ -16,6 +14,6 @@ module C = struct
 end
 
 let test =
-  let orig = Test.Next.Originate.contract (contract_of C) 1 0tez in
-  let _ = Test.Next.Typed_address.transfer_exn orig.taddr (Main ()) 0tez in
-  assert (Test.Next.Typed_address.get_storage orig.taddr = 5)
+  let orig = Test.Originate.contract (contract_of C) 1 0tez in
+  let _ = Test.Typed_address.transfer_exn orig.taddr (Main ()) 0tez in
+  Assert.assert (Test.Typed_address.get_storage orig.taddr = 5)

@@ -36,11 +36,12 @@ module C = struct
 end
 
 let testC =
-    let initial_storage = 42 in
-    let originated = Test.originate (contract_of C) initial_storage 0tez in
-    let p : C parameter_of = Increment 1 in
-    let _ = Test.transfer_exn originated.addr p 1mutez in
-    assert (Test.get_storage originated.addr = initial_storage + 1)
+  let initial_storage = 42 in
+  let originated =
+    Test.Originate.contract (contract_of C) initial_storage 0tez in
+  let p : C parameter_of = Increment 1 in
+  let _ = Test.Typed_address.transfer_exn originated.taddr p 1mutez in
+  Assert.assert (Test.Typed_address.get_storage originated.taddr = initial_storage + 1)
 ```
 
 </div>
@@ -389,9 +390,8 @@ Transactions
 <div className="example">
 
 ```cameligo group=tezos_specific
-
 let payment : operation =
-  Tezos.transaction unit 100mutez contract
+  Tezos.Operation.transaction unit 100mutez contract
 
 ```
 
@@ -513,32 +513,31 @@ Contract, view and test
 <div className="example">
 
 ```jsligo group=simple_contract_with_view_and_test
-namespace C {
-  export type storage = int;
+type storage = int;
+
+class C {
+  @entry
+  increment = (action: int, store: storage) : [list <operation>, storage] => [[], store + action];
 
   @entry
-  const increment = (action: int, store: storage) : [list <operation>, storage] => [[], store + action];
-
-  @entry
-  const decrement = (action: int, store: storage) : [list <operation>, storage] => [[], store - action];
+  decrement = (action: int, store: storage) : [list <operation>, storage] => [[], store - action];
 
   @view
-  const get_storage = (must_be_positive: bool, storage: int): int => {
-    if (must_be_positive && storage < 0) {
+  get_storage = (must_be_positive: bool, storage: int): int => {
+    if (must_be_positive && storage < 0)
       return failwith("Negative value in storage");
-    } else {
+    else
       return storage;
-    }
   }
 };
 
-const testC = do {
-    let initial_storage = 42;
-    let originated = Test.originate(contract_of(C), initial_storage, 0tez);
-    let p : parameter_of C = Increment(1);
-    Test.transfer_exn(originated.addr, p, 1mutez);
-    return assert(Test.get_storage(originated.addr) == initial_storage + 1);
-}
+const testC = (() => {
+  const initial_storage = 42;
+  const originated = Test.Originate.contract(contract_of(C), initial_storage, 0 as tez);
+  const p : parameter_of<C> = ["Increment" as "Increment", 1];
+  Test.Typed_address.transfer_exn(originated.taddr, p, 1 as mutez);
+  return Assert.assert(Test.Typed_address.get_storage(originated.taddr) == initial_storage + 1);
+})()
 ```
 
 </div>
@@ -576,7 +575,7 @@ Natural numbers
 <div className="example">
 
 ```jsligo
-const n: nat = 7n;
+const n: nat = 7 as nat;
 ```
 
 </div>
@@ -621,8 +620,8 @@ Mutez (micro tez)
 <div className="example">
 
 ```jsligo
-const tez_amount: tez = 42tez
-const tez_amount2: tez = tez_amount + 7mutez // == 42000007mutez
+const tez_amount: tez = 42 as tez
+const tez_amount2: tez = tez_amount + (7 as mutez) // == (42000007 as mutez)
 ```
 
 </div>
@@ -664,7 +663,7 @@ Addition
 
 ```jsligo
 const add_int: int = 3 + 4;
-const add_nat: nat = 3n + 4n;
+const add_nat: nat = (3 as nat) + (4 as nat);
 ```
 
 </div>
@@ -675,10 +674,10 @@ Multiplication & Division
 
 ```jsligo
 const mul_int: int = 3 * 4;
-const mul_nat: nat = 3n * 4n;
+const mul_nat: nat = (3 as nat) * (4 as nat);
 
 const div_int: int = 10 / 5;
-const div_nat: nat = 10n / 5n; // can fail (division by zero), check your inputs first.
+const div_nat: nat = (10 as nat) / (5 as nat);
 ```
 
 </div>
@@ -722,11 +721,6 @@ type name = string
 Include (prefer import)
 </div>
 <div className="example">
-
-```jsligo skip
-#include "library.jsligo"
-```
-
 </div>
 <div className="primitive">
 Import (better)
@@ -734,8 +728,6 @@ Import (better)
 <div className="example">
 
 ```jsligo skip
-#import "library.jsligo" "MyLibrary"
-const foo = MyLibrary.bar;
 ```
 
 </div>
@@ -756,9 +748,9 @@ Functions (long form)
 <div className="example">
 
 ```jsligo group=b
-const add = (a: int, b: int): int => {
-  let c = a;
-  let d = b;
+function add (a: int, b: int): int {
+  const c = a;
+  const d = b;
   return c + d
 };
 ```
@@ -771,7 +763,7 @@ If/else Statement
 
 ```jsligo
 function if_statement (age : nat): string {
-  if (age >= 16n) return "yes" else return "no"
+  if (age >= (16 as nat)) return "yes"; else return "no";
 }
 ```
 
@@ -783,8 +775,8 @@ Options
 
 ```jsligo
 type middle_name = option<string>;
-const a_middle_name : middle_name = Some("Foo");
-const no_middle_name : middle_name = None();
+const a_middle_name : middle_name = ["Some" as "Some", "Foo"];
+const no_middle_name : middle_name = ["None" as "None"];
 ```
 
 </div>
@@ -827,12 +819,13 @@ Matching on variant cases
 <div className="example">
 
 ```jsligo group=variants
-let a: action = Increment(5)
-const result: int = match(a) {
-  when(Increment(n)): n + 1;
-  when(Decrement(n)): n - 1;
-  when(Reset()): 0;
-}
+const a: action = ["Increment" as "Increment", 5];
+const result: int =
+  $match(a, {
+    "Increment": n => n + 1,
+    "Decrement": n => n - 1,
+    "Reset": () => 0
+  });
 ```
 
 </div>
@@ -865,14 +858,15 @@ Maps
 type prices = map<nat, tez>;
 
 const prices: prices = Map.literal([
-  [10n, 60mutez],
-  [50n, 30mutez],
-  [100n, 10mutez]
+  [10 as nat, 60 as mutez],
+  [50 as nat, 30 as mutez],
+  [100 as nat, 10 as mutez]
 ]);
 
-const price: option<tez> = Map.find_opt(50n, prices)
+const price: option<tez> = Map.find_opt(50 as nat, prices)
 
-const prices2: prices = Map.update(200n, Some (5mutez), prices)
+const prices2: prices =
+  Map.update(200 as nat, ["Some" as "Some", 5 as mutez], prices)
 ```
 
 </div>
@@ -885,10 +879,10 @@ Contracts & Accounts
 const destinationAddress: address = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx";
 
 const contract : contract<unit> =
-  match(Tezos.get_contract_opt(Tezos.get_sender()) as option<contract<unit>>) {
-    when(Some(contract)): contract;
-    when(None()): failwith("no contract or wrong contract type")
-  }
+  $match(Tezos.get_contract_opt(Tezos.get_sender()) as option<contract<unit>>, {
+    "Some": contract => contract,
+    "None": () => failwith("no contract or wrong contract type")
+  })
 ```
 
 </div>
@@ -899,7 +893,7 @@ Transactions
 
 ```jsligo group=tezos_specific
 const payment: operation =
-  Tezos.transaction(unit, 100mutez, contract);
+  Tezos.Operation.transaction(unit, 100 as mutez, contract);
 ```
 
 </div>
@@ -921,7 +915,7 @@ Comb layout (default)
 
 ```jsligo
 type animal =
-@layout("comb")
+// @layout("comb")
 | ["Elephant"]
 | ["Dog"]
 | ["Cat"];
@@ -935,7 +929,7 @@ Tree layout
 
 ```jsligo
 type animal =
-@layout("tree")
+// @layout("tree")
 | ["Elephant"]
 | ["Dog"]
 | ["Cat"];
@@ -950,8 +944,10 @@ Namespace (auto-inferred type)
 ```jsligo
 namespace FA0_inferred {
   type storage = int;
-  @entry const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
-  @entry const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
+  // @entry
+  const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
+  // @entry
+  const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }
 ```
 
@@ -962,46 +958,42 @@ Interface
 <div className="example">
 
 ```jsligo
+type storage = int;
+
 interface FA0_INTF {
-  type storage;
-  @entry const add : (s : int, k : storage) => [list<operation>, storage];
+  //@entry
+  add : (s : int, k : storage) => [list<operation>, storage];
 }
 ```
 
 </div>
 <div className="primitive">
-Extending Interface
+Extending an interface
 </div>
 <div className="example">
 
 ```jsligo
 interface FA0_EXT_INTF extends FA0_INTF {
-  type storage;
-  @entry const add : (s : int, k : storage) => [list<operation>, storage];
+  // @entry
+  add : (s : int, k : storage) => [list<operation>, storage];
 }
 ```
 
 </div>
 <div className="primitive">
-Namespace impmlementing
+Implementing an interface
 </div>
 <div className="example">
 
 ```jsligo
-namespace FA0 implements FA0_INTF {
-  export type storage = int;
-  @entry const add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
-  @entry const extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
+class FA0 implements FA0_INTF {
+  @entry
+  add = (s : int, k : int) : [list<operation>, int] => [[], s + k];
+
+  @entry
+  extra = (s : int, k : int) : [list<operation>, int] => [[], s - k];
 }
 ```
-
-</div>
-<div className="primitive">
-Extending namespace
-</div>
-<div className="example">
-
-Not available in JsLIGO, use CameLIGO.
 
 </div>
 </div>

@@ -1,9 +1,9 @@
 type storage = int
 
-@entry
+// @entry
 const left = (i: int, x: storage) : [list<operation>, storage] =>
   [[], x - i]
 
-@entry
+// @entry
 const right = (i: int, x: storage) : [list<operation>, storage] =>
   [[], x + i]

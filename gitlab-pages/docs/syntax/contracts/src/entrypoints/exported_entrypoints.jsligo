@@ -2,13 +2,13 @@ namespace ContractA {
   type storage_type = int;
   type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const increment = (delta: int, storage: storage_type): return_type => [[], storage + delta];
 
-  @entry
+  // @entry
   const decrement = (delta: int, storage: storage_type): return_type => [[], storage - delta];
 
-  @entry
+  // @entry
   const reset = (_: unit, _s: storage_type): return_type => [[], 0];
 }
 
@@ -16,8 +16,9 @@ namespace ContractB {
   type storage_type = int;
   export type return_type = [list<operation>, storage_type];
 
-  @entry
+  // @entry
   const add = ContractA.increment;
-  @entry
+
+  // @entry
   const sub = ContractA.decrement;
 }

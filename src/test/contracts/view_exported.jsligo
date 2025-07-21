@@ -2,14 +2,18 @@ namespace C {
   export type storage = unit
   type result = [list<operation>, storage];
 
-  @entry const foo = (_u : unit, s : storage) : result => [[], s];
-  @view const bar = (_u : unit, s : storage) => s;
+  export class C {
+    @entry foo = (_u : unit, s : storage) : result => [[], s];
+    @view bar = (_u : unit, s : storage) => s;
+  }
 }
 
-const test = do {
-  let orig = Test.originate(contract_of(C), [], 0tez);
-  Test.log(orig.code);
-  let c = Test.to_contract(orig.addr);
+const test = (() => {
+  let orig = Test.Originate.contract(contract_of(C.C), [], 0 as tez);
+  Test.IO.log(orig.code);
+  let c = Test.Typed_address.to_contract(orig.taddr);
 
-  Test.log(Tezos.call_view("bar", unit, Tezos.address(c)) as option<C.storage>);
-};
+  Test.IO.log(Tezos.View.call("bar",
+                              unit,
+                              Tezos.address(c)) as option<C.storage>);
+})();

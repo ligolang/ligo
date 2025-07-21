@@ -1,7 +1,7 @@
-let () = Test.set_print_values ()
+let () = Test.IO.set_test_print ()
 
-let f () = 
-  let () = Test.log "Once" in
+let f () =
+  let () = Test.IO.log "Once" in
   (1n, 1, "Hello")
 let (a, b, c) = f ()
 
@@ -9,7 +9,7 @@ let (a1, b1, c1) = (1n, 1, "Hello")
 
 let test =
   begin
-    assert (a = a1);
-    assert (b = b1);
-    assert (c = c1)
+    Assert.assert (a = a1);
+    Assert.assert (b = b1);
+    Assert.assert (c = c1)
   end

@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let f = "../../../../../src/contract/unit.mligo"
 
 let originate () =

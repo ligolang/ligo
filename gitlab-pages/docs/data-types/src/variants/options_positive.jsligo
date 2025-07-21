@@ -1,1 +1,0 @@
-const one_is_nat : option<nat> = is_nat(1);

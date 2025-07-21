@@ -191,8 +191,4 @@ const b = 1;
 const min = (a < b) ? a : b; // min == 0
 ```
 
-Note: Parentheses are often necessary before `?`, but not always: you
-can either rely on the compiler error message or always use
-parentheses.
-
 </Syntax>

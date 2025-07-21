@@ -36,7 +36,6 @@ The simplest example of an internal transaction is sending Tez to a contract. No
 
 ```cameligo
 type parameter = address
-
 type storage = unit
 
 [@entry]
@@ -46,7 +45,8 @@ let main (destination_addr : parameter) (_ : storage) =
     match maybe_contract with
       Some contract -> contract
     | None -> failwith "Contract does not exist" in
-  let op = Tezos.transaction () (Tezos.get_amount ()) destination_contract in
+  let op = Tezos.Operation.transaction
+             () (Tezos.get_amount ()) destination_contract in
   [op], ()
 ```
 
@@ -65,7 +65,6 @@ Let us also examine a contract that stores the address of another contract and p
 (* examples/contracts/mligo/Proxy.mligo *)
 
 type parameter = int
-
 type storage = address
 
 let get_contract (addr : address) =
@@ -76,7 +75,7 @@ let get_contract (addr : address) =
 [@entry]
 let main (param : parameter) (callee_addr : storage) =
   let callee = get_contract (callee_addr) in
-  let op = Tezos.transaction param 0mutez callee in
+  let op = Tezos.Operation.transaction param 0mutez callee in
   [op], callee_addr
 ```
 
@@ -141,7 +140,6 @@ To specify an entrypoint, we can use `Tezos.get_entrypoint_opt` instead of `Tezo
 (* contracts/examples/mligo/EntrypointProxy.mligo *)
 
 type parameter = int
-
 type storage = address
 
 let get_add_entrypoint (addr : address) =
@@ -152,7 +150,7 @@ let get_add_entrypoint (addr : address) =
 [@entry]
 let main (param : parameter) (callee_addr : storage) =
   let add : int contract = get_add_entrypoint (callee_addr) in
-  let op = Tezos.transaction param 0mutez add in
+  let op = Tezos.Operation.transaction param 0mutez add in
   [op], callee_addr
 ```
 
@@ -271,7 +269,7 @@ let call (op : unit -> operation) (s : storage) : operation list * storage =
 let iswhitelisted (arg : address * (bool contract)) (s : storage) : operation list * storage =
   let addr, callback_contract = arg in
   let whitelisted = Set.mem addr s.senders_whitelist in
-  let op = Tezos.transaction whitelisted 0mutez callback_contract in
+  let op = Tezos.Operation.transaction whitelisted 0mutez callback_contract in
   [op], s
 ```
 
@@ -326,7 +324,7 @@ For example, we can create a new counter contract with
 <Syntax syntax="cameligo">
 
 ```cameligo group=solo_create_contract
-let op = Tezos.create_contract
+let op = Tezos.Operation.create_contract
   (fun (p : int) (s : int) -> [], p + s)
   None
   0mutez
@@ -351,13 +349,13 @@ let op = Tezos.create_contract
 
 let create_and_call (storage : address list) =
   let create_op, addr =
-    Tezos.create_contract
+    Tezos.Operation.create_contract
       (fun (p : int) (s : int) -> [], p + s)
       None
       0tez
       1 in
   let call_op =
-    Tezos.transaction (addr, 41) 0tez (Tezos.self "%callback") in
+    Tezos.Operation.transaction (addr, 41) 0tez (Tezos.self "%callback") in
   [create_op; call_op], addr :: storage
 ```
 

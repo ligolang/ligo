@@ -1,21 +1,14 @@
 ---
 title: Records
+jsligoTitle: Objects
 ---
 
 import Syntax from '@theme/Syntax';
 
-So far, we have seen relatively simple data types. LIGO also offers
-more complex built-in constructs, such as *records*.
-
-Records are one-way data of different types can be packed into a
-single type. A record is made of a set of *fields*, which are made of
-a *field name* and a *field type*. Given a record, the value bound to
-a field is accessed by giving its name to the selection operator
-"`.`".
-
-Let us first consider an example of record type declaration.
-
 <Syntax syntax="cameligo">
+
+Records are a structured data type that can include one or more fields, each with a name and a type.
+A record type can contain any number of different data types, as in this example:
 
 ```cameligo group=records1
 type user = {
@@ -29,7 +22,10 @@ type user = {
 
 <Syntax syntax="jsligo">
 
-```jsligo group=records1
+As in JavaScript, objects (called *records* in previous versions of JsLIGO), are a structured data type that can include one or more fields, each with a name and a type.
+A record type can contain any number of different data types, as in this example:
+
+```jsligo group=objects1
 type user = {
   id       : nat,
   is_admin : bool,
@@ -41,7 +37,7 @@ type user = {
 
 <Syntax syntax="cameligo">
 
-And here is how a record value is defined:
+To create a variable of a record type, specify the name and value of each field, as in this example:
 
 ```cameligo group=records1
 let alice : user = {
@@ -55,27 +51,25 @@ let alice : user = {
 
 <Syntax syntax="jsligo">
 
-And here is how a record value is defined:
+To create a variable of an object type, specify the name and value of each field, as in this example:
 
-```jsligo group=records1
+```jsligo group=objects1
 const alice : user = {
-  id       : 1n,
+  id       : 1 as nat,
   is_admin : true,
   name     : "Alice"
 };
 ```
 
-> Note: A semicolon `;` can also separate fields instead of a
-> comma.
+You can also use a semicolon (`;`) to separate the fields in a record instead of a comma.
 
 </Syntax>
 
 ## Accessing
 
-<Syntax syntax="cameligo">
+To get the value of a field, use a period (`.`) as the selection operator, as in this example:
 
-If we want the contents of a given field, we use the selection operator
-"`.`", like so:
+<Syntax syntax="cameligo">
 
 ```cameligo group=record_access
 type user = {
@@ -98,10 +92,7 @@ let is_alice_admin : bool = alice.is_admin // = true
 
 <Syntax syntax="jsligo">
 
-If we want to access a field, we use the selection operator "`.`"
-followed by the field name, like so:
-
-```jsligo group=record_access
+```jsligo group=object_access
 type user = {
   login : string,
   name  : string
@@ -113,20 +104,25 @@ type account = {
   is_admin : bool
 };
 
-const user : user = {login: "al", name: "Alice"};
-const alice : account = {user, id: 5, is_admin: true};
+const user: user = {login: "al", name: "Alice"};
+const alice: account = {user, id: 5, is_admin: true};
 const is_alice_admin = alice.is_admin; // == true
+const alice_name = alice.user.name; // == "Alice"
 ```
 
-Instead of the field name, we can provide between square brackets a
-string that contains the field name, or an integer that is the index
-of the field in the record declaration:
+Instead of using the field name and the selection operator, you can put the name of the field in square brackets, as in this example:
+
+```jsligo group=object_access
+const alice_id = alice["id"]; // 5
+```
+
+Unlike in JavaScript, you cannot use the name of a variable in square brackets to specify which field to retrieve.
 
 </Syntax>
 
 <Syntax syntax="cameligo">
 
-We can also access fields of a record using a destructuring syntax,
+You can also access fields of a record using a destructuring syntax,
 known as _pattern matching_, which enables accessing multiple fields of
 a record in parallel, like so:
 
@@ -140,12 +136,12 @@ let user_to_triple (a : account) =
 
 <Syntax syntax="jsligo">
 
-We can also access fields of a record using the destructuring
+You can also access fields of a record using the destructuring
 syntax, known as _pattern matching_, which allows accessing multiple
 fields of a record in parallel, like so:
 
-```jsligo group=record_access
-function userToTuple (a : account) {
+```jsligo group=object_access
+function userToTuple (a: account) {
   const {user, id, is_admin} = a;
   return [user, id, is_admin];
 }
@@ -155,9 +151,7 @@ function userToTuple (a : account) {
 
 <Syntax syntax="cameligo">
 
-If we do not use some of the fields we matched, we assign them the
-special variable `_`, to avoid triggering a warning about an unused
-variable, like so:
+If you do not use one or more of the fields in the record, assign them the special variable name `_` to avoid triggering a warning about an unused variable, like so:
 
 ```cameligo group=record_access
 let get_id (a : account) =
@@ -169,11 +163,10 @@ let get_id (a : account) =
 
 <Syntax syntax="jsligo">
 
-We can ignore some fields by calling the predefined function
-`ignore` on them, like so:
+If you do not use one or more of the fields in the object, use the predefined function `ignore` on them to avoid triggering a warning about an unused variable, like so:
 
-```jsligo group=record_access
-function getId (a : account) {
+```jsligo group=object_access
+function getId (a: account) {
   let {user, id, is_admin} = a;
   ignore([user, is_admin]); // To avoid a warning
   return id;
@@ -184,9 +177,11 @@ function getId (a : account) {
 
 ## Assigning
 
+<Syntax syntax="cameligo">
+
 Given a record, it is a common design pattern to update only a small
 number of its fields. Instead of forcing the programmer to copy the
-remaining, unchanged fields, CameLIGO offers a way to only update the
+remaining, unchanged fields, CameLIGO offers a way to update only the
 fields that are modified.
 
 One way to understand the update of records is the *functional
@@ -195,8 +190,6 @@ updated record.
 
 Let us consider defining a function that translates three-dimensional
 points on a plane.
-
-<Syntax syntax="cameligo">
 
 The syntax for the functional updates of record in CameLIGO follows
 that of OCaml:
@@ -219,27 +212,47 @@ let xy_translate (p, vec : point * vector) : point =
 
 <Syntax syntax="jsligo">
 
-The syntax for the functional updates is:
+You can change the fields of an object that is declared as a variable, as in this example:
 
-```jsligo group=record_update
+```jsligo group=object_update
+function my_function () {
+  let my_object = {a: 1, b: 2};
+  my_object.a = 5;
+  my_object["b"] = 3;
+}
+```
+
+:::note
+
+Unlike in JavaScript, you cannot change the fields of an object that is declared as a constant.
+
+:::
+
+Similarly, you cannot add fields to an object after you create it, regardless of whether it is declared as a constant or a variable.
+To add fields, you can use a *functional update* to create a new object that has all of the fields of one or more other objects with the updates that you want.
+As in JavaScript, this type of update uses the `...` operator, as in this example:
+
+```jsligo group=object_update
 type point = {x: int, y: int, z: int}
 type vector = {dx: int, dy: int}
 
-const origin = {x: 0, y: 0, z: 0};
+const origin: point = {x: 0, y: 0, z: 0};
 
 const xy_translate = (p: point, vec: vector) =>
   ({...p, x: p.x + vec.dx, y: p.y + vec.dy});
 ```
 
-> It is important to understand that `p` has not been changed by the
-> functional update: a nameless new version of it has been created and
-> returned.
+:::note
+
+In the previous example, the constant `p` has not been changed by the functional update; a nameless new version of it has been created and returned.
+
+:::
 
 </Syntax>
 
-### Nested updates
-
 <Syntax syntax="cameligo">
+
+### Nested updates
 
 A unique feature of CameLIGO is the ability to perform nested updates
 on records. For example, given the following record declarations:
@@ -269,60 +282,38 @@ let change_login (login : string) (account : account) : account =
 
 </Syntax>
 
-
-<Syntax syntax="jsligo">
-
-JsLIGO does not support functional updates of nested records. For
-example, if you have the following record declarations:
-
-```jsligo group=record_nested_update
-type user = {
-  login : string,
-  name  : string
-};
-
-type account = {
-  user     : user,
-  id       : int,
-  is_admin : bool
-};
-```
-
-You can update the record `user` nested inside `account` the long way:
-
-```jsligo group=record_nested_update
-const change_login = (login: string, account: account) : account =>
-  ({...account, user: {...account.user, login}});
-```
-
-</Syntax>
-
 ## Comparing
-
-Record types are comparable types, which means that their values can
-be implicitly compared for equality, and records can be used as keys
-in [sets](./sets.md) or [maps](./maps.md). By
-default, the implicit, total order over records is **undefined and
-implementation-dependent** --- ultimately, the order is determined by
-the translated Michelson type.
 
 <Syntax syntax="cameligo">
 
+Record types are comparable types, which means that their values can
+be implicitly compared for equality. As a result, records can be used
+as keys in [sets](./sets.md) and [maps](./maps.md). By default, the
+implicit, total order over records is **undefined and
+implementation-dependent** — ultimately, the order is determined by
+the translated Michelson type.
+
 When using the `[@layout "comb"]` (or `[@layout:comb]`) attribute,
-fields are translated in Michelsom with their order as written in the
+fields are translated in Michelson with their order as written in the
 source code, and records are then ordered lexicographically (that is,
 when two fields of the same name have the same values, another field
-is compared, much rather like ordering two English words according to
-the alphabet).
+is compared, like ordering two English words according to the alphabet).
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
+Object types are comparable types, which means that their values can
+be implicitly compared for equality. As a result, objects can be used
+as keys in [sets](./sets.md) and [maps](./maps.md). By default, the
+implicit, total order over objects is **undefined and
+implementation-dependent** — ultimately, the order is determined by
+the translated Michelson type.
+
 When using the `@layout("comb")` decorator, fields are translated in
-Michelsom with their order as written in the source code, and records
+Michelson with their order as written in the source code, and objects
 are then ordered lexicographically (that is, when two fields of the
-same name have the same values, another field is compared, much rather
+same name have the same values, another field is compared,
 like ordering two English words according to the alphabet).
 
 </Syntax>

@@ -12,11 +12,12 @@ function main (action: parameter, store: storage) : [list<operation>, storage] {
   if (true) {
     return [
       [],    // No operations
-      match (action) {
-        when(Increment(n)): add (store, n)
-        when(Decrement(n)): sub (store, n)
-        when(Reset()): 0 }
-      ]
+      $match(action, {
+        "Increment": n => add (store, n),
+        "Decrement": n => sub (store, n),
+        "Reset": () => 0
+      })
+    ]
   }
   return failwith("Not Allowed")
 }
@@ -25,10 +26,11 @@ function main2 (action: parameter, store: storage) : [list<operation>, storage] 
   if (true) {
     return [
       [],    // No operations
-      match (action) {
-        when(Increment(n)): add (store, n)
-        when(Decrement(n)): sub (store, n)
-        when(Reset()): 0 }
+      $match(action, {
+        "Increment": n => add (store, n),
+        "Decrement": n => sub (store, n),
+        "Reset": () => 0
+      })
     ]
   } // comment should also work
   return failwith("Not Allowed")
@@ -38,25 +40,26 @@ function main3 (action: parameter, store: storage) : [list<operation>, storage] 
   if (true) {
     return [
       [],    // No operations
-      match (action) {
-        when(Increment(n)): add (store, n)
-        when(Decrement(n)): sub (store, n)
-        when(Reset()): 0 }
+      $match(action, {
+        "Increment": n => add (store, n),
+        "Decrement": n => sub (store, n),
+        "Reset": () => 0
+      })
     ]
   } // Comment then else should be fine too
-  else {
+  else
     return failwith("Not allowed")
-  }
 }
 
 function main4 (action: parameter, store: storage) : [list<operation>, storage] {
   if (true) {
     return [
       [],    // No operations
-      match (action) {
-        when(Increment(n)): add (store, n)
-        when(Decrement(n)): sub (store, n)
-        when(Reset()): 0 }
+      $match(action, {
+        "Increment": n => add (store, n),
+        "Decrement": n => sub (store, n),
+        "Reset": () => 0
+      })
     ]
   } /* Block comments as well */
   // and even multiple comments
@@ -65,18 +68,16 @@ function main4 (action: parameter, store: storage) : [list<operation>, storage] 
 
 export function example (x : int) : int {
   if (x == 42) { return x; } // foo
-  else {
-    return x
-  }
+  else { return x }
 }
 
 export function max2 (x: int, y: int) {
-  if (x > y) return x else return y
+  if (x > y) return x; else return y
 }
 
 export function max3 (x: int, y: int, z: int) {
   if (x > y)
-    if (x > z) return x else return z
+    if (x > z) return x; else return z
   else
-    if (y > z) return y else return z
+    if (y > z) return y; else return z
 }

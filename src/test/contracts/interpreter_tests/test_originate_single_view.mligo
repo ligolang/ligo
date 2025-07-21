@@ -1,5 +1,3 @@
-module Test = Test.Next
-
 let () = Test.IO.unset_test_print ()
 
 module Bar = struct

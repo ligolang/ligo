@@ -1,3 +1,0 @@
-let u1 : unit = [];
-let u2 : unit = unit;
-let eq = (u1 == u2); // true

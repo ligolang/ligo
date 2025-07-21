@@ -9,30 +9,29 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 Sequences of bytes
 
-    Bytes are used for serializing data, in order to check signatures
-    and compute hashes on them. They can also be used to read untyped
-    data from outside of the contract.
+Bytes are used for serializing data, in order to check signatures
+and compute hashes on them. They can also be used to read untyped
+data from outside of the contract.
 
 
 <SyntaxTitle syntax="cameligo">
 val length : bytes -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let length: (&#95;: bytes) =&gt; nat
+length: (&#95;: bytes) =&gt; nat
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Bytes.length b` is the number of bytes in the sequence of
-      bytes `b`. Note: `Bytes.length` is another name for
-      `Bytes.size`.
+bytes `b`. Note: `Bytes.length` is another name for `Bytes.size`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Bytes.length(b)` is the number of bytes in the sequence of
-      bytes `b`. Note: `Bytes.length` is another name for
-      `Bytes.size`.
+bytes `b`. Note: `Bytes.length` is another name for `Bytes.size`.
 
 </Syntax>
 
@@ -41,19 +40,20 @@ The call `Bytes.length(b)` is the number of bytes in the sequence of
 val size : bytes -&gt; nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let size: (&#95;: bytes) =&gt; nat
+size: (&#95;: bytes) =&gt; nat
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Bytes.size b` is the number of bytes in the sequence of
-    bytes `b`.
+bytes `b`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Bytes.size(b)` is the number of bytes in the sequence of
-    bytes `b`.
+bytes `b`.
 
 </Syntax>
 
@@ -62,21 +62,20 @@ The call `Bytes.size(b)` is the number of bytes in the sequence of
 val concat : bytes -&gt; bytes -&gt; bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let concat: (&#95;: bytes) =&gt; (&#95;: bytes) =&gt; bytes
+concat: (&#95;: bytes) =&gt; (&#95;: bytes) =&gt; bytes
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Bytes.concat left right` is the sequence of bytes obtained
-    by concatenating the sequence `left` before the sequence
-    `right`.
+by concatenating the sequence `left` before the sequence `right`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Bytes.concat(left, right)` is the sequence of bytes obtained
-    by concatenating the sequence `left` before the sequence
-    `right`.
+by concatenating the sequence `left` before the sequence `right`.
 
 </Syntax>
 
@@ -85,19 +84,20 @@ The call `Bytes.concat(left, right)` is the sequence of bytes obtained
 val concats : bytes list -&gt; bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let concats: (&#95;: list&lt;bytes&gt;) =&gt; bytes
+concats: (&#95;: list&lt;bytes&gt;) =&gt; bytes
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Bytes.concats list` is the concatenation of the byte
-    sequences in the list `list`, from left to right.
+sequences in the list `list`, from left to right.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Bytes.concats(list)` is the concatenation of the byte
-    sequences in the list `list`, from left to right.
+sequences in the list `list`, from left to right.
 
 </Syntax>
 
@@ -106,23 +106,24 @@ The call `Bytes.concats(list)` is the concatenation of the byte
 val sub : nat -&gt; nat -&gt; bytes -&gt; bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let sub: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: bytes) =&gt; bytes
+sub: (index: nat, length: nat, bytes: bytes) =&gt; bytes
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Bytes.sub index len bytes` is the subsequence of bytes
-    `bytes` starting at index `index` (0 denoting the first byte) and
-    of length `len`. If the index or length are invalid, an exception
-    interrupts the execution.
+`bytes` starting at index `index` (0 denoting the first byte) and
+of length `len`. If the index or length are invalid, an exception
+interrupts the execution.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Bytes.sub(index, len, bytes)` is the subsequence of bytes
-    `bytes` starting at index `index` (0 denoting the first byte) and
-    of length `len`. If the index or length are invalid, an exception
-    interrupts the execution.
+`bytes` starting at index `index` (0 denoting the first byte) and
+of length `len`. If the index or length are invalid, an exception
+interrupts the execution.
 
 </Syntax>
 
@@ -131,23 +132,24 @@ The call `Bytes.sub(index, len, bytes)` is the subsequence of bytes
 val slice : nat -&gt; nat -&gt; bytes -&gt; bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let slice: (&#95;: nat) =&gt; (&#95;: nat) =&gt; (&#95;: bytes) =&gt; bytes
+slice: (index: nat, length: nat, bytes: bytes) =&gt; bytes
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Bytes.slice index len bytes` is the subsequence of bytes
-    `bytes` starting at index `index` (0 denoting the first byte) and
-    of length `len`. If the index or length are invalid, an exception
-    interrupts the execution.
+`bytes` starting at index `index` (0 denoting the first byte) and
+of length `len`. If the index or length are invalid, an exception
+interrupts the execution.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Bytes.slice(index, len, bytes)` is the subsequence of bytes
-    `bytes` starting at index `index` (0 denoting the first byte) and
-    of length `len`. If the index or length are invalid, an exception
-    interrupts the execution.
+`bytes` starting at index `index` (0 denoting the first byte) and
+of length `len`. If the index or length are invalid, an exception
+interrupts the execution.
 
 </Syntax>
 
@@ -156,19 +158,20 @@ The call `Bytes.slice(index, len, bytes)` is the subsequence of bytes
 val pack : &#39;a.&#39;a -&gt; bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let pack: &lt;a&gt;(&#95;: a) =&gt; bytes
+pack: &lt;a&gt;(&#95;: a) =&gt; bytes
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Bytes.pack v` transforms the value `v` into a sequence of
-    bytes.
+bytes.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 The call `Bytes.pack(v)` transforms the value `v` into a sequence of
-    bytes.
+bytes.
 
 </Syntax>
 
@@ -177,19 +180,20 @@ The call `Bytes.pack(v)` transforms the value `v` into a sequence of
 val unpack : &#39;a.bytes -&gt; &#39;a option
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let unpack: &lt;a&gt;(&#95;: bytes) =&gt; option&lt;a&gt;
+unpack: &lt;a&gt;(&#95;: bytes) =&gt; option&lt;a&gt;
 </SyntaxTitle>
+
 <Syntax syntax="cameligo">
 
 The call `Bytes.unpack bytes` is `Some v` if the sequence of bytes
-    `bytes` decodes into a valid LIGO value `v`; otherwise `None`.
+`bytes` decodes into a valid LIGO value `v`; otherwise `None`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-The call `Bytes.unpack(bytes)` is `Some(v)` if the sequence of bytes
-    `bytes` decodes into a valid LIGO value `v`; otherwise
-    `None()`.
+The call `Bytes.unpack(bytes)` is `["Some" as "Some", v]` if the
+sequence of bytes `bytes` decodes into a valid LIGO value `v`;
+otherwise `["None" as "None"]`.
 
 </Syntax>

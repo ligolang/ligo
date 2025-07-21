@@ -40,7 +40,7 @@ let print_decl : Pretty.pp_mode -> declaration -> string =
   Pretty.with_pp_mode
     pp_mode
     { cameligo = uncurry CameLIGO_pretty.print_declaration
-    ; jsligo = uncurry JsLIGO_pretty.print_statement
+    ; jsligo = uncurry @@ JsLIGO_pretty.print_statement ~let_to_const:false
     }
 
 (* [print_decl] produce a newline at the end of doc, which leads to a trailing newline

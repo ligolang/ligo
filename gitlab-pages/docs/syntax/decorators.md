@@ -42,6 +42,8 @@ You may encounter them when exporting the Abstract Syntax Tree (AST) after a cer
 
 ## List of attributes
 
+LIGO supports these attributes:
+
 </Syntax>
 
 <Syntax syntax="jsligo">
@@ -55,25 +57,44 @@ Decorators come in two forms:
 The most common use of a decorator is to denote an [entrypoint](../syntax/contracts/entrypoints).
 
 Decorators are placed immediately before the code they apply to.
-You can also apply multiple decorators on one line, as in this example:
+You can also apply multiple decorators to the same piece of code, as in this example:
 
 ```jsligo group=decorators
 type storage = int;
 type result = [list<operation>, storage];
 
-@entry @no_mutation
+// @entry
+// @no_mutation
 const sub = (delta: int, storage: storage) : result =>
   [[], storage - delta];
 ```
 
-Note that the lexical convention for decorators clashes with that of [escaped variables](keywords#escaping-keywords).
-Therefore, you cannot escape the name of a decorator and use it as a variable name.
+Decorators must be in comments unless they are within a class.
+For example, this class has decorators that are not in comments:
+
+```jsligo group=decorators
+class Counter {
+
+  @entry
+  @inline
+  add = (value: int, storage: storage): result =>
+    [[], storage + value];
+
+  @entry
+  @deprecated
+  sub = (value: int, storage: storage): result =>
+    [[], storage - value];
+
+  @view
+  get = (_: unit, storage: storage): storage => storage;
+}
+```
 
 ## List of decorators
 
-</Syntax>
-
 LIGO supports these decorators:
+
+</Syntax>
 
 - [`annot`](../reference/decorators/annot)
 - [`deprecated`](../reference/decorators/deprecated)

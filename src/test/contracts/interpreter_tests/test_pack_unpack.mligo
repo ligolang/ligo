@@ -1,10 +1,8 @@
-module Test = Test.Next
 let assert = Assert.assert
 
 module C = struct
   [@entry]
-  let main (b : bytes) (_ : bytes) : operation list * bytes =
-    ([] : operation list), b
+  let main (b : bytes) (_ : bytes) : operation list * bytes = [], b
 end
 
 let test =

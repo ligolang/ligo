@@ -1,1 +1,1 @@
-let check = (kh: key_hash) => Tezos.implicit_account(kh);
+const check = (kh: key_hash) => Tezos.implicit_account(kh);

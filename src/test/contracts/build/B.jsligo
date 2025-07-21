@@ -1,9 +1,11 @@
-#import "A.jsligo" "A"
+// @export
+import * as A from "A.jsligo";
 
-export let toto = 32;
-let titi = A.toto + 42;
+export const toto = 32
+export const titi = A.toto + 42;
 
-export let f = (u: unit, x_: int) : [list<operation>, int] => {
-    let x : int = x_ + A.toto + titi;
-    return [[], x];
+// @entry
+export function main (_u: unit, x_: int) : [list<operation>, int] {
+  const x : int = x_ + toto + titi;
+  return [[], x];
 };

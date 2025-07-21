@@ -1,5 +1,4 @@
 type storage = int
-
 type parameter = int
 
 type x = Left of int
@@ -11,4 +10,4 @@ let main (p : parameter) (s : storage): operation list * storage =
     | Some c -> c
     | None -> failwith "contract does not match"
   in
-  [Tezos.transaction (Left 2) 2mutez contract], s
+  [Tezos.Operation.transaction (Left 2) 2mutez contract], s

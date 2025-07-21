@@ -1,3 +1,4 @@
+open Core
 module Node = struct
   type t = String.t [@@deriving eq, compare]
 

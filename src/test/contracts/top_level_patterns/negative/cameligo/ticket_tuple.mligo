@@ -1,7 +1,7 @@
-let (b, _) = (Option.unopt (Tezos.create_ticket "one" 10n), 1)
+let b, _ = Option.value_with_error "option is None" (Tezos.Ticket.create "one" 10n), 1
 
 type storage = string ticket
 
 [@entry]
 let main (_ : unit) (_ : storage) : operation list * storage =
-  [], Option.unopt (Tezos.join_tickets (b, b))
+  [], Option.value_with_error "option is None" (Tezos.Ticket.join (b, b))

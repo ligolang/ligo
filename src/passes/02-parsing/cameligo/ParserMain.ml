@@ -71,6 +71,9 @@ module Pretty =
   struct
     include Parsing_cameligo.Pretty
     type tree = CST.t
+
+    (* TODO: this is monkey patching, remove it in the future *)
+    let print ?(stdlib:_) ?(classes:_) state cst = print state cst
   end
 
 module Print =

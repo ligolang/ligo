@@ -1,7 +1,6 @@
-#import "test_imported.mligo" "External"
-
-module Test = Test.Next
 let assert = Assert.assert
+
+module External = Test_imported
 
 let test =
   let orig = Test.Originate.contract (contract_of External) External.D.default.initial 0tez in
