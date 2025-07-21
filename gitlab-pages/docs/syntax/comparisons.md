@@ -172,9 +172,9 @@ const c: bool = (a == b); // false
 
 To compare tuples, LIGO compares the values in order from left to right.
 
-Therefore, the tuple `[1, 2, 3]` is equal to the tuple `[1, 2, 3]` but not equal to a tuple with the same values in a different order:
-
 <Syntax syntax="cameligo">
+
+Therefore, the tuple `1, 2, 3` is equal to the tuple `1, 2, 3` but not equal to a tuple with the same values in a different order:
 
 ```cameligo group=tuples_equal
 let a = 1, 2, 3
@@ -187,6 +187,8 @@ let e = (a = d) // false
 </Syntax>
 
 <Syntax syntax="jsligo">
+
+Therefore, the tuple `[1, 2, 3]` is equal to the tuple `[1, 2, 3]` but not equal to a tuple with the same values in a different order:
 
 ```jsligo group=tuples_equal
 const a = [1, 2, 3];
