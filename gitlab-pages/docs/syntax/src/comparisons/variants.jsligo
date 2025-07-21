@@ -1,0 +1,22 @@
+type user =
+  ["Admin", nat]
+| ["Manager", nat]
+| ["VP", string]
+| ["Guest"];
+
+const alice: user = ["Admin" as "Admin", 1 as nat];
+const bob: user = ["Manager" as "Manager", 1 as nat];
+const carl: user = ["Guest" as "Guest"];
+const diana: user = ["VP" as "VP", "Accounts"];
+const alice_2: user = ["Admin" as "Admin", 1 as nat];
+
+const a = (alice == bob); // false
+const b = (alice == carl); // false
+const c = (alice == carl); // false
+const d = (alice == diana); // false
+const e = (alice == alice_2); // true
+const edwin: user = ["Admin" as "Admin", 9 as nat];
+const francis: user = ["Admin" as "Admin", 12 as nat];
+const grady: user = ["Admin" as "Admin", 1 as nat];
+const h = (edwin < francis); // true
+const i = (edwin < grady); // false

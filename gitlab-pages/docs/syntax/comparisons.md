@@ -177,10 +177,10 @@ Therefore, the tuple `[1, 2, 3]` is equal to the tuple `[1, 2, 3]` but not equal
 <Syntax syntax="cameligo">
 
 ```cameligo group=tuples_equal
-let a = [1, 2, 3]
-let b = [1, 2, 3]
+let a = 1, 2, 3
+let b = 1, 2, 3
 let c = (a = b) // true
-let d = [3, 2, 1]
+let d = 3, 2, 1
 let e = (a = d) // false
 ```
 
@@ -204,8 +204,8 @@ Then it compares the two different values and returns the result, as in this exa
 <Syntax syntax="cameligo">
 
 ```cameligo group=tuples_greater
-let a = [1, 3, 2]
-let b = [1, 2, 10]
+let a = 1, 3, 2
+let b = 1, 2, 10
 let c = (a > b) // true because 3 > 2
 ```
 

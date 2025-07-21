@@ -1,0 +1,3 @@
+const a = "Alice";
+const b = "Alice";
+const c = (a == b); // true
