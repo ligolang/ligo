@@ -76,6 +76,20 @@ let rec assert_type_expression_eq
   =
   let open Ligo_option in
   match a.type_content, b.type_content with
+  (* TODO: this is hack to workaround the issue with unforged_tickets here *)
+  | ( T_constant
+        { language = _
+        ; injection = Ligo_prim.Literal_types.Ticket
+        ; parameters = [ a_ty ]
+        }
+    , T_constant
+        { language = _
+        ; injection = Ligo_prim.Literal_types.Ticket
+        ; parameters = [ b_ty ]
+        } ) ->
+    (match assert_type_expression_eq ~unforged_tickets (a_ty, b_ty) with
+    | Some () -> Some ()
+    | None -> if unforged_tickets then Some () else None)
   | ( T_constant
         { language = _; injection = Ligo_prim.Literal_types.Ticket; parameters = [ _ty ] }
     , _human_t )
