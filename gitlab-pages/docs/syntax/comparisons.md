@@ -150,7 +150,7 @@ Comparing `tez` values is especially useful when dealing with an amount sent in 
 
 <Syntax syntax="cameligo">
 
-```cameligo grouptez
+```cameligo group=tez
 let a : tez = 5mutez
 let b : tez = 10mutez
 let c : bool = (a = b) // false
@@ -160,7 +160,7 @@ let c : bool = (a = b) // false
 
 <Syntax syntax="jsligo">
 
-```jsligo grouptez
+```jsligo group=tez
 const a: tez = 5 as mutez;
 const b: tez = 10 as mutez;
 const c: bool = (a == b); // false
