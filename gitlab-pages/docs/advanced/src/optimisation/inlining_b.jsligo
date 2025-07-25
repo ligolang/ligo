@@ -1,0 +1,4 @@
+const main = (_p: unit, _s: int): [list<operation>, int] => {
+  const n = 4 as int;
+  return [[], n * n];
+};

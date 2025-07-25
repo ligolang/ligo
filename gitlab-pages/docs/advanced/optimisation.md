@@ -71,6 +71,54 @@ Operations that exceed these limits are rejected regardless of the fees that you
 
 - Transactions that call contracts are limited by the maximum size of the operation itself (including the parameter passed to the contract) and by the maximum computation that an operation can use (the gas limit).
 
+:::warning
+
+Contracts become unusable if the cost of calling them exceeds the gas limit.
+For example, if the storage gets too large to load, deserialize, and type-check within the gas limit, the contract becomes permanently locked and unusable.
+
+:::
+
+## Measuring gas consumption
+
+You can use the `ligo info measure-contract` command to get the size of a compiled contract's code in bytes:
+
+```bash
+ligo info measure-contract <SOURCE>
+```
+
+The `Test.Originate.contract` function also returns the size of the compiled contract in bytes.
+
+There are two main ways to estimate the gas cost of calling a smart contract:
+
+- In a test, the functions `Test.Contract.transfer` and `Test.Contract.transfer_exn` return the gas cost of successful smart contract calls.
+
+- You can deploy the contract to a sandbox or test network and call it with the Octez client or add the `--dry-run` argument to simulate calling it, as in this example:
+
+   ```bash
+   octez-client call <CONTRACT_ADDRESS> from <ACCOUNT_OR_ALIAS> --entrypoint "<ENTRYPOINT>" --arg "<PARAMETER>" --dry-run --burn-cap 1
+   ```
+
+   The logging information includes the gas cost at the end, as in this example:
+
+   ```
+   Storage size: 144 bytes
+   Paid storage size diff: 12 bytes
+   Consumed gas: 1290.264
+   Balance updates:
+     tz1QCVQinE8iVj1H2fckqx6oiM85CNJSK9Sx ... -ꜩ0.003
+     storage fees ........................... +ꜩ0.003
+   ```
+
+   In this log, the "consumed gas" is the total transaction fee (execution and storage) and the "storage fees" is the storage fee by itself.
+   If the storage fee is not listed, the transaction did not increase storage and therefore did not incur a storage fee.
+
+It's harder to get the cost of storage, but you can estimate it by deploying a contract with that storage to a sandbox or testnet.
+Then you can send transactions to the contract to see the storage fees or deploy it different times with different initial storage values to get estimates of what the storage fees cost in the long run.
+
+When you deploy a contract and provide an initial storage value, the log shows two storage fees.
+The first fee is for the initial storage and the second is for the storage of the contract code itself.
+You can use this information to optimize storage values and other variables such as parameters.
+
 ## Optimisation targets
 
 For the reasons listed above, smart contract developers can focus on these optimisation targets:
@@ -82,13 +130,12 @@ For the reasons listed above, smart contract developers can focus on these optim
 
 Another two factors – parameter size and operations pressure – are mostly out of control of the contract author.
 
-Although the optimisation targets listed above are inter-related, you can look at them in isolation because the optimisation methods may differ.
+Although the optimisation targets listed above are interrelated, you can look at them in isolation because the optimisation methods may differ.
 
 ### Gas consumption
 
-Contrary to a more conventional instruction-based gas accounting, where each instruction has a cost associated with it, Tezos gas fees reflect actual computations and I/O operations performed by the nodes.
-On one hand, this gas cost accounting prevents vulnerabilities caused by incorrect estimation of the instruction costs.
-On the other hand, it makes the gas model more complex than, for example, the Ethereum model.
+Contrary to gas fees on some other blockchains where each instruction has a fixed cost, Tezos gas fees reflect actual computations and I/O operations performed by the nodes.
+This gas cost accounting prevents vulnerabilities caused by incorrect estimation of the instruction costs, but it requires more calculation to get the actual gas cost of an operation.
 
 To understand how gas is spent, consider the phases of transaction execution:
 
@@ -101,17 +148,18 @@ To understand how gas is spent, consider the phases of transaction execution:
 
 At each phase, a certain amount of gas is consumed.
 
-* The amount of gas consumed in phases 1–3 is proportional the size of the code and the size of the non-lazy storage.
+* The amount of gas consumed in phases 1–3 depends on the size of the code, the total size of the non-lazy storage, and the size of the lazy storage that is accessed.
+
 * The cost of running the contract code (phase 4) depends on the number of instructions and the complexity of those instructions.
 
-  - You can estimate the cost of simple, atomic instructions like variable assignments and comparisons based on the average gas cost of a Michelson instruction.
+  - You can estimate the cost of simple, atomic instructions like variable assignments and comparisons based on the average gas cost of a Michelson instruction because they don't differ very much.
 
-  - The cost of more complex, expensive instructions such as `Tezos.get_contract_opt` and `Bytes.pack` can be estimated separately.
+  - You should estimate the cost of more complex, expensive instructions such as `Tezos.get_contract_opt` and `Bytes.pack` separately.
 
-* The amount of gas consumed in phases 5–6 is proportional to the size of the storage.
+* The amount of gas consumed in phases 5–6 depends on the size of the non-lazy storage and the changes to the lazy storage.
 
 These are only approximations; for example, the true cost of deserialization also depends on the inherent complexity of the code and data types, but the primary variable is the size.
-Similarly, not all simple, atomic instructions cost the same.
+Similarly, not all simple, atomic instructions cost the same amount.
 For detailed info on gas consumption, please refer to the [Tezos gas model description](https://gitlab.com/tezos/tezos/-/blob/52a074ab3eb43ad0087804b8521f36cb517f7c28/docs/whitedoc/gas_consumption.rst).
 
 According to these approximations, the formula for the total gas consumption is (using `α` and `β` as scaling factors for the expense of reading, serialising, and deserialising storage and code):
@@ -120,9 +168,18 @@ According to these approximations, the formula for the total gas consumption is 
 α(size(code) + size(storage)) + cost(expensive_instructions) + (cost(average_instruction) x atomic_instructions) + βsize(storage)
 ```
 
-In practice, as long as the contract code does not include costly loops with a large number of iterations, the cost of running the contract code is negligible compared to other costs.
-In other words, **the gas consumption depends mostly on the total size of the contract code and storage** (and possibly a small number of expensive instructions, if any).
+In practice, as long as the contract code does not include expensive instructions or costly loops with a large number of iterations, the cost of running the contract code is negligible compared to other costs.
+In other words, **the gas consumption depends mostly on the total size of the contract code and storage**.
 The amount of code _actually executed_ does not affect gas consumption as much.
+
+:::note
+
+Because of how gas consumption is calculated, optimising Tezos smart contracts can be very different from other kinds of code.
+For example, when you optimise off-chain programs, you might spend more time on code that runs frequently and ignore code that runs infrequently.
+However, when you optimise Tezos smart contracts, you must consider even code that runs infrequently because Tezos loads the entire code of the contract, not just the code that runs.
+For this reason, you must pay attention to all entrypoints and functions, even if they are not called frequently.
+
+:::
 
 ### Expensive instructions
 
@@ -135,15 +192,15 @@ If the called contract is large, such an instruction may consume a lot more gas 
 
 * `Bytes.pack` and `Bytes.unpack`: These instructions involve serialising and deserialising values, so their cost depends on the size of the data.
 
-* Reading and updating the values in a big-map may be more expensive than you expect because doing so involves serialising and deserialising values.
+* Reading and updating the values in a big-map may be more expensive than you might expect because doing so involves fetching the value from lazy storage and serialising and deserialising values.
 Also, big-map keys are stored as hashes, so reading or updating a value requires getting the hash of the key value.
 However, unlike maps, the cost of reading or updating a big-map entry does not change as the big-map grows.
 
 ### Code size
 
-The size of the contract code is often the most important optimisation target.
-When you originate a large contract, you risk hitting an operation size limit and pay more for storing the code of the contract in the context.
-The size of the contract matters in gas consumption as well: the bigger your contract is, the more gas is consumed for reading, deserialising, and type-checking it.
+The size of the contract code is often the most important optimisation target because each time a contract is called, it is read, deserialized, and type-checked.
+For this reason, reducing the size of the contract code can yield large savings over its lifetime.
+Also, originating a large contract costs more and (when combined with its initial storage) can exceed the gas limit.
 
 You can reduce your code size by:
 
@@ -151,13 +208,10 @@ You can reduce your code size by:
 - Separating larger or less frequently-used entrypoints into other contracts
 - Changing the inlining of functions
 
-You can use the `ligo info measure-contract` command to measure the size of the contract code:
-
-```
-ligo info measure-contract <SOURCE> --entry-point <ENTRYPOINT>
-```
-
 Also, to optimise code execution, you must ensure that the code doesn't have to run too many loop iterations.
+
+To verify the size of the compiled contract, use the `ligo info measure-contract` command as described in [Measuring gas consumption](#measuring-gas-consumption).
+Measuring contracts in this way is the best way to know if you have actually reduced the contract's size as compiled to Michelson.
 
 ### Storage size
 
@@ -166,7 +220,7 @@ The storage size and growth rate are also important optimisation targets.
 Of course, the initial storage size affects how much the contract costs to deploy.
 If the initial storage size is too large, the origination operation can exceed the gas limit.
 
-The current size of the storage also affects the cost to call the contract because each time the contract is called, all non-lazy storage variables are read and deseralised, even if the transaction or called entrypoint does not use them.
+The current size of the storage also affects the cost to call the contract because each time the contract is called, all non-lazy storage variables are read, deseralised, and type-checked, even if the transaction or called entrypoint does not use them.
 
 The other major factor is how the storage grows over time.
 As described above, the fee for each transaction includes a component to pay for the amount of storage increase from the maximum historical size of the contract storage.
@@ -185,6 +239,8 @@ In short, to reduce the cost of calling the contract many times over its lifespa
 - Reduce the amount of data that the contract stores.
 - Make sure that the storage size stays the same or grows only when necessary.
 
+You can also reduce the storage size by storing data in creative ways, such as by using lazy storage types (as described below) or by storing large or infrequently-used pieces of data in other contracts.
+
 ### Using lazy storage
 
 Using lazily-deserialized storage (big-maps) is a common way that smart contract developers reduce the cost of calling their contracts in the long run.
@@ -192,14 +248,18 @@ Unlike other variables, the big-maps in a contract's storage are not read and de
 Instead, only the entries that the code accesses are read and deserialized.
 Similarly, when you change a single entry in a big-map, the contract does not need to access the entire big-map, only that entry.
 
-Therefore, while it costs more gas to read or update an entry from a big-map than from a regular map, the cost of reading or updating a big-map entry stays constant as the big-map grows.
+Therefore, while it costs more gas to read or update an entry from a small big-map than from a comparable regular map, the cost of reading or updating a big-map entry stays constant as the big-map grows, unlike the regular map.
 
-Then why not just use big maps everywhere?
-Accessing big map entries one-by-one is more expensive than just reading the whole storage in batch.
-Moreover, big maps have limitations; for example, you can't iterate over the entries in a big-map, get a list of its keys, or even get a count of the number of entries in it.
-To make your storage efficient, you must consider how big the values are, how often they are accessed, and what operations you need the storage to support.
+:::note
 
-Also, as described in [Security](./security), using non-lazy storage variables can expose your contract to attacks.
+Then why not use big-maps everywhere?
+Accessing big-map entries one-by-one is more expensive than reading the whole storage in batch, as in regular maps.
+Moreover, big-maps have limitations; for example, you can't iterate over the entries in a big-map, get a list of its keys, or even get a count of the number of entries in it.
+To choose between lazy and non-lazy storage, you must consider how big the values are, how often they are accessed, and what operations you need the storage to support.
+
+:::
+
+As described in [Security](./security), using non-lazy storage variables can expose your contract to attacks.
 You should never allow users to directly increase the size of a non-lazy storage variable because they could grow that variable to a point where it prevents the contract from being called.
 Therefore, if users can somehow increase the size of a storage variable, use a big-map or put a limit on the variable size.
 
@@ -216,11 +276,26 @@ This way, calling the other entrypoints does not cause the variable to be loaded
 
 ## Common optimisation techniques
 
-### Constants optimisation
+Many common techniques for optimising code also work for LIGO contracts.
+The following sections show some specific ways that you can optimise LIGO contract code.
 
-One of the most rewarding ways to optimise your contract is shrinking the constants. For example, if your contract has long, overly-verbose error descriptions passed to `Tezos.failwith`, you should consider replacing them with short abbreviated strings or even integer error codes.
+:::note
 
-If you have repeating constants (e.g., you may have several entrypoints that check permissions and a constant "PERMISSION_DENIED" error), you can extract these constants to a top-level binding. In this case, the LIGO compiler will generate the code of the form:
+Always test the behaviour and gas consumption of optimisation efforts to ensure that the new code works and is more efficient than the original code that you are trying to optimise.
+
+:::
+
+### Reusing constants
+
+You can often save a lot of code size with minimal effort by shrinking constants.
+For example, if your contract has long error descriptions passed to `Tezos.failwith`, you can replace them with short abbreviated strings or integer error codes.
+
+If the contract uses a constant in more than one place, you can reduce code size by making it a top-level variable.
+For example, if your code has multiple entrypoints that check permissions and generate the same "PERMISSION_DENIED" errors, you might put a string variable with that message in each entrypoint.
+When Tezos loads the contract code, it adds all of those variables to the Michelson code stack.
+Instead, if you extract those messages to a single top-level variable, Tezos adds it to the stack only once and accesses it with a `DIG` instruction.
+
+In this case, the LIGO compiler generates Michelson code that looks like this:
 
 | Michelson instruction             | Description                                |
 |-----------------------------------|--------------------------------------------|
@@ -228,15 +303,21 @@ If you have repeating constants (e.g., you may have several entrypoints that che
 | ...                               | ...                                        |
 | `DIG n`                           | Get the n-th stack entry and put it on top |
 
-This is cheaper than pushing the same string to stack every time it is needed. This string will be pushed to stack _every time_ the contract is called, regardless of whether the current entrypoint actually uses it. This will not increase gas consumption significantly since, as we discussed, the cost of _interpreting_ the instruction is relatively low. However, you can go further and save large constants in _storage_ or even in a big map.
+There might be multiple `DIG n` instructions on the stack for each time that the constant is used, but each is still more efficient than pushing the constant to the stack again.
+You can go further and save large constants in storage or even in a big-map.
+
+These optimisations may not increase gas consumption significantly because the cost of interpreting these instructions is already relatively low.
+However, over the life of the contract, these small optimisations can add up.
 
 ### Inlining
+
+Inlining is the process of embedding the code of a function instead of storing the function as a separate block of code.
 
 Consider the following contract:
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=inlining_a
 let sum (x, y : int * int) = x + y
 
 let main (parameter, storage : int * int) : operation list * int =
@@ -245,8 +326,18 @@ let main (parameter, storage : int * int) : operation list * int =
 
 </Syntax>
 
+<Syntax syntax="jsligo">
 
-There are two major ways to represent functions (like `sum`) in Michelson. The first way is to first push the function `f` to the stack, and then execute it with the argument `(parameter, storage)`:
+```jsligo group=inlining_a
+const sum = (x: int, y: int) => x + y;
+
+const main = (parameter: int, storage: int): [list<operation>, int] =>
+  [[], sum(parameter, storage)]
+```
+
+</Syntax>
+
+There are two major ways to represent functions (like `sum` in the previous example) in Michelson. The first way is to push the function to the stack as a lambda and execute it with the argument `(parameter, storage)`:
 
 | Michelson instruction | Stack after the instruction                    |
 |-----------------------|------------------------------------------------|
@@ -257,8 +348,7 @@ There are two major ways to represent functions (like `sum`) in Michelson. The f
 | `NIL operation`       | `[]`, `parameter + storage`                    |
 | `PAIR`                | `([], parameter + storage)`                    |
 
-
-The second way is to replace the function call (`LAMBDA`, `SWAP`, `EXEC` sequence) with the function body, or _inline_ the function:
+The second way is to put the individual instructions in the function on the stack, or _inline_ the function:
 
 | Michelson instruction | Stack after the instruction                    |
 |-----------------------|------------------------------------------------|
@@ -268,91 +358,150 @@ The second way is to replace the function call (`LAMBDA`, `SWAP`, `EXEC` sequenc
 | `NIL operation`       | `[]`; `parameter + storage`                    |
 | `PAIR`                | `([], parameter + storage)`                    |
 
-You may notice that in this case, inlining reduced the size of the contract.
+In this case, inlining reduced the size of the contract.
 
-Other declarations can be inlined as well. In this contract, the compiler may generate the code that does `PUSH int 4` twice (in case there is an `[@inline]` annotation), or `PUSH int 4; DUP` (if there is no instruction to inline this binding):
+Other declarations can be inlined as well.
+In the following example, the compiler might generate the code that does `PUSH int 4` twice (in case there is an `[@inline]` annotation), or `PUSH int 4; DUP` (if there is no instruction to inline the code):
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=inlining_b
 let n = 4
 
-let main (_, _ : unit * int) : operation list * int = [], n * n
+let main (_p, _s : unit * int) : operation list * int = [], n * n
 ```
 
 </Syntax>
 
+<Syntax syntax="jsligo">
 
-LIGO will automatically inline declarations if two conditions are met:
-1. The declaration is only used once
-2. The declaration is pure, i.e., it does not depend on the execution context or cause failure.
+```jsligo group=inlining_b
+const main = (_p: unit, _s: int): [list<operation>, int] => {
+  const n = 4 as int;
+  return [[], n * n];
+};
+```
 
-If any of these conditions is not met, LIGO will **not** inline the declaration. You may use the `[@inline]` attribute to force inlining if the declaration is used more than once. You cannot force inlining if the declaration is not pure.
+</Syntax>
 
-Unfortunately, there is no general rule on when to inline your declarations: sometimes inlining may increase the size of the contract, but in some cases – decrease it.
+As described in [Inlining](../syntax/functions#inlining), LIGO automatically inlines declarations if both of these conditions are met:
 
-Intuitively, inlining functions is useful if:
-1. You are inlining a function with a complex argument or return type – lambdas in Michelson require an explicit type annotation, and if you inline a function, you can omit it.
-2. The function is not used often.
+- The declaration is used only once
+- The declaration is pure, which means that it does not depend on the execution context or cause failure
+
+If any of these conditions is not met, LIGO does not automatically inline the declaration.
+You can use the `[@inline]` attribute or `@inline` decorator to force inlining if the declaration is used more than once.
+You cannot force inlining if the declaration is not pure.
+
+There is no general rule on when to inline your declarations.
+Sometimes inlining increases the size of the contract and other times it decreases it.
+The only way to be sure is to try both ways and use the `ligo info measure-contract` command and gas cost testing to compare.
+
+In general, inlining functions is useful if:
+
+- You are inlining a function with a complex argument or return type.
+Lambdas in Michelson require an explicit type annotation, and if you inline a function, you can omit that type annotation.
+- The function is not used often.
 
 However, the best approach is to measure the gas consumption and the size of your contract to make a decision on inlining.
 
 ### Lazy-loading
-This peculiar technique can be used to lower the average gas consumption of your contract by making large entrypoints a bit more expensive to call.
 
-Imagine you have a contract with a number of small frequently-used entrypoints and several large entrypoints that are called rarely. During each transaction to the contract, the bakers would read **the whole code** of your contract, deserialise and type-check it, and only after that, execute the requested entrypoint.
+Because the entire code of the contract is loaded each time it is called, you can sometimes reduce long-term gas costs by putting the code of large or infrequently-used entrypoints in other contracts.
+Another way to achieve the same effect is by putting the code of these entrypoints or other logic in lambdas and store them in a big-map.
+
+LIGO provides a system for storing logic in big-maps; see [Dynamic entrypoints](../syntax/contracts/dynamic-entrypoints).
+If you don't want to to use dynamic entrypoints, you can do something similar manually by storing logic in big-maps.
+
+For example, this contract has an entrypoint named `large_entry_point` that loads a large lambda from a big-map and runs it.
+The contract could have other entrypoints that don't need the logic from that lambda.
+Storing the logic in the big-map makes calling the `large_entry_point` entrypoint more expensive, but it makes calling the other entrypoints cheaper because the lambda isn't loaded.
 
 <Syntax syntax="cameligo">
 
-It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and type-checked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `(bool, entrypoint_lambda) big_map` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `(unit, entrypoint_lambda) big_map`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
+```cameligo group=lazy_entrypoints
+module LazyEntrypoint = struct
+  type storage_type = {
+    large_entrypoint_map : (bool, int -> int) big_map;
+    value : int
+  }
+  type return_type = operation list * storage_type
 
-Here is how it looks like:
-```cameligo
-type storage = { large_entrypoint : (bool, int -> int) big_map; result : int }
+  (* Load the code from the big-map *)
+  let load_large_ep (storage : storage_type) : (int -> int) =
+    let large_entrypoint_opt =
+      Big_map.find_opt true storage.large_entrypoint_map in
+    match large_entrypoint_opt with
+      Some ep -> ep
+    | None -> failwith "Internal error"
 
-let load_large_ep (store : storage) : (int -> int) =
-  let maybe_large_entrypoint =
-    Big_map.find_opt true (store.large_entrypoint) in
-  match maybe_large_entrypoint with
-    Some ep -> ep
-  | None -> failwith "Internal error"
+  (* Run the code from the big-map *)
+  [@entry]
+  let large_entry_point (param : int) (storage : storage_type) : return_type =
+    [], {storage with value = (load_large_ep storage) param}
 
-[@entry]
-let large_entry_point (n : int) (store :  storage) : operation list * storage =
-  [], {store with result = (load_large_ep store) n}
+  (* Do something that doesn't require the large code *)
+  [@entry]
+  let small_entry_point (param : int) (storage : storage_type) : return_type =
+    [], {storage with value = param}
 
-(* Other entrypoints ... *)
+  (* Other entrypoints... *)
+
+end
 ```
 
 </Syntax>
 
-We can now put the code of this large entrypoint to storage upon the
-contract origination. If we do not provide any means to change the
-stored lambda, the immutability of the contract will not be affected.
+<Syntax syntax="jsligo">
 
-<Syntax syntax="cameligo">
+```jsligo group=lazy_entrypoints
+type big_lambda = (p: int) => int;
+type storage_type = {
+    large_entrypoint_map: big_map<bool, big_lambda>;
+    value: int
+  }
+type return_type = [list<operation>, storage_type];
 
-This pattern is also useful if you have long code blocks that repeat
-across some subset of entrypoints. For example, if you develop a
-custom token, you may need different flavors of transfers with a
-common pre-transfer check. In this case, you can add a lambda
-`preTransferCheck : (transfer_params -> bool)` to the storage and call
-it upon transfer.
+class LazyEntrypoint {
+
+  // Get the code from the big-map
+  static load_large_ep = (storage: storage_type): big_lambda => {
+    const large_entrypoint_opt =
+      Big_map.find_opt(true, storage.large_entrypoint_map);
+    return $match(large_entrypoint_opt, {
+      "Some": ep => ep,
+      "None": () => failwith("Internal error"),
+    });
+  }
+
+  // Run the code from the big-map
+  @entry
+  static large_entry_point = (param: int, storage: storage_type): return_type => {
+    const newValue = load_large_ep(storage)(param);
+    return [[], {
+      large_entrypoint_map: storage.large_entrypoint_map,
+      value: newValue,
+      }];
+  }
+
+  // Do something that doesn't require the large code
+  @entry
+  static sub = (value: int, storage: storage_type): return_type =>
+    [[], {
+      large_entrypoint_map: storage.large_entrypoint_map,
+      value: value,
+      }];
+
+  // Other entrypoints...
+
+}
+```
 
 </Syntax>
 
+You can now originate the contract and put the code of the lambda in the initial storage.
+If the contract does not provide any means to change the stored lambda, the contract code remains immutable just like other smart contracts.
 
-However, you always need to measure the gas consumption and the
-occupied storage. It may be the case that the wrapper code that
-extracts the lambda from storage and calls it is costlier than the
-piece of code you are trying to optimise.
-
-## Conclusion
-
-We have discussed the Tezos fee and gas model and identified the
-following optimisation targets: contract and storage size, gas
-consumption, and excess bytes written to storage. We also discussed
-inlining, constants optimisation, lazy storage, and lazy entrypoint
-loading. We hope these techniques can help you develop contracts that
-require fewer resources to execute. And, we cannot stress this enough:
-**always measure your contracts.**
+This pattern can also be useful if you have long code blocks that repeat across some subset of entrypoints.
+For example, if you develop a custom token, you may need different flavors of transfers with a common pre-transfer check.
+In this case, you can add a lambda for the pre-transfer check to a big-map and call it any time a transfer happens.
