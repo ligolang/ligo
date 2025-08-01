@@ -15,7 +15,7 @@ const FEATURES = [
     title: "Multi-syntax",
     content:
       "Ligo brings syntaxes that fit your preferences: TypeScript-inspired or OCaml-inspired.",
-    link: "docs/intro/introduction#ligo-for-newcomers-or-confirmed-developpers",
+    link: "docs/intro/introduction#ligo-for-newcomers-or-confirmed-developers",
   },
   {
     image: "img/ligo_features/ligo-feature-optimized.svg",

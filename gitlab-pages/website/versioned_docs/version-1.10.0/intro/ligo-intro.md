@@ -14,7 +14,7 @@ Our hope is to have a simple, strongly typed language with
 a low footprint. Most useful smart contracts can express their core functionality in under a
 thousand lines of code.
 
-### LIGO, for newcomers or confirmed developpers
+### LIGO, for newcomers or confirmed developers
 
 Even if LIGO currently offers **two syntaxes**, you'll need to **choose only one**:
 
