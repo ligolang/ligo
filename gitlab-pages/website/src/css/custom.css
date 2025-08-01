@@ -116,6 +116,16 @@ h4 {
   font-size: 1.125rem;
 }
 
+/* icon for external links */
+[data-theme="light"] article a[target="_blank"]:after {
+  content: url("/img/external_link_light.svg");
+  padding-left: 5px;
+}
+[data-theme="dark"] article a[target="_blank"]:after {
+  content: url("/img/external_link_dark.svg");
+  padding-left: 5px;
+}
+
 blockquote {
   background-color: var(--blockquote-color);
   border-left: 5px solid var(--ligo-color_content-primary);
