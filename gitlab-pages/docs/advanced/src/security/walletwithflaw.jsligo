@@ -1,0 +1,55 @@
+namespace WalletWithFlaw {
+
+  // Variant for two types of transactions
+  type transaction =
+    ["Deposit", [address, tez]]
+  | ["Withdrawal", [address, tez]];
+
+  type storage = {
+    owner: address,
+    transactionLog: list<transaction>,
+  };
+
+  type return_type = [list<operation>, storage];
+
+  // Receive a deposit
+  // @entry
+  const deposit = (_: unit, storage: storage): return_type => {
+    // Verify that tez was sent
+    if (Tezos.get_amount() == (0 as tez)) {
+      failwith("Send tez to deposit");
+    }
+    // Add log entry
+    const newLogEntry: transaction = ["Deposit" as "Deposit", [Tezos.get_sender(), Tezos.get_amount()]];
+    return [[], {
+      owner: storage.owner,
+      transactionLog: [newLogEntry, ...storage.transactionLog],
+    }];
+  }
+
+  // Return a withdrawal
+  // @entry
+  const withdraw = (param : [address, tez], storage : storage): return_type => {
+    const [tx_destination, tx_amount] = param;
+    // Verify that the sender is the admin
+    if (Tezos.get_sender() != storage.owner) {
+      failwith("Not the owner");
+    }
+    // Verify that no tez was sent
+    if (Tezos.get_amount() != (0 as tez)) {
+      failwith("Don't send tez to this entrypoint");
+    }
+    // Create transaction
+    const callee = Tezos.get_contract_opt(tx_destination);
+    const operation = $match(callee, {
+      "Some": contract => (() => Tezos.Operation.transaction(unit, tx_amount, contract))(),
+      "None": () => failwith("Couldn't send withdrawal to that address"),
+    });
+    // Add log entry and return operation and new log
+    const newLogEntry: transaction = ["Withdrawal" as "Withdrawal", [tx_destination, tx_amount]];
+    return [[operation], {
+      owner: storage.owner,
+      transactionLog: [newLogEntry, ...storage.transactionLog],
+    }];
+  }
+}
