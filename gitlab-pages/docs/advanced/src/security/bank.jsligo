@@ -1,0 +1,26 @@
+namespace Bank {
+
+  type storage = big_map<address, tez>;
+  type return_type = [list<operation>, storage];
+
+  // Return a withdrawal
+  // @entry
+  const withdraw = (tx_amount: tez, storage: storage): return_type => {
+    // Verify that the caller has enough balance for the withdrawal
+    const old_balance = Big_map.find(Tezos.get_sender(), storage);
+    if (tx_amount > old_balance) {
+      failwith("Insufficient balance");
+    }
+    // Create transaction
+    const receiver_account = $match((Tezos.get_contract_opt(Tezos.get_sender())), {
+      "Some": account => account,
+      "None": () => failwith("Couldn't find account"),
+    });
+    const operation = Tezos.Operation.transaction(unit, tx_amount, receiver_account);
+    // Update balance
+    const new_balance: tez = Option.value_with_error("Unreachable error; we already compared balance to amount", old_balance - tx_amount);
+    const new_storage = Big_map.update(Tezos.get_sender(), ["Some" as "Some", new_balance], storage);
+    return [[operation], new_storage];
+  }
+
+}
