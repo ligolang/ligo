@@ -2,12 +2,12 @@ open Main_errors
 open Mini_c
 open Proto_alpha_utils
 open Trace
-open! Stacking
+open Stacking
 open Tezos_micheline
 open Ligo_lltz_codegen
 open Lltz_codegen
 
-let dummy : Stacking.meta =
+let dummy : Mini_c.meta =
   { location = Location.dummy
   ; env = []
   ; binder = None
@@ -50,80 +50,93 @@ let optimize_for_contract ~raise options e : type_expression * anon_function =
   input_ty, optimized
 
 
-let compile_type e =
-  let expr_ty = Scoping.translate_type e in
-  dummy_locations (To_micheline.translate_type expr_ty)
+let compile_type ty =
+  let ty = Ligo_lltz_codegen.compile_type_expression ty in
+  let ty = Lltz_codegen.convert_type ty in
+  Micheline.map_node (fun _ -> dummy) (fun prim -> Michelson.Ast.Prim.to_string prim) ty
 
+
+(* TODO: LLTZ from here *)
+let lambda_body ~environment ~lam_var ~return_type return =
+  let open Lltz_codegen in
+  let open Instruction in
+  (* TODO: export this *)
+  let module Config = Lltz_codegen__Config in
+  let n = List.length environment + 1 in
+  let environment_slots = List.map environment ~f:(fun (ident, _) -> `Ident ident) in
+  let parameter_slot = `Ident (fst lam_var) in
+  let lambda_stack = [ `Value ] in
+  let { Config.stack = _; instructions } =
+    let defined_slots = environment_slots @ [ parameter_slot ] in
+    seq
+      [ unpair_n n
+      ; Slot.def_all defined_slots ~in_:return
+      ; Slot.collect_all defined_slots
+      ]
+      lambda_stack
+  in
+  instructions
+
+
+let compile_lambda var var_type ret_type body =
+  let open Lltz_codegen in
+  (* TODO: this is copied from LLTZ *)
+  let lam_var = var, convert_type var_type in
+  let return_type = convert_type ret_type in
+  let environment = LLTZ.Free_vars.free_vars_with_types body in
+  let environment = Map.remove environment var in
+  lambda_body
+    ~environment:(environment |> Map.map ~f:convert_type |> Map.to_alist)
+    ~lam_var
+    ~return_type
+    (compile body)
+
+
+let compile_function_body ~var_ty expr =
+  let var_ty = Ligo_lltz_codegen.compile_type_expression var_ty in
+  let Var var, ret_ty, expr = Ligo_lltz_codegen.compile_function expr in
+  let expr = Last_vars.compute_last_vars expr in
+  let compiled = compile_lambda var var_ty ret_ty expr in
+  let micheline = Michelson.Ast.seq compiled in
+  (* TODO: strip annotations? *)
+  let strip_annots = true in
+  Michelson_optimisations.Rewriter.optimise_micheline ~strip_annots micheline
+
+
+(* TODO: LLTZ to here *)
 
 let compile_contract ~raise
-    : options:Compiler_options.t -> expression -> Stacking.compiled_expression Lwt.t
+    : options:Compiler_options.t -> expression -> compiled_expression Lwt.t
   =
  fun ~options e_contract ->
-  let open Lwt.Let_syntax in
   let input_ty, contract = optimize_for_contract ~raise options e_contract in
   (* Compile without IR *)
-  let%bind expr_no_ir =
-    let de_bruijn =
-      trace ~raise scoping_tracer @@ Scoping.translate_closed_function contract input_ty
-    in
-    let%map expr = Stacking.Program.compile_function_body de_bruijn in
-    Self_michelson.optimize
-      ~experimental_disable_optimizations_for_debugging:
-        options.backend.experimental_disable_optimizations_for_debugging
-      ~has_comment:(has_comment options)
-      expr
-  in
   (* Return the value as before *)
-  let%bind expr_to_return =
-    if options.backend.lltz_ir
-    then (
-      (* Compile with IR *)
-      let%bind expr_ir =
-        let e_optimised =
-          trace ~raise self_mini_c_tracer
-          @@ Self_mini_c.all_expression options contract.body
-        in
-        let expr =
-          let Var lltz_var, lltz_ty, lltz_body =
-            Ligo_lltz_codegen.compile_contract contract.binder input_ty e_optimised
-          in
-          Lltz_codegen.compile_contract_to_micheline lltz_var lltz_body []
-        in
-        let%map expr =
-          Lwt.return
-            (Micheline.map_node
-               (fun _ -> dummy)
-               (fun prim -> Michelson.Ast.Prim.to_string prim)
-               expr)
-        in
-        expr
+  let expr_to_return =
+    (* Compile with IR *)
+    let e_optimised =
+      trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options contract.body
+    in
+    let expr =
+      let Var lltz_var, lltz_ty, lltz_body =
+        Ligo_lltz_codegen.compile_contract contract.binder input_ty e_optimised
       in
-      (* Measure code sizes *)
-      let%bind size_ir = Of_michelson.measure ~raise expr_ir in
-      let%bind size_no_ir = Of_michelson.measure ~raise expr_no_ir in
-      if size_ir > size_no_ir
-      then
-        Printf.printf
-          "You can achieve a smaller code size by not using lltz-ir.\n\
-          \ \n\
-          \           Size with lltz-ir: %d, Size without lltz-ir: %d\n\
-          \ \n\
-          \           We aim to improve this soon.\n\n"
-          size_ir
-          size_no_ir;
-      Lwt.return expr_ir)
-    else Lwt.return expr_no_ir
+      Lltz_codegen.compile_contract_to_micheline lltz_var lltz_body []
+    in
+    Micheline.map_node
+      (fun _ -> dummy)
+      (fun prim -> Michelson.Ast.Prim.to_string prim)
+      expr
   in
   let expr_ty = compile_type e_contract.type_expression in
   let expr_ty = dummy_locations expr_ty in
-  Lwt.return ({ expr_ty; expr = expr_to_return } : Stacking.Program.compiled_expression)
+  Lwt.return { expr_ty; expr = expr_to_return }
 
 
 let compile_view ~raise
-    : options:Compiler_options.t -> expression -> Stacking.compiled_expression Lwt.t
+    : options:Compiler_options.t -> expression -> compiled_expression Lwt.t
   =
  fun ~options e ->
-  let open Lwt.Let_syntax in
   let input_ty, output_ty =
     trace ~raise self_mini_c_tracer @@ Self_mini_c.get_t_function e.type_expression
   in
@@ -136,16 +149,12 @@ let compile_view ~raise
         trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options view.body
     }
   in
-  let de_bruijn =
-    trace ~raise scoping_tracer @@ Scoping.translate_closed_function view input_ty
-  in
-  let%map de_bruijn = Stacking.Program.compile_function_body de_bruijn in
+  let expr = compile_function_body ~var_ty:input_ty view in
   let expr =
-    Self_michelson.optimize
-      ~experimental_disable_optimizations_for_debugging:
-        options.backend.experimental_disable_optimizations_for_debugging
-      ~has_comment:(has_comment options)
-      de_bruijn
+    Micheline.map_node
+      (fun _ -> dummy)
+      (fun prim -> Michelson.Ast.Prim.to_string prim)
+      expr
   in
   let l, r = trace ~raise self_mini_c_tracer @@ Self_mini_c.get_t_pair input_ty in
   let l = compile_type l in
@@ -154,65 +163,32 @@ let compile_view ~raise
   let output_ty = compile_type output_ty in
   let expr_ty = Micheline.(Prim (dummy, "lambda", [ input_ty; output_ty ], [])) in
   let expr_ty = dummy_locations expr_ty in
-  ({ expr_ty; expr } : Stacking.Program.compiled_expression)
+  Lwt.return { expr_ty; expr }
 
 
 let compile_expression ~raise
     : options:Compiler_options.t -> expression -> compiled_expression Lwt.t
   =
  fun ~options e ->
-  let open Lwt.Let_syntax in
   (* Preprocess the expression using Self_mini_c. *)
   let e = trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options e in
-  (* First: compile to Michelson without IR. *)
-  let%bind expr_no_ir =
-    let expr = trace ~raise scoping_tracer @@ Scoping.translate_expression e [] in
-    let%map expr = Stacking.Program.compile_expr [] expr in
-    Self_michelson.optimize
-      ~experimental_disable_optimizations_for_debugging:
-        options.backend.experimental_disable_optimizations_for_debugging
-      ~has_comment:(has_comment options)
+  let expr =
+    Lltz_codegen.compile_to_micheline (Ligo_lltz_codegen.compile_expression e) []
+  in
+  let expr =
+    Micheline.map_node
+      (fun _ -> dummy)
+      (fun prim -> Michelson.Ast.Prim.to_string prim)
       expr
   in
-  (* If requested, also compile with IR and compare sizes. Otherwise, just reuse expr_no_ir. *)
-  let%bind expr_final =
-    if options.backend.lltz_ir
-    then (
-      let%bind expr_ir =
-        let expr =
-          Lltz_codegen.compile_to_micheline (Ligo_lltz_codegen.compile_expression e) []
-        in
-        let expr =
-          Micheline.map_node
-            (fun _ -> dummy)
-            (fun prim -> Michelson.Ast.Prim.to_string prim)
-            expr
-        in
-        Lwt.return expr
-      in
-      let%bind size_ir = Of_michelson.measure ~raise expr_ir in
-      let%bind size_no_ir = Of_michelson.measure ~raise expr_no_ir in
-      if size_ir > size_no_ir
-      then
-        Printf.printf
-          "You can achieve a smaller code size by not using lltz-ir.\n\
-           Size with lltz-ir: %d, Size without lltz-ir: %d\n\
-           We aim to improve this soon.\n\n"
-          size_ir
-          size_no_ir;
-      Lwt.return expr_ir)
-    else Lwt.return expr_no_ir
-  in
-  (* Finally, compile the type and return the overall result. *)
   let expr_ty = compile_type e.type_expression in
-  Lwt.return { expr_ty; expr = expr_final }
+  Lwt.return { expr_ty; expr }
 
 
 let compile_expression_function ~raise
     : options:Compiler_options.t -> expression -> compiled_expression Lwt.t
   =
  fun ~options e ->
-  let open Lwt.Let_syntax in
   let input_ty, _ =
     trace ~raise self_mini_c_tracer @@ Self_mini_c.get_t_function e.type_expression
   in
@@ -225,16 +201,13 @@ let compile_expression_function ~raise
         trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options expr.body
     }
   in
-  let de_bruijn =
-    trace ~raise scoping_tracer @@ Scoping.translate_closed_function expr input_ty
-  in
-  let%map de_bruijn = Stacking.Program.compile_function_body de_bruijn in
+  (* TODO: is this `Ident the correct usage? *)
+  let expr = compile_function_body ~var_ty:input_ty expr in
   let expr =
-    Self_michelson.optimize
-      ~experimental_disable_optimizations_for_debugging:
-        options.backend.experimental_disable_optimizations_for_debugging
-      ~has_comment:(has_comment options)
-      de_bruijn
+    Micheline.map_node
+      (fun _ -> dummy)
+      (fun prim -> Michelson.Ast.Prim.to_string prim)
+      expr
   in
   let expr_ty = compile_type e.type_expression in
-  ({ expr_ty; expr } : Program.compiled_expression)
+  Lwt.return { expr_ty; expr }

@@ -564,7 +564,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "nested_record_sum.mligo" ];
-  [%expect {| 148 bytes |}]
+  [%expect {| 142 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "edge_case_I.mligo" ];
@@ -572,7 +572,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "edge_case_T.mligo" ];
-  [%expect {| 448 bytes |}]
+  [%expect {| 444 bytes |}]
 
 let%expect_test _ =
   run_ligo_bad [ "info"; "measure-contract"; good_test "edge_case_V.mligo" ];
@@ -668,8 +668,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "bug_report.mligo" ];
-  [%expect {| 468 bytes |}]
+  [%expect {| 452 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "mini_shifumi.mligo" ];
-  [%expect {| 368 bytes |}]
+  [%expect {| 358 bytes |}]

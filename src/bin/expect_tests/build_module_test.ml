@@ -90,15 +90,7 @@ let%expect_test _ =
     {|
     { parameter int ;
       storage int ;
-      code { PUSH int 1 ;
-             PUSH int 10 ;
-             ADD ;
-             SWAP ;
-             UNPAIR ;
-             ADD ;
-             ADD ;
-             NIL operation ;
-             PAIR } } |}]
+      code { PUSH int 11 ; SWAP ; UNPAIR ; ADD ; ADD ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "instance/main.mligo" ];
@@ -122,15 +114,7 @@ let%expect_test _ =
     {|
     { parameter int ;
       storage int ;
-      code { PUSH int 1 ;
-             PUSH int 10 ;
-             ADD ;
-             SWAP ;
-             UNPAIR ;
-             ADD ;
-             ADD ;
-             NIL operation ;
-             PAIR } } |}]
+      code { PUSH int 11 ; SWAP ; UNPAIR ; ADD ; ADD ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; contract "cycle_A.mligo" ];

@@ -26,7 +26,7 @@ let%expect_test "for loop negative tests" =
       storage int ;
       code { DROP ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF {} {} } ;
+             LOOP { PUSH bool True } ;
              PUSH int 1 ;
              NIL operation ;
              PAIR } } |}];
@@ -56,7 +56,7 @@ let%expect_test "for loop negative tests" =
       code { DROP ;
              PUSH int 0 ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
+             LOOP { PUSH int 1 ; ADD ; PUSH bool True } ;
              NIL operation ;
              PAIR } } |}];
   run_ligo_good
@@ -84,7 +84,7 @@ let%expect_test "for loop negative tests" =
       storage int ;
       code { DROP ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF {} {} } ;
+             LOOP { PUSH bool True } ;
              PUSH int 0 ;
              NIL operation ;
              PAIR } } |}];
@@ -114,7 +114,7 @@ let%expect_test "for loop negative tests" =
       code { DROP ;
              PUSH int 0 ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF {} {} } ;
+             LOOP { PUSH bool True } ;
              NIL operation ;
              PAIR } } |}];
   run_ligo_good
@@ -143,7 +143,7 @@ let%expect_test "for loop negative tests" =
       code { DROP ;
              PUSH int 0 ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
+             LOOP { PUSH int 1 ; ADD ; PUSH bool True } ;
              DROP ;
              PUSH int 0 ;
              NIL operation ;
@@ -174,7 +174,7 @@ let%expect_test "for loop negative tests" =
       code { DROP ;
              PUSH int 0 ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
+             LOOP { PUSH int 1 ; ADD ; PUSH bool True } ;
              NIL operation ;
              PAIR } } |}];
   run_ligo_good
@@ -198,7 +198,7 @@ let%expect_test "for loop negative tests" =
       storage int ;
       code { DROP ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF {} {} } ;
+             LOOP { PUSH bool True } ;
              PUSH int 0 ;
              NIL operation ;
              PAIR } } |}];
@@ -224,7 +224,7 @@ let%expect_test "for loop negative tests" =
       code { DROP ;
              PUSH int 0 ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
+             LOOP { PUSH int 1 ; ADD ; PUSH bool True } ;
              NIL operation ;
              PAIR } } |}];
   run_ligo_good
@@ -248,7 +248,7 @@ let%expect_test "for loop negative tests" =
       storage int ;
       code { DROP ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF {} {} } ;
+             LOOP { PUSH bool True } ;
              PUSH int 0 ;
              NIL operation ;
              PAIR } } |}];
@@ -274,7 +274,7 @@ let%expect_test "for loop negative tests" =
       code { DROP ;
              PUSH int 0 ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF {} {} } ;
+             LOOP { PUSH bool True } ;
              NIL operation ;
              PAIR } } |}];
   run_ligo_good
@@ -299,7 +299,7 @@ let%expect_test "for loop negative tests" =
       code { DROP ;
              PUSH int 0 ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
+             LOOP { PUSH int 1 ; ADD ; PUSH bool True } ;
              DROP ;
              PUSH int 0 ;
              NIL operation ;
@@ -326,7 +326,7 @@ let%expect_test "for loop negative tests" =
       code { DROP ;
              PUSH int 0 ;
              PUSH bool True ;
-             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
+             LOOP { PUSH int 1 ; ADD ; PUSH bool True } ;
              NIL operation ;
              PAIR } } |}];
   run_ligo_bad

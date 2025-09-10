@@ -7,7 +7,7 @@ let () = Sys_unix.chdir "../../test/contracts/polymorphism/"
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "storage"; test "monomorphisation_raw.mligo"; "foo"; "-m"; "C" ];
-  [%expect {| 0x0502000000110320074303680100000004686168610327 |}];
+  [%expect {| 0x05020000000f074303680100000004686168610327 |}];
   run_ligo_bad
     [ "compile"
     ; "expression"
@@ -129,7 +129,7 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage int ;
-      code { DROP ; PUSH int 1 ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
+      code { DROP ; PUSH int 2 ; NIL operation ; PAIR } } |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/polymorphism/"
@@ -492,28 +492,22 @@ let%expect_test _ =
         (pair bool string)
         string
         { UNPAIR ;
-          SWAP ;
-          PUSH int 2 ;
-          PUSH int 40 ;
-          ADD ;
-          SWAP ;
-          DIG 2 ;
+          PUSH int 42 ;
+          DUG 2 ;
           IF { LAMBDA
                  string
                  (lambda int string)
-                 { LAMBDA (pair string int) string { CAR } ; DUP 2 ; APPLY ; SWAP ; DROP } }
+                 { LAMBDA (pair string int) string { CAR } ; SWAP ; APPLY } }
              { LAMBDA
                  string
                  (lambda int string)
-                 { LAMBDA (pair string int) string { CAR } ; DUP 2 ; APPLY ; SWAP ; DROP } } ;
+                 { LAMBDA (pair string int) string { CAR } ; SWAP ; APPLY } } ;
           SWAP ;
           EXEC ;
           SWAP ;
           EXEC } ;
-      DUP 2 ;
-      APPLY ;
       SWAP ;
-      DROP } |}]
+      APPLY } |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/negative/polymorphism/"

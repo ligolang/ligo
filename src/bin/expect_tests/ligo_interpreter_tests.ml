@@ -1048,7 +1048,7 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test exited with value 112. |}]
+    - test exited with value 102. |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
@@ -1121,8 +1121,7 @@ let%expect_test _ =
     - test_x exited with value {code = { parameter unit ;
       storage
         (pair (set %participants address)
-              (map %secrets address bool)
-              (big_map %metadata string bytes)) ;
+              (pair (map %secrets address bool) (big_map %metadata string bytes))) ;
       code { CDR ;
              PUSH bool True ;
              DUP 2 ;
@@ -1134,17 +1133,8 @@ let%expect_test _ =
                     GET ;
                     IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
              DROP ;
-             PUSH bool True ;
-             DUP 2 ;
-             CAR ;
-             ITER { SWAP ;
-                    EMPTY_MAP address bool ;
-                    DIG 2 ;
-                    GET ;
-                    IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
-             DROP ;
              NIL operation ;
-             PAIR } } ; size = 226 ; taddr = KT1RCTMT7fm32ZVaTT5pqtNnPsRvbMxkpVMd}. |}]
+             PAIR } } ; size = 155 ; taddr = KT1NoYUevBXb92XrdKwC5c7UhLTixcrfk1HP}. |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "../../test/contracts/interpreter_tests/"
@@ -1601,7 +1591,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "contract_with_ticket_storage.mligo" ];
   [%expect
     {|
-    ("unforged_ticket" , Some ({amount = 15n ; ticketer = KT1CDHnKFHBMFtyzC92oTfi4Z5wthR4Yk3LW ; value = 0x0202}))
+    ("unforged_ticket" , Some ({amount = 15n ; ticketer = KT1BYRbhgcHGmsgu8fUxzz75NDTKSrx5AKgU ; value = 0x0202}))
     Everything at the top-level was executed.
     - test_originate_contract exited with value (). |}];
   run_ligo_good [ "run"; "test"; test "contract_with_ticket_param.mligo" ];
