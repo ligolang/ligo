@@ -33,17 +33,12 @@ let find_cmi : t -> key -> Cmi.t * Cmi.crc =
     Map.find_exn cmis path
   | File f -> Map.find_exn cmis f
 
-
-let compute_cmi
-    : t -> Filename.t -> Filename.t list -> Ast_typed.signature -> Cmi.t * Cmi.crc
-  =
- fun ({ cmis; _ } as env) path imports sign ->
+let compute_cmi : t -> Filename.t list -> Ast_typed.signature -> Cmi.t * Cmi.crc =
+ fun ({ cmis; _ } as env) imports sign ->
   let imports =
-    List.map
-      ~f:(fun filename -> filename, Tuple2.get2 @@ find_cmi env (File filename))
-      imports
+    List.map ~f:(fun import -> import, Tuple2.get2 @@ find_cmi env (File import)) imports
   in
-  let cmi = Cmi.{ path; sign; imports } in
+  let cmi = Cmi.{ sign; imports } in
   let crc = Cmi.Serialized.compute_crc cmi in
   cmi, crc
 
@@ -52,7 +47,7 @@ let add_signature
     : t -> Module_var.t -> Filename.t -> Filename.t list -> Ast_typed.signature -> t
   =
  fun ({ cmis; path_tbl; virtual_env } as env) m path imports sign ->
-  let cmi, crc = compute_cmi env path imports sign in
+  let cmi, crc = compute_cmi env imports sign in
   let cmis = Map.set cmis ~key:path ~data:(cmi, crc) in
   let path_tbl = Map.set path_tbl ~key:m ~data:path in
   { cmis; path_tbl; virtual_env }

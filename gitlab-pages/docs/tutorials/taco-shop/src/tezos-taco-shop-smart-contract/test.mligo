@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/tutorials/taco-shop/src/tezos-taco-shop-smart-contract/TacoShop.mligo" "TacoShop"
+module TacoShop = Gitlab_pages.Docs.Tutorials.Taco_shop.Src.Tezos_taco_shop_smart_contract.TacoShop
 
 let assert_string_failure (res : test_exec_result) (expected : string) =
   let expected = Test.eval expected in

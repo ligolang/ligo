@@ -1,4 +1,4 @@
-#import "./contract_under_test/module_adder.mligo" "Adder"
+module Adder = Contract_under_test.Module_adder
 
 let assert = Assert.assert
 

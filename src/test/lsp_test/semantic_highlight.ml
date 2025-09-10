@@ -268,22 +268,50 @@ let%expect_test "Whole file" =
     [{
        "line": 0,
        "start_char": 0,
-       "length": 43,
-       "token_type": "macro",
+       "length": 6,
+       "token_type": "keyword",
        "token_modifiers": []
      };
      {
        "line": 0,
-       "start_char": 8,
+       "start_char": 7,
+       "length": 1,
+       "token_type": "operator",
+       "token_modifiers": []
+     };
+     {
+       "line": 0,
+       "start_char": 9,
+       "length": 2,
+       "token_type": "keyword",
+       "token_modifiers": []
+     };
+     {
+       "line": 0,
+       "start_char": 12,
+       "length": 8,
+       "token_type": "namespace",
+       "token_modifiers": []
+     };
+     {
+       "line": 0,
+       "start_char": 21,
+       "length": 4,
+       "token_type": "keyword",
+       "token_modifiers": []
+     };
+     {
+       "line": 0,
+       "start_char": 26,
        "length": 24,
        "token_type": "string",
        "token_modifiers": []
      };
      {
        "line": 0,
-       "start_char": 33,
-       "length": 10,
-       "token_type": "string",
+       "start_char": 50,
+       "length": 1,
+       "token_type": "operator",
        "token_modifiers": []
      };
      {

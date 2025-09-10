@@ -1,13 +1,14 @@
+open Core
 open Types
 
 let graph (dep_g, filename) =
   let set = SSet.empty in
   let rec pp_node set name parent =
     let node = "file", `String name in
-    if SSet.mem name set
+    if Set.mem set name
     then ("child", `Assoc [ node ]) :: parent
     else (
-      let set = SSet.add name set in
+      let set = Set.add set name in
       let node = G.fold_succ (pp_node set) dep_g name [ node ] in
       let node = List.rev node in
       ("child", `Assoc node) :: parent)

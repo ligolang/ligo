@@ -30,7 +30,7 @@ end
 
 let x = Aaa "aaa"
 
-#import "poly_types_common.mligo" "Common"
+module Common = Poly_types_common
 
 let foo = Foo 42
 

@@ -1,9 +1,9 @@
 //#define USE_SET
 
 #if USE_SET
-#import "set_monad.mligo" "M"
+module M = Set_monad
 #else
-#import "list_monad.mligo" "M"
+module M = List_monad
 #endif
 
 type 'a t = 'a M.monad

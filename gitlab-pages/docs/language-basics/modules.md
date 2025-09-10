@@ -275,7 +275,7 @@ that imports all definitions from `imported.mligo` as the module
 `EURO`:
 
 ```cameligo group=importer
-#import "gitlab-pages/docs/language-basics/src/modules/imported.mligo" "EURO"
+module EURO = Gitlab_pages.Docs.Language_basics.Src.Modules.Imported
 
 type storage = EURO.t
 
@@ -294,7 +294,7 @@ that imports all definitions from `imported.jsligo` as the module
 `EURO`:
 
 ```jsligo group=importer
-#import "gitlab-pages/docs/language-basics/src/modules/imported.jsligo" "EURO"
+import * as EURO from "gitlab-pages/docs/language-basics/src/modules/imported.jsligo";
 
 type storage = EURO.t;
 

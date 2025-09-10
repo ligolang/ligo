@@ -41,8 +41,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_test "view_restrictions1.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/view_restrictions1.mligo", line 1, character 0:
-    ../../test/contracts/negative/view_restrictions1.mligo: No such file or directory. |}]
+    Module "../../test/contracts/negative/view_restrictions1.mligo" not found. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_test "view_restrictions2.mligo" ];

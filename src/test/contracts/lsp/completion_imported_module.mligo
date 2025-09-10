@@ -1,4 +1,4 @@
-#import "completion_x.mligo" "A"
+module A = Completion_x
 
 module M = 
 

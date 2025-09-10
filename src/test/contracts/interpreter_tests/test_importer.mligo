@@ -1,4 +1,4 @@
-#import "test_imported.mligo" "External"
+module External = Test_imported
 
 module Test = Test.Next
 let assert = Assert.assert

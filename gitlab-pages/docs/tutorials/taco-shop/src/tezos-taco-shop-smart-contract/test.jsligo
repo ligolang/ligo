@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/tutorials/taco-shop/src/tezos-taco-shop-smart-contract/TacoShop.jsligo" "TacoShop"
+import * as TacoShop from "gitlab-pages/docs/tutorials/taco-shop/src/tezos-taco-shop-smart-contract/TacoShop.jsligo";
 
 function assert_string_failure (res: test_exec_result, expected: string) {
   const expected_bis = Test.eval(expected);

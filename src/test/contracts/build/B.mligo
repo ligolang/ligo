@@ -1,6 +1,3 @@
-[@public]
-#import "A.mligo" "A"
-
 let toto = 32
 
 let titi = A.toto + 42

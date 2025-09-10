@@ -1,2 +1,2 @@
-#import "warnings.jsligo" "W"
+import * as W from "warnings.jsligo"
 const x = W.y

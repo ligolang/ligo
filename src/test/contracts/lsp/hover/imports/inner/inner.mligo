@@ -1,3 +1,3 @@
-[@public] #import "../C.mligo" "Outer"
+[@public] module Outer = Super__.C
 
 let test = Outer.K.B.bar

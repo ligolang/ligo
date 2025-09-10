@@ -43,6 +43,8 @@ type nonrec result = (success, error) result
 
 type 'src preprocessor = 'src -> result
 
+val mangle : string -> string
+
 module type S =
   sig
     (* Preprocessing from various sources *)

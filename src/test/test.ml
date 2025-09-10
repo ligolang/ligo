@@ -11,6 +11,7 @@ let () =
        ; Ast_production.core_prod
        ; Ast_production.agg_prod
        ; Ast_production.mini_c_prod
+       ; Ligo_dep_tests.main
        ; Integration_tests.main
        ; Spilling_tests.main
        ; Ligo_init_tests.main

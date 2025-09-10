@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/language-basics/src/modules/imported.mligo" "EURO"
+module EURO = Gitlab_pages.Docs.Language_basics.Src.Modules.Imported
 
 type storage = EURO.t
 

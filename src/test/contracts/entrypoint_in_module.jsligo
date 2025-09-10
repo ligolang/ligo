@@ -1,2 +1,1 @@
-#import "entrypoint_in_module.mligo" "M"
-
+export import * as M from "entrypoint_in_module.mligo";

@@ -1,6 +1,6 @@
 module Test = Test.Next
 
-#import "../../c/d/foo.mligo" "Foo"
+module Foo = Super__.Super__.C.D.Foo
 
 let test_originate_from_file_relative_path : (unit, unit) typed_address =
   let x = Test.Originate.from_file

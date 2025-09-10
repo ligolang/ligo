@@ -99,7 +99,7 @@ It follows these basic steps:
 
 module Test = Test.Next
 
-#import "gitlab-pages/docs/testing/src/testing/mycontract.mligo" "MyContract"
+module MyContract = Gitlab_pages.Docs.Testing.Src.Testing.Mycontract
 
 let run_test1 =
   let initial_storage = 10 in
@@ -118,7 +118,7 @@ let run_test1 =
 
 import Test = Test.Next;
 
-#import "gitlab-pages/docs/testing/src/testing/mycontract.jsligo" "MyModule"
+import * as MyModule from "gitlab-pages/docs/testing/src/testing/mycontract.jsligo";
 
 const run_test1 = () => {
     let initial_storage = 10;

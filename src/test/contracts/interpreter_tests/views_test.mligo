@@ -1,6 +1,6 @@
 module Test = Test.Next
 
-#import "./contract_under_test/views_contract.mligo" "CUT"
+module CUT = Contract_under_test.Views_contract
 
 let test =
   let _baker = Test.Account.address 0 in

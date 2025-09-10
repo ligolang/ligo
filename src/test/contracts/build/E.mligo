@@ -1,8 +1,3 @@
-[@public]
-#import "F.mligo" "F"
-
-[@public]
-#import "G.mligo" "G"
+type foobar = [@layout:comb] { titi: int; toto: int; tata: int; tete: int; }
 
 let toto = 10
-let foo = "bar"

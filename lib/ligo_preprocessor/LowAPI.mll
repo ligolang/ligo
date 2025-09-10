@@ -33,6 +33,21 @@ type result      = (success, error) Core.result
 
 type 'src preprocessor = 'src -> result
 
+let mangle str =
+    let name =
+        let open Str in
+        str
+        |> global_replace (regexp_string "_")  "_u_"
+        |> global_replace (regexp_string ".")  "_p_"
+        |> global_replace (regexp_string ":")  "_c_"
+        |> global_replace (regexp_string "\\") "_b_"
+        |> global_replace (regexp_string "/")  "_s_"
+        |> global_replace (regexp_string "@")  "_a_"
+        |> global_replace (regexp_string "-")  "_d_"
+        |> global_replace (regexp_string "(")  "_l_"
+        |> global_replace (regexp_string ")")  "_r_"
+    in "Mangled_module_" ^ name
+
 module type S =
   sig
     (* Preprocessing from various sources *)
@@ -314,23 +329,8 @@ module Make (Config : Config.S) (Options : Options.S) =
           else callback state lexbuf
 
 (* Scanning #import directives *)
-
+(*
 let import_action ~callback hash_pos state lexbuf =
-  let mangle str =
-    let name =
-      let open Str in
-     str
-     |> global_replace (regexp_string "_")  "_u_"
-      |> global_replace (regexp_string ".")  "_p_"
-      |> global_replace (regexp_string ":")  "_c_"
-      |> global_replace (regexp_string "\\") "_b_"
-      |> global_replace (regexp_string "/")  "_s_"
-      |> global_replace (regexp_string "@")  "_a_"
-      |> global_replace (regexp_string "-")  "_d_"
-      |> global_replace (regexp_string "(")  "_l_"
-      |> global_replace (regexp_string ")")  "_r_"
-    in "Mangled_module_" ^ name
-  in
   match Directive.scan_import hash_pos state lexbuf with
     Error (region, error) -> fail state region error
   | Ok (state, import, _, _) ->
@@ -362,6 +362,7 @@ let import_action ~callback hash_pos state lexbuf =
          identical to the original #import. *)
       let () = state#copy_nl lexbuf
       in callback state lexbuf
+*)
 
 (* Scanning #if directives *)
 
@@ -601,8 +602,9 @@ rule scan state = parse
     match id with
       "include" ->
         include_action ~callback:scan region#start state lexbuf
-    | "import" ->
-        import_action  ~callback:scan region#start state lexbuf
+(* NOTE: import directive is deprecated *)
+(*    | "import" ->
+        import_action  ~callback:scan region#start state lexbuf *)
     | "define" ->
         define_action  ~callback:scan region#start state lexbuf
     | "undef" ->

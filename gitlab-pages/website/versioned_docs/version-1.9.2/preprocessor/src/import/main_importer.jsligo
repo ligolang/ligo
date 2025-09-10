@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/preprocessor/src/import/euro.jsligo" "Euro"
+import * as Euro from "gitlab-pages/docs/preprocessor/src/import/euro.jsligo";
 
 type storage = Euro.t;
 

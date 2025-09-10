@@ -1,4 +1,4 @@
-#import "C.mligo" "C"
+module C = C
 
 let assert = Assert.assert
 

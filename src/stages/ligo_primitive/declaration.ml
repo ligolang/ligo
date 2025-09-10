@@ -116,11 +116,15 @@ module Import_decl (Attr : Attr) = struct
         }
     | Import_all_as of
         { alias : Module_var.t
+        (* module_str shall eventually contain actual internal module name.
+           Thus keeping original_module_str for better error messages *)
+        ; original_module_str : string
         ; module_str : string
         ; import_attr : Attr.t
         }
     | Import_selected of
-        { imported : Value_var.t Ne_list.t
+        { imported : Value_var.t list
+        ; original_module_str : string
         ; module_str : string
         ; import_attr : Attr.t
         }
@@ -137,7 +141,7 @@ module Import_decl (Attr : Attr) = struct
         imported_module
         Attr.pp
         import_attr
-    | Import_all_as { alias; module_str; import_attr } ->
+    | Import_all_as { alias; original_module_str = module_str; import_attr; _ } ->
       Format.fprintf
         ppf
         "@[<2>import * as %a from %s%a@]"
@@ -146,11 +150,7 @@ module Import_decl (Attr : Attr) = struct
         module_str
         Attr.pp
         import_attr
-    | Import_selected { imported; module_str; import_attr } ->
-      let imported : Value_var.t list =
-        match imported with
-        | x :: l -> x :: l
-      in
+    | Import_selected { imported; original_module_str = module_str; import_attr; _ } ->
       let rec pp_imported ppf = function
         | [] -> ()
         | [ x ] -> Format.fprintf ppf "%a" Value_var.pp x

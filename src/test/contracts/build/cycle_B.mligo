@@ -1,3 +1,3 @@
-#import "cycle_C.mligo" "C"
+module C = Cycle_C
 
 let tata = 2
