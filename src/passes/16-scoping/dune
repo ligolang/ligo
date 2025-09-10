@@ -1,8 +1,0 @@
-(library
- (name scoping)
- (public_name ligo.scoping)
- (instrumentation
-  (backend bisect_ppx))
- (libraries simple-utils ligo_prim mini_c predefined ligo_coq_ocaml)
- (preprocess
-  (pps ppx_poly_constructor)))

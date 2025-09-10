@@ -379,7 +379,6 @@ let rec error_ppformat
     | `Self_mini_c_tracer e ->
       Self_mini_c.Errors.error_ppformat ~display_format ~no_colour f e
     | `Spilling_tracer e -> Spilling.Errors.error_ppformat ~display_format ~no_colour f e
-    | `Scoping_tracer e -> Scoping.Errors.error_ppformat ~display_format f e
     | `Stacking_tracer e -> Stacking.Errors.error_ppformat ~display_format f e
     | `Main_interpret_not_enough_initial_accounts (loc, max) ->
       Format.fprintf
@@ -777,7 +776,6 @@ let rec error_json : Types.all -> Ligo_Error.t list =
   | `Expansion_tracer e -> [ Expansion.Errors.error_json e ]
   | `Spilling_tracer e -> [ Spilling.Errors.error_json e ]
   | `Self_mini_c_tracer e -> [ Self_mini_c.Errors.error_json e ]
-  | `Scoping_tracer e -> [ Scoping.Errors.error_json e ]
   | `Stacking_tracer e -> [ Stacking.Errors.error_json e ]
   | `Main_interpret_test_entry_not_found _
   | `Main_interpret_target_lang_error _

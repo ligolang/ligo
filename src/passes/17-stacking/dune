@@ -6,7 +6,6 @@
  (libraries
   simple-utils
   ligo.proto-alpha-utils
-  ligo_coq_ocaml
   self_michelson
   mini_c
   octez-libs.hacl)

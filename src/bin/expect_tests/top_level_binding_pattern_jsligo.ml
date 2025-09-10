@@ -366,5 +366,5 @@ let%expect_test _ =
   Called from Cli_helpers.return_result_lwt.get_formatted_result in file "src/main/helpers/cli_helpers.ml", line 185, characters 19-84
   Re-raised at Cli.run in file "src/bin/cli.ml", line 3757, characters 21-30
   Called from Cli_expect_tests__Cli_expect.run_ligo_bad in file "src/bin/expect_tests/cli_expect.ml", line 46, characters 18-31
-  Called from Cli_expect_tests__Top_level_binding_pattern_jsligo.(fun) in file "src/bin/expect_tests/top_level_binding_pattern_jsligo.ml", line 284, characters 2-155
+  Called from Cli_expect_tests__Top_level_binding_pattern_jsligo.(fun) in file "src/bin/expect_tests/top_level_binding_pattern_jsligo.ml", line 275, characters 2-155
   Called from Expect_test_collector.Make.Instance_io.exec in file "collector/expect_test_collector.ml", line 234, characters 12-19 |}]

@@ -58,7 +58,6 @@
               (_: prev:
                 with prev; {
                   ocamlPackages = ocaml-ng.ocamlPackages_4_14;
-                  coqPackages = coqPackages_8_13;
                   ocamlformat = ocaml-ng.ocamlPackages_4_14.ocamlformat_0_21_0;
                 })
               rust-overlay.overlays.default

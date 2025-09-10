@@ -42,7 +42,6 @@ type all =
   | `Expansion_tracer of Expansion.Errors.expansion_error
   | `Spilling_tracer of Spilling.Errors.spilling_error
   | `Self_mini_c_tracer of Self_mini_c.Errors.self_mini_c_error
-  | `Scoping_tracer of Scoping.Errors.scoping_error
   | `Stacking_tracer of Stacking.Errors.stacking_error
   | `Ligo_init_unrecognized_template of string list
   | `Ligo_init_registry_template_error of string

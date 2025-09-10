@@ -32,7 +32,7 @@ type contract_env =
   }
 [@@deriving yojson_of]
 
-type evaluated_michelson = (Mini_c.meta, string) Scoping.Micheline.node
+type evaluated_michelson = (Mini_c.meta, string) Tezos_micheline.Micheline.node
 
 let yojson_of_evaluated_michelson (em : evaluated_michelson) : Display.json =
   let open Tezos_utils.Michelson in

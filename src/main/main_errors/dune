@@ -19,7 +19,6 @@
   spilling
   self_ast_aggregated
   self_mini_c
-  scoping
   stacking
   self_michelson)
  (preprocess
