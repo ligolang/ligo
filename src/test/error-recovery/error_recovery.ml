@@ -39,7 +39,7 @@ end
 
 module RecoveryType (MenhirInterpreter : MenhirLib.IncrementalEngine.EVERYTHING) = struct
   module type RecoverParser = sig
-    include Merlin_recovery.RECOVERY_GENERATED with module I := MenhirInterpreter
+    include MenhirRecoveryLib.RECOVERY_GENERATED with module I := MenhirInterpreter
 
     val default_value : Simple_utils.Region.t -> 'a MenhirInterpreter.symbol -> 'a
   end

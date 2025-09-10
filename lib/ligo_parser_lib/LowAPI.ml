@@ -67,7 +67,7 @@ module type PARSER =
 
     module Recovery :
       sig
-        include Merlin_recovery.RECOVERY_GENERATED
+        include MenhirRecoveryLib.RECOVERY_GENERATED
                 with module I := MenhirInterpreter
 
         val default_value : Region.t -> 'a MenhirInterpreter.symbol -> 'a
@@ -459,10 +459,10 @@ module Make (Lexer  : LEXER)
           in List.iter ~f:print lexemes
       end
 
-    module type PRINTER = Merlin_recovery.PRINTER with module I = Inter
+    module type PRINTER = MenhirRecoveryLib.PRINTER with module I = Inter
 
     module TracingPrinter : PRINTER =
-      Merlin_recovery.MakePrinter (EltPrinter)
+      MenhirRecoveryLib.MakePrinter (EltPrinter)
 
     let checkpoint_to_string = function
       Inter.InputNeeded _   -> "InputNeeded"
@@ -472,7 +472,7 @@ module Make (Lexer  : LEXER)
     | Inter.HandlingError _ -> "HandlingError"
     | Inter.Shifting _      -> "Shifting"
 
-    module RecoverWithDefault =
+    module RecoverWithDefault : MenhirRecoveryLib.RECOVERY with module I := Inter =
       struct
         include Parser.Recovery
 
@@ -499,9 +499,10 @@ module Make (Lexer  : LEXER)
         let guide _ = false
 
         let use_indentation_heuristic = false
+        let is_eof = Lexer.Token.is_eof
       end
 
-    module R = Merlin_recovery.Make
+    module R = MenhirRecoveryLib.Make
                  (Inter) (RecoverWithDefault) (TracingPrinter)
 
     module Recover =
