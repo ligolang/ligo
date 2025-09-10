@@ -26,7 +26,7 @@ let%expect_test _ =
   [%expect
     {|
     { parameter unit ;
-      storage (pair (int %ana) (string %anb) (nat %anc)) ;
+      storage (pair (int %ana) (pair (string %anb) (nat %anc))) ;
       code { DROP ;
              PUSH nat 1 ;
              PUSH string "" ;
@@ -45,7 +45,8 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage
-        (pair (int %an_One) (string %an_Two) (bool %an_Three) (nat %an_Four) (int %an_Five)) ;
+        (pair (int %an_One)
+              (pair (string %an_Two) (pair (bool %an_Three) (pair (nat %an_Four) (int %an_Five))))) ;
       code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
@@ -127,7 +128,7 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage
-        (pair (pair (pair (int %an_Five) (nat %an_Four)) (int %an_One) (bool %an_Three))
+        (pair (pair (pair (int %an_Five) (nat %an_Four)) (pair (int %an_One) (bool %an_Three)))
               (string %an_Two)) ;
       code { CDR ; NIL operation ; PAIR } } |}]
 

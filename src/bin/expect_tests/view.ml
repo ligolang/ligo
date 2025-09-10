@@ -77,7 +77,7 @@ let%expect_test _ =
   [%expect
     {|
     { parameter int ;
-      storage (pair string nat string nat string) ;
+      storage (pair string (pair nat (pair string (pair nat string)))) ;
       code { CDR ; NIL operation ; PAIR } ;
       view "v" int mutez { DROP ; PUSH mutez 1000000 } } |}]
 
@@ -98,15 +98,15 @@ let%expect_test _ =
       storage int ;
       code { DROP ; PUSH int 0 ; NIL operation ; PAIR } ;
       view "basic" address int { CDR ; PUSH int 0 ; ADD } ;
-      view "not_funny" unit int { PUSH int 0 ; SWAP ; CDR ; DUP 2 ; ADD ; ADD } ;
+      view "not_funny" unit int { CDR ; PUSH int 0 ; SWAP ; DUP 2 ; ADD ; ADD } ;
       view "get_storage" unit int { CDR ; PUSH int 0 ; ADD } ;
       view "get_address" unit address { DROP ; SENDER } ;
       view "super_not_funny"
            unit
            int
-           { PUSH int 0 ;
+           { CDR ;
+             PUSH int 0 ;
              SWAP ;
-             CDR ;
              DUP ;
              DUP 3 ;
              ADD ;
@@ -460,7 +460,7 @@ let%expect_test _ =
   [%expect
     {|
     { parameter unit ;
-      storage (pair (int %a) (nat %b) (mutez %c) (address %d)) ;
+      storage (pair (int %a) (pair (nat %b) (pair (mutez %c) (address %d)))) ;
       code { CDR ;
              PUSH int 1 ;
              SOME ;
@@ -480,6 +480,6 @@ let%expect_test _ =
                  DUP 2 ;
                  GET 3 ;
                  VIEW "bar" unit ;
-                 IF_NONE {} { DROP } } ;
+                 DROP } ;
              NIL operation ;
              PAIR } } |}]

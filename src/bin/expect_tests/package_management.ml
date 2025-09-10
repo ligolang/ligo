@@ -429,12 +429,7 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage string ;
-      code { DROP ;
-             PUSH string "Hello" ;
-             PUSH string "Hello" ;
-             CONCAT ;
-             NIL operation ;
-             PAIR } } |}]
+      code { DROP ; PUSH string "Hello" ; DUP ; CONCAT ; NIL operation ; PAIR } } |}]
 
 let () = Sys_unix.chdir pwd
 let () = Sys_unix.chdir "include_include"
@@ -445,12 +440,7 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage string ;
-      code { DROP ;
-             PUSH string "Hello" ;
-             PUSH string "Hello" ;
-             CONCAT ;
-             NIL operation ;
-             PAIR } } |}]
+      code { DROP ; PUSH string "Hello" ; DUP ; CONCAT ; NIL operation ; PAIR } } |}]
 
 let () = Sys_unix.chdir pwd
 

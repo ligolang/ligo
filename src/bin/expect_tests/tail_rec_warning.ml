@@ -8,15 +8,7 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage (pair (int %foo) (int %bar)) ;
-      code { CDR ;
-             PUSH int 0 ;
-             PUSH int 1 ;
-             PUSH int 2 ;
-             ADD ;
-             ADD ;
-             UPDATE 2 ;
-             NIL operation ;
-             PAIR } } |}]
+      code { CDR ; PUSH int 3 ; UPDATE 2 ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -52,15 +44,7 @@ let%expect_test _ =
 
     { parameter unit ;
       storage (pair (int %foo) (int %bar)) ;
-      code { CDR ;
-             PUSH int 0 ;
-             PUSH int 1 ;
-             PUSH int 2 ;
-             ADD ;
-             ADD ;
-             UPDATE 2 ;
-             NIL operation ;
-             PAIR } } |}]
+      code { CDR ; PUSH int 3 ; UPDATE 2 ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "unused_recursion.jsligo" ];
@@ -68,15 +52,7 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage (pair (int %foo) (int %bar)) ;
-      code { CDR ;
-             PUSH int 0 ;
-             PUSH int 1 ;
-             PUSH int 2 ;
-             ADD ;
-             ADD ;
-             UPDATE 2 ;
-             NIL operation ;
-             PAIR } } |}]
+      code { CDR ; PUSH int 3 ; UPDATE 2 ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -85,12 +61,4 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage (pair (int %foo) (int %bar)) ;
-      code { CDR ;
-             PUSH int 0 ;
-             PUSH int 1 ;
-             PUSH int 2 ;
-             ADD ;
-             ADD ;
-             UPDATE 2 ;
-             NIL operation ;
-             PAIR } } |}]
+      code { CDR ; PUSH int 3 ; UPDATE 2 ; NIL operation ; PAIR } } |}]

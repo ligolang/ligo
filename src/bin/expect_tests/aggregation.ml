@@ -19,12 +19,13 @@ let%expect_test _ =
       storage unit ;
       code { DROP ;
              PUSH nat 1 ;
-             PUSH nat 1 ;
+             DUP ;
              ADD ;
              PUSH nat 2 ;
              COMPARE ;
              EQ ;
-             IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             UNIT ;
              NIL operation ;
              PAIR } } |}]
 
@@ -32,9 +33,7 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "effects.mligo" ];
   [%expect
     {|
-    { parameter int ;
-      storage int ;
-      code { CDR ; PUSH string "foo" ; FAILWITH } } |}]
+    { parameter int ; storage int ; code { PUSH string "foo" ; FAILWITH } } |}]
 
 let%expect_test _ =
   run_ligo_good

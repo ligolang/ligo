@@ -12,7 +12,7 @@ let%expect_test _ =
   [%expect
     {|
     { parameter (or (chest %initialize) (or (bytes %guess) (chest_key %finish))) ;
-      storage (pair (nat %level) (chest %chest) (bytes %guess) (bytes %result)) ;
+      storage (pair (nat %level) (pair (chest %chest) (pair (bytes %guess) (bytes %result)))) ;
       code { UNPAIR ;
              IF_LEFT
                { SWAP ; DROP ; PUSH bytes 0xa0 ; DUP ; DIG 2 ; LEVEL ; PAIR 4 }
@@ -35,7 +35,6 @@ let%expect_test _ =
                        { PUSH bytes 0x10 }
                        { DUP 2 ;
                          GET 5 ;
-                         SWAP ;
                          COMPARE ;
                          EQ ;
                          IF { PUSH bytes 0x00 } { PUSH bytes 0x01 } } ;
@@ -248,11 +247,7 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    { LAMBDA (pair int int) int { UNPAIR ; ADD } ;
-      DUP 2 ;
-      APPLY ;
-      SWAP ;
-      DROP } |}]
+    { LAMBDA (pair int int) int { UNPAIR ; ADD } ; SWAP ; APPLY } |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -385,11 +380,11 @@ let%expect_test _ =
                        (pair %request (address %owner) (address %spender))
                        (contract %callback nat))
                     (or (pair %approve (address %spender) (nat %value))
-                        (pair %transfer (address %from) (address %to) (nat %value)))))) ;
+                        (pair %transfer (address %from) (pair (address %to) (nat %value))))))) ;
       storage
         (pair (big_map %tokens address nat)
-              (big_map %allowances (pair (address %owner) (address %spender)) nat)
-              (nat %total_supply)) ;
+              (pair (big_map %allowances (pair (address %owner) (address %spender)) nat)
+                    (nat %total_supply))) ;
       code { UNPAIR ;
              IF_LEFT
                { DUP 2 ;
@@ -454,9 +449,8 @@ let%expect_test _ =
                              DIG 3 ;
                              CDR ;
                              DIG 3 ;
-                             PUSH nat 0 ;
-                             DUP 3 ;
-                             COMPARE ;
+                             DUP 2 ;
+                             INT ;
                              EQ ;
                              IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                              DIG 3 ;
@@ -486,9 +480,8 @@ let%expect_test _ =
                                   ISNAT ;
                                   IF_NONE { PUSH string "NotEnoughAllowance" ; FAILWITH } {} ;
                                   DIG 3 ;
-                                  PUSH nat 0 ;
-                                  DUP 3 ;
-                                  COMPARE ;
+                                  DUP 2 ;
+                                  INT ;
                                   EQ ;
                                   IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                                   DIG 2 ;
@@ -504,9 +497,8 @@ let%expect_test _ =
                              ISNAT ;
                              IF_NONE { PUSH string "NotEnoughBalance" ; FAILWITH } {} ;
                              DIG 2 ;
-                             PUSH nat 0 ;
-                             DUP 3 ;
-                             COMPARE ;
+                             DUP 2 ;
+                             INT ;
                              EQ ;
                              IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                              DUP 4 ;
@@ -522,9 +514,8 @@ let%expect_test _ =
                              ADD ;
                              DIG 4 ;
                              DIG 2 ;
-                             PUSH nat 0 ;
-                             DUP 4 ;
-                             COMPARE ;
+                             DUP 3 ;
+                             INT ;
                              EQ ;
                              IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
                              DIG 4 ;
@@ -561,9 +552,8 @@ let%expect_test _ =
              SWAP ;
              ITER { CONS } ;
              ITER { CONS } ;
-             SWAP ;
              NIL int ;
-             SWAP ;
+             DIG 2 ;
              ITER { CONS } ;
              ITER { CONS } ;
              NIL operation ;
@@ -720,14 +710,12 @@ let%expect_test _ =
     {|
     { parameter
         (or (or %vote (unit %yea) (unit %nay))
-            (pair %reset (string %title) (timestamp %start_time) (timestamp %finish_time))) ;
+            (pair %reset (string %title) (pair (timestamp %start_time) (timestamp %finish_time)))) ;
       storage
         (pair (string %title)
-              (nat %yea)
-              (nat %nay)
-              (set %voters address)
-              (timestamp %start_time)
-              (timestamp %finish_time)) ;
+              (pair (nat %yea)
+                    (pair (nat %nay)
+                          (pair (set %voters address) (pair (timestamp %start_time) (timestamp %finish_time)))))) ;
       code { UNPAIR ;
              IF_LEFT
                { SENDER ;
@@ -749,7 +737,7 @@ let%expect_test _ =
                  GET 3 ;
                  EMPTY_SET address ;
                  PUSH nat 0 ;
-                 PUSH nat 0 ;
+                 DUP ;
                  DIG 5 ;
                  CAR ;
                  PAIR 6 } ;
@@ -762,7 +750,9 @@ let%expect_test _ =
     {|
     { parameter
         (or (ticket %receive unit)
-            (pair %send (contract %destination (ticket unit)) (nat %amount) (address %ticketer))) ;
+            (pair %send
+               (contract %destination (ticket unit))
+               (pair (nat %amount) (address %ticketer)))) ;
       storage (pair (address %manager) (big_map %tickets address (ticket unit))) ;
       code { UNPAIR ;
              PUSH mutez 0 ;
@@ -804,10 +794,9 @@ let%expect_test _ =
                  GET 4 ;
                  GET_AND_UPDATE ;
                  IF_NONE
-                   { DROP 3 ; PUSH string "no tickets" ; FAILWITH }
+                   { PUSH string "no tickets" ; FAILWITH }
                    { READ_TICKET ;
-                     CDR ;
-                     CDR ;
+                     GET 4 ;
                      DUP 4 ;
                      GET 3 ;
                      DUP ;
@@ -820,7 +809,7 @@ let%expect_test _ =
                      SWAP ;
                      SPLIT_TICKET ;
                      IF_NONE
-                       { DROP 3 ; PUSH string "impossible?" ; FAILWITH }
+                       { PUSH string "impossible?" ; FAILWITH }
                        { UNPAIR ;
                          DUG 2 ;
                          SOME ;
@@ -869,7 +858,6 @@ let%expect_test _ =
                  DROP ;
                  CAR ;
                  SELF_ADDRESS ;
-                 SWAP ;
                  COMPARE ;
                  EQ ;
                  IF {} { PUSH string "failed assertion" ; FAILWITH } ;
@@ -970,10 +958,8 @@ let%expect_test _ =
         (pair (lambda operation (contract int)) int)
         (lambda operation (contract int))
         { CAR } ;
-      DUP 2 ;
-      APPLY ;
       SWAP ;
-      DROP } |}]
+      APPLY } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "amount_lambda.mligo" ];
@@ -1028,12 +1014,7 @@ let%expect_test _ =
     { parameter bool ;
       storage (lambda unit mutez) ;
       code { CAR ;
-             IF { AMOUNT ;
-                  LAMBDA (pair mutez unit) mutez { CAR } ;
-                  DUP 2 ;
-                  APPLY ;
-                  SWAP ;
-                  DROP }
+             IF { LAMBDA (pair mutez unit) mutez { CAR } ; AMOUNT ; APPLY }
                 { LAMBDA unit mutez { DROP ; AMOUNT } } ;
              NIL operation ;
              PAIR } } |}]
@@ -1413,7 +1394,7 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage unit ;
-      code { LAMBDA (pair unit unit unit unit) unit { DROP ; UNIT } ;
+      code { LAMBDA (pair unit (pair unit (pair unit unit))) unit { DROP ; UNIT } ;
              LAMBDA (pair nat nat) nat { UNPAIR ; MUL } ; |}]
 
 (* old uncurry bugs: *)
@@ -1471,7 +1452,7 @@ let%expect_test _ =
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    { parameter (pair (int %x) (int %y) (int %z) (int %w)) ;
+    { parameter (pair (int %x) (pair (int %y) (pair (int %z) (int %w)))) ;
       storage int ;
       code { CAR ; UNPAIR 4 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
 
@@ -1631,7 +1612,7 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "annotation_cases.mligo"; "-m"; "A" ];
   [%expect
     {|
-    { parameter (pair (nat %AAA) (nat %fooB) (nat %cCC)) ;
+    { parameter (pair (nat %AAA) (pair (nat %fooB) (nat %cCC))) ;
       storage unit ;
       code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
 
@@ -1776,7 +1757,9 @@ let%expect_test _ =
     {|
     { parameter
         (or (ticket %receive unit)
-            (pair %send (contract %destination (ticket unit)) (nat %amount) (address %ticketer))) ;
+            (pair %send
+               (contract %destination (ticket unit))
+               (pair (nat %amount) (address %ticketer)))) ;
       storage (pair (address %manager) (big_map %tickets address (ticket unit))) ;
       code { UNPAIR ;
              PUSH mutez 0 ;
@@ -1818,10 +1801,9 @@ let%expect_test _ =
                  GET 4 ;
                  GET_AND_UPDATE ;
                  IF_NONE
-                   { DROP 3 ; PUSH string "no tickets" ; FAILWITH }
+                   { PUSH string "no tickets" ; FAILWITH }
                    { READ_TICKET ;
-                     CDR ;
-                     CDR ;
+                     GET 4 ;
                      DUP 4 ;
                      GET 3 ;
                      DUP ;
@@ -1834,7 +1816,7 @@ let%expect_test _ =
                      SWAP ;
                      SPLIT_TICKET ;
                      IF_NONE
-                       { DROP 3 ; PUSH string "impossible?" ; FAILWITH }
+                       { PUSH string "impossible?" ; FAILWITH }
                        { UNPAIR ;
                          DUG 2 ;
                          SOME ;
@@ -1869,45 +1851,18 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage unit ;
-      code { { /* _ */ } ;
-             CDR ;
-             { /* _ */ } ;
-             { /* File "../../test/contracts/noop.mligo", line 3, character 2 to line 7, character 28 */
-               { /* File "../../test/contracts/noop.mligo", line 3, characters 28-29 */
-                 LAMBDA
-                   unit
-                   unit
-                   { { /* x */ } ;
-                     { /* File "../../test/contracts/noop.mligo", line 3, characters 28-29 */ } } } ;
-               { /* f, _ */ } ;
-               { /* File "../../test/contracts/noop.mligo", line 4, character 2 to line 7, character 28 */
-                 { /* File "../../test/contracts/noop.mligo", line 4, characters 18-21 */
-                   SWAP ;
-                   { /* File "../../test/contracts/noop.mligo", line 4, characters 18-19 */ DUP 2 } ;
-                   SWAP ;
-                   EXEC } ;
-                 { /* s2, f */ } ;
-                 { /* File "../../test/contracts/noop.mligo", line 5, character 2 to line 7, character 28 */
-                   { /* File "../../test/contracts/noop.mligo", line 5, characters 18-22 */
-                     { /* File "../../test/contracts/noop.mligo", line 5, characters 20-22 */ } ;
-                     { /* File "../../test/contracts/noop.mligo", line 5, characters 18-19 */ DUP 2 } ;
-                     SWAP ;
-                     EXEC } ;
-                   { /* s3, f */ } ;
-                   { /* File "../../test/contracts/noop.mligo", line 6, character 2 to line 7, character 28 */
-                     { /* File "../../test/contracts/noop.mligo", line 6, characters 10-14 */
-                       { /* File "../../test/contracts/noop.mligo", line 6, characters 12-14 */ } ;
-                       { /* File "../../test/contracts/noop.mligo", line 6, characters 10-11 */ SWAP } ;
-                       SWAP ;
-                       EXEC } ;
-                     { /* s */ } ;
-                     { /* File "../../test/contracts/noop.mligo", line 7, characters 3-27 */
-                       { /* File "../../test/contracts/noop.mligo", line 7, characters 26-27 */ } ;
-                       { /* File "../../test/contracts/noop.mligo", line 7, characters 3-24 */
-                         NIL operation
-                             /* File "../../test/contracts/noop.mligo", line 7, characters 3-24 */
-                         /* File "../../test/contracts/noop.mligo", line 7, characters 3-24 */ } ;
-                       PAIR } } } } } } } |}]
+      code { CDR ;
+             LAMBDA unit unit {} ;
+             SWAP ;
+             DUP 2 ;
+             SWAP ;
+             EXEC ;
+             DUP 2 ;
+             SWAP ;
+             EXEC ;
+             EXEC ;
+             NIL operation ;
+             PAIR } } |}]
 
 (* JSON source location comments *)
 let%expect_test _ =
@@ -2230,9 +2185,7 @@ let%expect_test _ =
       code { LEFT string ;
              LOOP_LEFT
                { UNPAIR ;
-                 PUSH int 0 ;
-                 DUP 2 ;
-                 COMPARE ;
+                 DUP ;
                  EQ ;
                  IF { DROP ; RIGHT (pair int string) }
                     { PUSH string "toto" ;
@@ -2790,10 +2743,10 @@ let%expect_test _ =
     {|
     { parameter
         (pair (string %name)
-              (or %planetType
-                 (string %union.Injection_0)
-                 (or (string %union.Injection_1) (string %union.Injection_2)))
-              (option %lord address)) ;
+              (pair (or %planetType
+                       (string %union.Injection_0)
+                       (or (string %union.Injection_1) (string %union.Injection_2)))
+                    (option %lord address))) ;
       storage int ;
       code { CAR ;
              PUSH int 0 ;
@@ -2808,9 +2761,7 @@ let%expect_test _ =
              GET 3 ;
              IF_LEFT
                { LEFT string ; EXEC ; DROP }
-               { IF_LEFT
-                   { DROP 2 ; PUSH int 2 ; SWAP ; SUB }
-                   { RIGHT string ; EXEC ; DROP } } ;
+               { IF_LEFT { DROP 2 ; PUSH int -2 ; ADD } { RIGHT string ; EXEC ; DROP } } ;
              LAMBDA (or string string) unit { DROP ; UNIT } ;
              DIG 2 ;
              GET 3 ;
@@ -2825,13 +2776,13 @@ let%expect_test _ =
   [%expect
     {|
     { parameter (or (unit %a) (or (int %b) (pair %c int int))) ;
-      storage (pair (int %x) (int %y) (int %z)) ;
+      storage (pair (int %x) (pair (int %y) (int %z))) ;
       code { CAR ;
              IF_LEFT
-               { DROP ; PUSH int 10 ; PUSH int 10 ; PUSH int 10 }
-               { IF_LEFT
-                   { DROP ; PUSH int 20 ; PUSH int 20 ; PUSH int 20 }
-                   { DROP ; PUSH int 20 ; PUSH int 20 ; PUSH int 20 } } ;
+               { DROP ; PUSH int 10 }
+               { IF_LEFT { DROP ; PUSH int 20 } { DROP ; PUSH int 20 } } ;
+             DUP ;
+             DUP ;
              PAIR 3 ;
              NIL operation ;
              PAIR } } |}]
@@ -2842,16 +2793,7 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage (list int) ;
-      code { DROP ;
-             NIL int ;
-             PUSH int 3 ;
-             CONS ;
-             PUSH int 2 ;
-             CONS ;
-             PUSH int 1 ;
-             CONS ;
-             NIL operation ;
-             PAIR } } |}]
+      code { DROP ; PUSH (list int) { 1 ; 2 ; 3 } ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "used_var_in_local_module.mligo" ];
@@ -3021,11 +2963,11 @@ let%expect_test _ =
                        (pair %request (address %owner) (address %spender))
                        (contract %callback nat))
                     (or (pair %approve (address %spender) (nat %value))
-                        (pair %transfer (address %from) (address %to) (nat %value)))))) ;
+                        (pair %transfer (address %from) (pair (address %to) (nat %value))))))) ;
       storage
         (pair (big_map %tokens address nat)
-              (big_map %allowances (pair (address %owner) (address %spender)) nat)
-              (nat %total_supply)) ;
+              (pair (big_map %allowances (pair (address %owner) (address %spender)) nat)
+                    (nat %total_supply))) ;
       code { UNPAIR ;
              IF_LEFT
                { DUP 2 ;
@@ -3090,9 +3032,8 @@ let%expect_test _ =
                              DIG 3 ;
                              CDR ;
                              DIG 3 ;
-                             PUSH nat 0 ;
-                             DUP 3 ;
-                             COMPARE ;
+                             DUP 2 ;
+                             INT ;
                              EQ ;
                              IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                              DIG 3 ;
@@ -3122,9 +3063,8 @@ let%expect_test _ =
                                   ISNAT ;
                                   IF_NONE { PUSH string "NotEnoughAllowance" ; FAILWITH } {} ;
                                   DIG 3 ;
-                                  PUSH nat 0 ;
-                                  DUP 3 ;
-                                  COMPARE ;
+                                  DUP 2 ;
+                                  INT ;
                                   EQ ;
                                   IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                                   DIG 2 ;
@@ -3140,9 +3080,8 @@ let%expect_test _ =
                              ISNAT ;
                              IF_NONE { PUSH string "NotEnoughBalance" ; FAILWITH } {} ;
                              DIG 2 ;
-                             PUSH nat 0 ;
-                             DUP 3 ;
-                             COMPARE ;
+                             DUP 2 ;
+                             INT ;
                              EQ ;
                              IF { SWAP ; DROP ; NONE nat } { SWAP ; SOME } ;
                              DUP 4 ;
@@ -3158,9 +3097,8 @@ let%expect_test _ =
                              ADD ;
                              DIG 4 ;
                              DIG 2 ;
-                             PUSH nat 0 ;
-                             DUP 4 ;
-                             COMPARE ;
+                             DUP 3 ;
+                             INT ;
                              EQ ;
                              IF { DIG 2 ; DROP ; NONE nat } { DIG 2 ; SOME } ;
                              DIG 4 ;
@@ -3237,8 +3175,7 @@ let%expect_test _ =
         (or (pair %init address nat) (or (address %pokeAndGetFeedback) (unit %poke))) ;
       storage
         (pair (map %pokeTraces address (pair (address %receiver) (string %feedback)))
-              (string %feedback)
-              (map %ticketOwnership address (ticket string))) ;
+              (pair (string %feedback) (map %ticketOwnership address (ticket string)))) ;
       code { UNPAIR ;
              IF_LEFT
                { SWAP ;
@@ -3248,7 +3185,7 @@ let%expect_test _ =
                  CDR ;
                  COMPARE ;
                  EQ ;
-                 IF { DIG 3 ; DROP ; DIG 2 }
+                 IF { DIG 3 ; DROP }
                     { DUP 4 ;
                       CDR ;
                       PUSH string "can_poke" ;
@@ -3259,8 +3196,8 @@ let%expect_test _ =
                       SOME ;
                       DIG 4 ;
                       CAR ;
-                      UPDATE } ;
-                 DUG 2 ;
+                      UPDATE ;
+                      DUG 2 } ;
                  PAIR 3 ;
                  NIL operation ;
                  PAIR }
@@ -3278,24 +3215,18 @@ let%expect_test _ =
                      VIEW "feedback" string ;
                      SWAP ;
                      IF_NONE
-                       { DROP 4 ;
-                         PUSH string "User does not have tickets => not allowed" ;
-                         FAILWITH }
+                       { PUSH string "User does not have tickets => not allowed" ; FAILWITH }
                        { DROP ;
                          IF_NONE
-                           { DROP 3 ;
-                             PUSH string "Cannot find view feedback on given oracle address" ;
-                             FAILWITH }
+                           { PUSH string "Cannot find view feedback on given oracle address" ; FAILWITH }
                            { SWAP ;
                              DUP 2 ;
                              DIG 3 ;
                              DIG 3 ;
                              DIG 4 ;
                              PAIR ;
-                             SOURCE ;
-                             DUG 2 ;
                              SOME ;
-                             DIG 2 ;
+                             SOURCE ;
                              UPDATE ;
                              PAIR 3 ;
                              NIL operation ;
@@ -3307,23 +3238,19 @@ let%expect_test _ =
                      SOURCE ;
                      GET_AND_UPDATE ;
                      IF_NONE
-                       { DROP 3 ;
-                         PUSH string "User does not have tickets => not allowed" ;
-                         FAILWITH }
+                       { PUSH string "User does not have tickets => not allowed" ; FAILWITH }
                        { DROP ;
                          DUG 2 ;
                          PUSH string "" ;
                          SELF_ADDRESS ;
                          PAIR ;
-                         SOURCE ;
-                         DUG 2 ;
                          SOME ;
-                         DIG 2 ;
+                         SOURCE ;
                          UPDATE ;
                          PAIR 3 ;
                          NIL operation ;
                          PAIR } } } } ;
-      view "feedback" unit string { CDR ; GET 3 } } |}]
+      view "feedback" unit string { GET 5 } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "parameter"; contract "pokeGame.jsligo"; "Poke()" ];
@@ -3391,7 +3318,6 @@ let%expect_test _ =
              PUSH bytes 0x0006 ;
              LSR ;
              PUSH bytes 0x0003 ;
-             SWAP ;
              COMPARE ;
              EQ ;
              PUSH bytes 0x0600 ;
@@ -3492,7 +3418,6 @@ let%expect_test _ =
              DUP ;
              INT ;
              BYTES ;
-             SWAP ;
              COMPARE ;
              EQ ;
              IF {} { PUSH string "failed assertion" ; FAILWITH } ;
@@ -3564,7 +3489,7 @@ let%expect_test _ =
       code { UNPAIR ;
              IF_LEFT
                { DROP 2 ; PUSH int 0 }
-               { IF_LEFT { DROP ; PUSH int 1 ; SWAP ; SUB } { DROP ; PUSH int 1 ; ADD } } ;
+               { IF_LEFT { DROP ; PUSH int -1 ; ADD } { DROP ; PUSH int 1 ; ADD } } ;
              NIL operation ;
              PAIR } } |}];
   run_ligo_good [ "run"; "test"; contract "increment_prefix.jsligo" ];
@@ -3674,29 +3599,25 @@ let%expect_test _ =
              DUP 3 ;
              SIZE ;
              SUB ;
-             PUSH bool True ;
-             LOOP { PUSH int 0 ;
-                    DUP 2 ;
-                    COMPARE ;
-                    GE ;
+             DUP ;
+             GE ;
+             LOOP { DUP ;
+                    ABS ;
+                    DUP 4 ;
+                    PUSH nat 1 ;
+                    DIG 2 ;
+                    SLICE ;
+                    IF_NONE { PUSH string "SLICE" ; FAILWITH } {} ;
+                    DIG 2 ;
+                    CONCAT ;
+                    SWAP ;
+                    PUSH int -1 ;
+                    ADD ;
                     DUP ;
-                    IF { DUP 2 ;
-                         ABS ;
-                         DUP 5 ;
-                         PUSH nat 1 ;
-                         DIG 2 ;
-                         SLICE ;
-                         IF_NONE { PUSH string "SLICE" ; FAILWITH } {} ;
-                         DIG 3 ;
-                         CONCAT ;
-                         DUG 2 ;
-                         PUSH int 1 ;
-                         DIG 2 ;
-                         SUB ;
-                         SWAP }
-                       {} } ;
-             DIG 2 ;
-             DROP 2 ;
+                    GE } ;
+             DROP ;
+             SWAP ;
+             DROP ;
              NIL operation ;
              PAIR } } |}];
   run_ligo_good [ "run"; "test"; contract "reverse_string_for_loop.jsligo" ];
@@ -3820,19 +3741,16 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    { DROP ;
-      PUSH int 3 ;
+    { PUSH int 3 ;
       PUSH int 2 ;
       PUSH int 1 ;
       PAIR 3 ;
       UNIT ;
-      NIL int ;
-      PUSH int 2 ;
-      CONS ;
-      PUSH int 1 ;
-      CONS ;
+      PUSH (list int) { 1 ; 2 } ;
       UNIT ;
-      PAIR 4 } |}]
+      PAIR 4 ;
+      SWAP ;
+      DROP } |}]
 
 (* array as list *)
 let%expect_test _ =
@@ -3847,12 +3765,7 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    { DROP ;
-      NIL int ;
-      PUSH int 2 ;
-      CONS ;
-      PUSH int 1 ;
-      CONS ;
+    { PUSH (list int) { 1 ; 2 } ;
       NIL int ;
       PUSH int 3 ;
       CONS ;
@@ -3874,14 +3787,10 @@ let%expect_test _ =
       PUSH int 1 ;
       CONS ;
       SWAP ;
-      NIL int ;
-      PUSH int 3 ;
-      CONS ;
-      PUSH int 2 ;
-      CONS ;
-      PUSH int 1 ;
-      CONS ;
+      PUSH (list int) { 1 ; 2 ; 3 } ;
       NIL string ;
       DIG 4 ;
       UNIT ;
-      PAIR 6 } |}]
+      PAIR 6 ;
+      SWAP ;
+      DROP } |}]
