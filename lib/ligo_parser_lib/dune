@@ -11,7 +11,8 @@
   Preprocessor
   LexerLib
   GetoptLib
-  ocaml-recovery-parser
+  ocaml-recovery-parser.custom_compiler_libs
+  ocaml-recovery-parser.menhirRecoveryLib
   ;; Third party
   core_kernel.nonempty_list
   menhirLib))

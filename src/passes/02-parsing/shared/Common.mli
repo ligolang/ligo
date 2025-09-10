@@ -150,7 +150,7 @@ module type LIGO_PARSER =
 
     module Recovery :
       sig
-        include Merlin_recovery.RECOVERY_GENERATED
+        include MenhirRecoveryLib.RECOVERY_GENERATED
                 with module I := MenhirInterpreter
 
         val default_value : Region.t -> 'a MenhirInterpreter.symbol -> 'a

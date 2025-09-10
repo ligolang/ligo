@@ -21,7 +21,7 @@
   (with-stdout-to
    %{targets}
    (run
-    menhir-recover
+    ocaml-recovery-parser.menhir-recovery-generator
     --external-tokens
     Lexing_jsligo.Token.MenhirInterpreter
     Parser.cmly))))

@@ -89,7 +89,26 @@ with prev; {
             buildInputs = [jsonm ppx_sexp_conv];
             propagatedBuildInputs = [base64 re stringext uri-sexp];
           };
+          ocaml-recovery-parser = buildDunePackage
+            rec {
+              pname = "ocaml-recovery-parser";
+              version = "0.3.0";
 
+              duneVersion = "3";
+
+              src = fetchFromGitHub {
+                owner = "serokell";
+                repo = pname;
+                rev = version;
+                sha256 = "sha256-RFRI7VoHd7GceIQnzN1FQYfR/5nbrU/t1pLTbURE6PY=";
+              };
+
+              propagatedBuildInputs = [
+                fix
+                menhirLib
+                menhirSdk
+              ];
+            };
           grace = buildDunePackage rec {
             pname = "grace";
             version = "0.0.2";
