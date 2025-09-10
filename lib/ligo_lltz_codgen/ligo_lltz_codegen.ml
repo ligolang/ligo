@@ -47,7 +47,13 @@ let rec compile_type_expression (type_ : I.type_expression) : O.Type.t =
   | T_sapling_transaction memo -> return @@ Sapling_transaction { memo = Z.to_int memo }
   | T_function (arg_type, ret_type) ->
     return @@ Function (compile_type_expression arg_type, compile_type_expression ret_type)
-  | T_tuple annot_types -> return @@ Tuple (compile_row annot_types)
+  | T_tuple annot_types ->
+    (match annot_types with
+    | [] -> assert false
+    | [ (_annot, el) ] ->
+      (* TODO: should this handled by LLTZ? *)
+      compile_type_expression el
+    | annot_types -> return @@ Tuple (compile_row annot_types))
   | T_or (left, right) -> return @@ Or (compile_row [ left; right ])
   | T_base TB_unit -> return Unit
   | T_base TB_bool -> return Bool
@@ -557,16 +563,30 @@ let rec compile_expression (expr : I.expression) : O.Expr.t =
     let var, body = compile_binders binders ~in_:(compile_expression body) in
     return @@ For_each { collection; body = { lam_var = var; body } }
   | E_tuple elts ->
-    let elts = List.map elts ~f:compile_expression in
-    let row = O.Row.(Node (List.map elts ~f:(fun elt -> Leaf (None, elt)))) in
-    return @@ Tuple row
-  | E_proj (tuple, index, _tuple_size) ->
-    let tuple = compile_expression tuple in
-    return @@ Proj (tuple, O.Row.Path.Here [ index ])
-  | E_update (tuple, index, update, _tuple_size) ->
-    let tuple = compile_expression tuple in
-    let update = compile_expression update in
-    return @@ Update { tuple; component = O.Row.Path.Here [ index ]; update }
+    (match elts with
+    | [] -> assert false
+    | [ elt ] -> compile_expression elt
+    | elts ->
+      let elts = List.map elts ~f:compile_expression in
+      let row = O.Row.(Node (List.map elts ~f:(fun elt -> Leaf (None, elt)))) in
+      return @@ Tuple row)
+  | E_proj (tuple, index, tuple_size) ->
+    (match tuple_size with
+    | 0 -> assert false
+    | 1 ->
+      assert (index = 0);
+      compile_expression tuple
+    | _ ->
+      let tuple = compile_expression tuple in
+      return @@ Proj (tuple, O.Row.Path.Here [ index ]))
+  | E_update (tuple, index, update, tuple_size) ->
+    (match tuple_size with
+    | 0 -> assert false
+    | 1 -> compile_expression update
+    | _ ->
+      let tuple = compile_expression tuple in
+      let update = compile_expression update in
+      return @@ Update { tuple; component = O.Row.Path.Here [ index ]; update })
   | E_let_tuple (rhs, (binders, in_)) ->
     let components = List.map (List.map binders ~f:compile_binder) ~f:fst in
     let rhs = compile_expression rhs in
