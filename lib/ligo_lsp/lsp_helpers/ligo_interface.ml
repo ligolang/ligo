@@ -104,7 +104,7 @@ let lsp_raw_options : project_root:Path.t option -> Compiler_options.Raw_options
     diagnostics that require downloads from TZIP-16-compatible storages. *)
 let get_defs_and_diagnostics
     :  project_root:Path.t option -> code:string
-    -> logger:(type_:Lsp.Types.MessageType.t -> string -> unit Lwt.t)
+    -> logger:(type_:Linol.Lsp.Types.MessageType.t -> string -> unit Lwt.t)
     -> tzip16_download_options:Tzip16_storage.download_options -> Path.t
     -> defs_and_diagnostics Lwt.t
   =

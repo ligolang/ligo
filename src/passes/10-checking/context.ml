@@ -1211,9 +1211,8 @@ let get_sum ~refs_tbl
     : t -> Label.t -> (Type_var.t * Type_var.t list * Type.t * Type.t) list
   =
   let dedup =
-    List.stable_dedup_staged ~compare:(fun (_, _, _, tsum1) (_, _, _, tsum2) ->
+    List.stable_dedup ~compare:(fun (_, _, _, tsum1) (_, _, _, tsum2) ->
         Type.compare tsum1 tsum2)
-    |> Staged.unstage
   in
   memoize2_with_reference_list
     hashable

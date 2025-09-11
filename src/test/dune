@@ -37,7 +37,13 @@
   core_unix
   core_unix.sys_unix
   core_unix.filename_unix
-  core_kernel.nonempty_list)
+  core_kernel.nonempty_list
+  bls12-381.archive
+  octez-rustzcash-deps
+  octez-riscv-pvm
+  octez-rust-deps)
+ (flags
+  (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps"))
  (preprocess
   (pps ppx_jane)))
 

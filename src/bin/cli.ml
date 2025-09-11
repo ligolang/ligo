@@ -3550,7 +3550,10 @@ module Lsp_server = struct
           ~session_id
           ~skip_analytics
       in
-      let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
+      let server = Linol_lwt.Jsonrpc2.create_stdio
+        (* TODO: ???? *)
+        ~env:()
+        (s :> Linol_lwt.Jsonrpc2.server) in
       let shutdown () = Poly.(s#get_status = `ReceivedExit) in
       let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
       let analytics_job =

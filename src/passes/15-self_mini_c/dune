@@ -4,6 +4,14 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries ligo.tezos-utils mini_c octez-libs.hacl compiler_options)
- (inline_tests)
+ (inline_tests
+  (libraries
+   bls12-381.archive
+   octez-rustzcash-deps
+   octez-riscv-pvm
+   octez-rust-deps)
+  (executable
+   (flags
+    (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps"))))
  (preprocess
   (pps ppx_expect ppx_let ppx_poly_constructor)))

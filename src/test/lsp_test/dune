@@ -25,7 +25,15 @@
   fileutils)
  (inline_tests
   (deps
-   (source_tree ../contracts))))
+   (source_tree ../contracts))
+  (libraries
+   bls12-381.archive
+   octez-rustzcash-deps
+   octez-riscv-pvm
+   octez-rust-deps)
+  (executable
+   (flags
+    (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps")))))
 
 (alias
  (name lsp-test)

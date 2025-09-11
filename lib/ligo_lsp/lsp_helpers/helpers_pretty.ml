@@ -3,6 +3,7 @@
    LIGO CST/AST printers, since such reexports are contained in [Ligo_interface] *)
 
 open Core
+open Linol
 module Loc = Simple_utils.Location
 
 let pp_with_yojson (f : 'a -> Yojson.Safe.t) : 'a Fmt.t =

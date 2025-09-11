@@ -145,7 +145,7 @@ let wrap_comment comment michelson =
   let comment = Option.value ~default:(fun _ -> None) comment in
   (* pass original metadata using table from extract_locations *)
   let _, locs = extract_locations michelson in
-  let comment loc = comment (Base.List.Assoc.find_exn ~equal:Caml.( = ) locs loc) in
+  let comment loc = comment (Base.List.Assoc.find_exn ~equal:Stdlib.( = ) locs loc) in
   comment
 
 let pp_comment ?comment ppf michelson =

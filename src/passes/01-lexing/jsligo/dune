@@ -24,7 +24,13 @@
   lexing_shared
   lexing_jsligo
   ;; Third party
-  str)
+  str
+  bls12-381.archive
+  octez-rustzcash-deps
+  octez-riscv-pvm
+  octez-rust-deps)
+ (flags
+  (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps"))
  (modules Version LexerMain))
 
 ;; --------------------------------------------------------------------

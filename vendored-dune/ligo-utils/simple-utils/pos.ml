@@ -89,7 +89,7 @@ let make ~byte ~point_num ~point_bol : t =
       let len = String.length string
       in (self#shift_bytes len)#add_nl
 
-    method is_ghost = Caml.(byte = Lexing.dummy_pos)
+    method is_ghost = Stdlib.(byte = Lexing.dummy_pos)
 
     method file = byte.Lexing.pos_fname
 

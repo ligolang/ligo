@@ -6,6 +6,7 @@
   tree-sitter-typescript,
   lltz,
   libiconv,
+  apple-sdk,
 }: let
   inherit (pkgs) darwin ocamlPackages python3Packages coq_8_13 rustc cargo rustPlatform;
 in
@@ -74,7 +75,6 @@ in
           ocaml-compiler-libs
           simple-diff
           stdint
-          ocaml-migrate-parsetree-2
           alcotest-lwt
           qcheck-alcotest
           irmin-pack
@@ -85,7 +85,6 @@ in
           lwt-canceler
           lwt-exit
           seqes
-          ctypes_stubs_js
           hacl-star-raw
           hacl-star
           secp256k1-internal
@@ -112,7 +111,5 @@ in
           octez-libs
           octez-protocol-alpha-libs
         ]
-        ++ lib.optionals stdenv.isDarwin [
-          darwin.apple_sdk.frameworks.Security
-        ];
+        ++ lib.optionals stdenv.isDarwin [ apple-sdk ];
     }

@@ -77,8 +77,6 @@
   ocaml-compiler-libs
   simple-diff
   stdint
-  (ocaml-migrate-parsetree
-   (= 2.3.0))
   alcotest-lwt
   qcheck-alcotest
   irmin-pack

@@ -9,6 +9,14 @@
   self_michelson
   mini_c
   octez-libs.hacl)
- (inline_tests)
+ (inline_tests
+  (libraries
+   bls12-381.archive
+   octez-rustzcash-deps
+   octez-riscv-pvm
+   octez-rust-deps)
+  (executable
+   (flags
+    (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps"))))
  (preprocess
   (pps ppx_jane ppx_inline_test ppx_poly_constructor)))

@@ -5,7 +5,15 @@
   (backend bisect_ppx))
  (libraries ast_unified ast_core passes compiler_options main_warnings)
  (inline_tests
-  (libraries ligo.api)
+  (executable
+   (flags
+    (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps")))
+  (libraries
+   ligo.api
+   bls12-381.archive
+   octez-rustzcash-deps
+   octez-riscv-pvm
+   octez-rust-deps)
   (flags (-stop-on-error)))
  (preprocess
   (pps ppx_jane ppx_deriving.map ppx_woo ppx_poly_constructor)))

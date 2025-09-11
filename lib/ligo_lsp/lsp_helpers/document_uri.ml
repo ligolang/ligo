@@ -1,17 +1,20 @@
 open Core
+open Linol
 module Ligo_fun = Simple_utils.Ligo_fun
 
 let ( <@ ) = Ligo_fun.( <@ )
 
 include Lsp.Types.DocumentUri
 
-type t = [%import: Lsp.Types.DocumentUri.t] [@@deriving eq, ord]
+type t = [%import: Linol.Lsp.Types.DocumentUri.t] [@@deriving eq, ord]
 
 (* Uri type repr is not exported from LSP, so we need some dirty tricks *)
 type internal_replication =
   { scheme : string
   ; authority : string
   ; path : string
+  ; query : string option [@default None] [@sexp_drop_if Option.is_none]
+  ; fragment : string option [@default None] [@sexp_drop_if Option.is_none];
   }
 [@@deriving sexp]
 
