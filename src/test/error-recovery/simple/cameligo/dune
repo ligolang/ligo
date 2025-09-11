@@ -4,7 +4,15 @@
  (inline_tests
   (deps
    (glob_files *.mligo)
-   (glob_files original/*.mligo)))
+   (glob_files original/*.mligo))
+  (libraries
+   bls12-381.archive
+   octez-rustzcash-deps
+   octez-riscv-pvm
+   octez-rust-deps)
+  (executable
+   (flags
+    (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps"))))
  (libraries error_recovery)
  (preprocess
   (pps ppx_jane)))

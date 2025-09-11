@@ -9,7 +9,13 @@
   lsp_helpers
   lsp_test_helpers
   compiler_options
-  syntax_types)
+  syntax_types
+  bls12-381.archive
+  octez-rustzcash-deps
+  octez-riscv-pvm
+  octez-rust-deps)
+ (flags
+  (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps"))
  (preprocess
   (pps ppx_jane)))
 

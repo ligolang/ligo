@@ -1,6 +1,14 @@
 (library
  (name main_errors_test)
  (libraries simple-utils main_errors cst ast_typed)
- (inline_tests)
+ (inline_tests
+  (libraries
+   bls12-381.archive
+   octez-rustzcash-deps
+   octez-riscv-pvm
+   octez-rust-deps)
+  (executable
+   (flags
+    (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps"))))
  (preprocess
   (pps ppx_jane)))

@@ -27,7 +27,15 @@
   ligo.preprocessing
   ligo.package_management.alpha_shared)
  (inline_tests
-  (libraries ligo.api))
+  (libraries
+   ligo.api
+   bls12-381.archive
+   octez-rustzcash-deps
+   octez-riscv-pvm
+   octez-rust-deps)
+  (executable
+   (flags
+    (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps"))))
  (preprocess
   (staged_pps
    ppx_jane

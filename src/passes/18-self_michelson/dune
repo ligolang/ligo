@@ -6,4 +6,12 @@
  (libraries simple-utils octez-libs.hacl ligo.proto-alpha-utils)
  (preprocess
   (pps ppx_jane))
- (inline_tests))
+ (inline_tests
+  (libraries
+   bls12-381.archive
+   octez-rustzcash-deps
+   octez-riscv-pvm
+   octez-rust-deps)
+  (executable
+   (flags
+    (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps")))))

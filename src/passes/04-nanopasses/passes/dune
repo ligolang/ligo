@@ -78,7 +78,15 @@
   main_warnings
   core_kernel.nonempty_list)
  (inline_tests
-  (libraries ligo.api)
+  (executable
+   (flags
+    (:standard -cclib "-lblst" -cclib "-loctez_rustzcash_deps")))
+  (libraries
+   ligo.api
+   bls12-381.archive
+   octez-rustzcash-deps
+   octez-riscv-pvm
+   octez-rust-deps)
   (flags (-stop-on-error)))
  (preprocess
   (pps ppx_jane ppx_map ppx_deriving.map ppx_poly_constructor)))
