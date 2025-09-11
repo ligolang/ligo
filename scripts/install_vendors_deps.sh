@@ -18,5 +18,5 @@ OPAMSOLVERTIMEOUT=600 OPAMSOLVERTOLERANCE=0.0003 BLST_PORTABLE=y opam install -y
 cd vendors
 git clone https://gitlab.com/ligolang/tezos-ligo.git
 cd tezos-ligo
-git checkout fb4bad17f4d4a8b1df1ba5ea96935f63321e3a30
+git checkout 4d1f2bc8cdc13690328ead815dae7219561b38e5
 cd ../..

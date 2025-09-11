@@ -26,7 +26,6 @@ depends: [
   "tar" {= "2.6.0"}
   "tar-unix" {= "2.6.0"}
   "lambda-term"
-  "parse-argv"
   "msgpck"
   "bin_prot" {>= "v0.16.0"}
   "ppx_bin_prot" {>= "v0.16.0"}
@@ -38,9 +37,10 @@ depends: [
   "prometheus" {>= "1.2"}
   "lwt" {= "5.7.0"}
   "lwt_ppx"
+  "lwt_ssl"
   "bisect_ppx" {>= "2.3.0"}
   "irmin"
-  "cmdliner" {= "1.1.0"}
+  "cmdliner" {= "1.3.0"}
   "ocaml-compiler-libs"
   "simple-diff"
   "stdint"
@@ -54,7 +54,7 @@ depends: [
   "lwt-canceler"
   "lwt-exit"
   "logs"
-  "cohttp"
+  "cohttp" {= "5.3.1"}
   "conduit-lwt-unix"
   "magic-mime"
   "seqes"
@@ -67,26 +67,25 @@ depends: [
   "mtime" {>= "2.0.0"}
   "zarith" {= "1.13"}
   "tezt" {>= "4.0.0" & < "5.0.0"}
-  "ocamlformat" {= "0.21.0"}
-  "ocamlformat-rpc" {= "0.21.0"}
-  "ocaml-lsp-server" {>= "1.14.0"}
-  "lsp" {>= "1.17" & < "1.18"}
+  "ocaml-lsp-server" {>= "1.21.0"}
   "aches-lwt"
   "fileutils"
-  "conduit" {= "6.1.0"}
-  "ocaml-recovery-parser" {= "0.2.4"}
-  "linol" {= "0.5"}
-  "linol-lwt" {= "0.5"}
+  "conduit" {= "8.0.0"}
+  "ocaml-recovery-parser" {= "0.3.0"}
+  "linol" {= "0.10"}
+  "linol-lwt" {= "0.10"}
   "grace"
+  "eio"
+  "eio_main"
+  "lwt_eio"
   "dune" {>= "3.8" & "3.8" >= build}
-  "coq" {>= "8.12" & < "8.14" & build}
   "alcotest" {with-test}
   "ppx_expect" {with-test}
   "ppx_inline_test" {with-test}
   "odoc" {with-test}
-  "ocamlformat" {"0.21.0" = dev}
-  "ocaml-lsp-server" {"1.14.0" >= dev}
-  "ocamlformat-rpc" {"0.21.0" = dev}
+  "ocamlformat" {"0.27.0" = dev}
+  "ocamlformat-rpc" {"0.27.0" = dev}
+  "ocaml-lsp-server" {"1.21.0" >= dev}
   "odoc" {with-doc}
 ]
 build: [
@@ -105,9 +104,7 @@ build: [
 ]
 dev-repo: "git+https://gitlab.com/ligolang/ligo.git"
 pin-depends: [
-  [ "ocaml-recovery-parser.0.2.4" "git+https://github.com/serokell/ocaml-recovery-parser.git#e05c872d1a0e8074940d995b57556121eddbf0f2" ]
-  [ "linol.0.5" "git+https://github.com/c-cube/linol.git#7730eabf98f657059920369b41d43e657a231ed5" ]
-  [ "linol-lwt.0.5" "git+https://github.com/c-cube/linol.git#7730eabf98f657059920369b41d43e657a231ed5" ]
+  [ "ocaml-recovery-parser.0.3.0" "git+https://github.com/serokell/ocaml-recovery-parser.git#b8207b0c919b84d5096486e59985d0137c0c4d82" ]
   [ "landmarks.1.4" "git+https://github.com/LexiFi/landmarks.git#b0c753cd2a4c4aa00dffdd3be187d8ed592fabf7" ]
   [ "landmarks-ppx.1.4" "git+https://github.com/LexiFi/landmarks.git#b0c753cd2a4c4aa00dffdd3be187d8ed592fabf7" ]
   [ "grace.0.2.0" "git+https://github.com/johnyob/grace.git#d15a6d7d07a2551d1a9934fa79c2cf84c918f990" ]

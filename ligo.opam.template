@@ -1,7 +1,5 @@
 pin-depends: [
-  [ "ocaml-recovery-parser.0.2.4" "git+https://github.com/serokell/ocaml-recovery-parser.git#e05c872d1a0e8074940d995b57556121eddbf0f2" ]
-  [ "linol.0.5" "git+https://github.com/c-cube/linol.git#7730eabf98f657059920369b41d43e657a231ed5" ]
-  [ "linol-lwt.0.5" "git+https://github.com/c-cube/linol.git#7730eabf98f657059920369b41d43e657a231ed5" ]
+  [ "ocaml-recovery-parser.0.3.0" "git+https://github.com/serokell/ocaml-recovery-parser.git#b8207b0c919b84d5096486e59985d0137c0c4d82" ]
   [ "landmarks.1.4" "git+https://github.com/LexiFi/landmarks.git#b0c753cd2a4c4aa00dffdd3be187d8ed592fabf7" ]
   [ "landmarks-ppx.1.4" "git+https://github.com/LexiFi/landmarks.git#b0c753cd2a4c4aa00dffdd3be187d8ed592fabf7" ]
   [ "grace.0.2.0" "git+https://github.com/johnyob/grace.git#d15a6d7d07a2551d1a9934fa79c2cf84c918f990" ]

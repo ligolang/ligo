@@ -7,10 +7,12 @@ WORKDIR /ligo
 RUN apk update && apk upgrade && apk --no-cache add \
   build-base snappy-dev alpine-sdk \
   bash ncurses-dev xz m4 git pkgconfig findutils rsync \
-  gmp-dev libev-dev libressl-dev linux-headers pcre-dev perl zlib-dev hidapi-dev \
-  libffi-dev \
-  cargo py3-jsonschema cmake opam
+  gmp-dev libev-dev linux-headers pcre-dev perl zlib-dev hidapi-dev \
+  libffi-dev py3-jsonschema cmake opam rustup \
+  openssl openssl-dev openssl-libs-static
 
+RUN rustup-init --profile minimal --default-toolchain 1.86.0 -y
+ENV PATH="/root/.cargo/bin:${PATH}"
 RUN opam init --disable-sandboxing --bare
 
 # make bls12-381 build ???
@@ -26,15 +28,16 @@ RUN opam var --global os-distribution=arch
 RUN opam update \
   && sh scripts/setup_switch.sh
 COPY scripts/install_opam_deps.sh /ligo/scripts/install_opam_deps.sh
-COPY vendors /ligo/vendors
-COPY vendored-dune /ligo/vendored-dune
 COPY ligo.opam /ligo
 COPY ligo.opam.locked /ligo
+
+COPY vendors /ligo/vendors
+COPY vendored-dune /ligo/vendored-dune
+COPY gitlab-pages /ligo/gitlab-pages
 
 # install all transitive deps
 RUN opam update && sh scripts/install_opam_deps.sh
 
-COPY gitlab-pages /ligo/gitlab-pages
 # Install LIGO
 COPY dune dune-project /ligo/
 COPY configurator /ligo/configurator
@@ -55,19 +58,6 @@ COPY tools/ligo-syntax-highlighting ligo-syntax-highlighting
 ARG ligo_version
 ### TAG_REMOVE_IN_CASE_OF_MR ###
 
-# Tests
-##################
-# Code between TAG_REMOVE_IN_CASE_OF_SKIPTEST will be removed in case of skip test.
-# Useful if the package is build but have already been tested
-##################
-### TAG_REMOVE_IN_CASE_OF_SKIPTEST ###
-# Run tests
-RUN opam exec -- dune runtest -j 5 --profile static --no-buffer \
-# Coverage (only the overall)
-  && find . -name '*.coverage' | xargs rm -f \
-  && opam exec -- dune clean
-### TAG_REMOVE_IN_CASE_OF_SKIPTEST ###
-
 # Generate syntax highlighting files
 RUN mkdir highlighting highlighting/vim highlighting/emacs highlighting/vscode highlighting/textmate \
   && opam exec -- dune exec ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=highlighting/vim --emacs=highlighting/emacs --vscode=highlighting/vscode --textmate=highlighting/textmate
@@ -75,6 +65,18 @@ RUN mkdir highlighting highlighting/vim highlighting/emacs highlighting/vscode h
 COPY changelog.txt /ligo/changelog.txt
 ENV CHANGELOG_PATH=/ligo/changelog.txt
 
+# Tests
+##################
+# Code between TAG_REMOVE_IN_CASE_OF_SKIPTEST will be removed in case of skip test.
+# Useful if the package is build but have already been tested
+##################
+### TAG_REMOVE_IN_CASE_OF_SKIPTEST ###
+# Run tests
+RUN opam exec -- dune runtest --profile static --no-buffer || true
+RUN opam exec -- dune runtest -j 1 --profile static --no-buffer \
+# Coverage (only the overall)
+  && find . -name '*.coverage' | xargs rm -f
+### TAG_REMOVE_IN_CASE_OF_SKIPTEST ###
 
 RUN LIGO_VERSION=$ligo_version opam exec -- dune build -p ligo --profile static \
   # Copy binary now to avoid problems with BISECT_ENABLE below

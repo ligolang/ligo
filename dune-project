@@ -22,6 +22,7 @@
 (using menhir 2.0)
 
 (using coq 0.8)
+
 (using ctypes 0.3)
 
 (package
@@ -30,11 +31,11 @@
  ; When modifying the dependencies, don't forget to run `make lock`
  (depends
   (core
-    (>= v0.16.0))
+   (>= v0.16.0))
   (core_unix
-    (>= v0.16.0))
+   (>= v0.16.0))
   (core_kernel
-    (>= v0.16.0))
+   (>= v0.16.0))
   ocamlgraph
   (menhir
    (= 20230608))
@@ -48,11 +49,10 @@
   tls
   decompress
   (tar
-    (= 2.6.0))
+   (= 2.6.0))
   (tar-unix
-    (= 2.6.0))
+   (= 2.6.0))
   lambda-term
-  parse-argv
   msgpck
   (bin_prot
    (>= v0.16.0))
@@ -69,11 +69,12 @@
   (lwt
    (= 5.7.0))
   lwt_ppx
+  lwt_ssl
   (bisect_ppx
    (>= 2.3.0))
   irmin
   (cmdliner
-   (= 1.1.0))
+   (= 1.3.0))
   ocaml-compiler-libs
   simple-diff
   stdint
@@ -81,15 +82,16 @@
   qcheck-alcotest
   irmin-pack
   pure-splitmix
-;  cohttp-server-lwt-unix
-;  resto-cohttp-self-serving-client
+  ;  cohttp-server-lwt-unix
+  ;  resto-cohttp-self-serving-client
   crunch
   class_group_vdf
   hex
   lwt-canceler
   lwt-exit
   logs
-  cohttp
+  (cohttp
+   (= 5.3.1))
   conduit-lwt-unix
   magic-mime
   seqes
@@ -107,43 +109,33 @@
    (and
     (>= 4.0.0)
     (< 5.0.0)))
-  (ocamlformat
-   (= 0.21.0))
-  (ocamlformat-rpc
-   (= 0.21.0))
   (ocaml-lsp-server
-   (>= 1.14.0))
-  (lsp
-   (and
-    (>= 1.17)
-    (< 1.18)))
+   (>= 1.21.0))
   aches-lwt
   fileutils
   (conduit
-   (= 6.1.0))
+   (= 8.0.0))
   (ocaml-recovery-parser
-   (= 0.2.4))
+   (= 0.3.0))
   (linol
-   (= 0.5))
+   (= 0.10))
   (linol-lwt
-   (= 0.5))
+   (= 0.10))
   grace
+  eio
+  eio_main
+  lwt_eio
   ; For building, testing, or documentation
   (dune
    (>= 3.8 :build))
-  (coq
-   (and
-    (>= 8.12)
-    (< 8.14)
-    :build))
   (alcotest :with-test)
   (ppx_expect :with-test)
   (ppx_inline_test :with-test)
   (odoc :with-test)
   ; For dev
   (ocamlformat
-   (= 0.21.0 :dev))
-  (ocaml-lsp-server
-   (>= 1.14.0 :dev))
+   (= 0.27.0 :dev))
   (ocamlformat-rpc
-   (= 0.21.0 :dev))))
+   (= 0.27.0 :dev))
+  (ocaml-lsp-server
+   (>= 1.21.0 :dev))))

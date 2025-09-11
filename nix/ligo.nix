@@ -59,7 +59,6 @@ in
           tezt
           tar-unix
           lambda-term
-          parse-argv
           msgpck
           ppx_deriving
           ppx_deriving_yojson
