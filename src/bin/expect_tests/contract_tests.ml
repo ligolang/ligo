@@ -229,7 +229,8 @@ let%expect_test _ =
     In a future version, `Test` will be replaced by `Test.Next`, and using `Typed_address.transfer_exn` from `Test.Next` is encouraged for a smoother migration.
 
     Everything at the top-level was executed.
-    - test exited with value 1297n. |}]
+    - test exited with value 1572n.
+    |}]
 
 let%expect_test _ =
   run_ligo_good

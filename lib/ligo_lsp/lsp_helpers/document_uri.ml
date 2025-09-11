@@ -13,6 +13,8 @@ type internal_replication =
   { scheme : string
   ; authority : string
   ; path : string
+  ; query : string option [@default None] [@sexp_drop_if Option.is_none]
+  ; fragment : string option [@default None] [@sexp_drop_if Option.is_none];
   }
 [@@deriving sexp]
 
