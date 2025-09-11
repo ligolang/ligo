@@ -1,4 +1,5 @@
 open Core
+open Linol
 module Raw_options = Compiler_options.Raw_options
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace

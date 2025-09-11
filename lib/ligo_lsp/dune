@@ -7,4 +7,4 @@
   (backend bisect_ppx))
  (preprocess
   (pps ppx_jane lwt_ppx))
- (libraries linol linol-lwt lsp lsp_helpers requests simple-utils syntax))
+ (libraries linol linol.lsp linol-lwt lsp_helpers requests simple-utils syntax))

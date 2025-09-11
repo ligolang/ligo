@@ -249,7 +249,7 @@ let with_run_in_io : (unlift_io -> 'b IO.t) -> 'b t =
 (** Sends a LSP request from the server to the client. *)
 let send_request
     (request : 'a Server_request.t)
-    (handler : ('a, Jsonrpc.Response.Error.t) result -> unit t)
+    (handler : ('a, Linol.Jsonrpc.Response.Error.t) result -> unit t)
     : unit t
   =
   let open Let_syntax in

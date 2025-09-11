@@ -74,7 +74,6 @@ in
           ocaml-compiler-libs
           simple-diff
           stdint
-          ocaml-migrate-parsetree-2
           alcotest-lwt
           qcheck-alcotest
           irmin-pack
@@ -85,7 +84,6 @@ in
           lwt-canceler
           lwt-exit
           seqes
-          ctypes_stubs_js
           hacl-star-raw
           hacl-star
           secp256k1-internal

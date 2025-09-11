@@ -13,7 +13,7 @@
   ligo_run
   linol
   linol-lwt
-  lsp
+  linol.lsp
   compiler_options
   simple-utils
   yojson

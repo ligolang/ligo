@@ -1,11 +1,12 @@
 (* Range between two positions *)
 
 open Core
+open Linol
 module Loc = Simple_utils.Location
 module Region = Simple_utils.Region
 include Lsp.Types.Range
 
-type t = [%import: Lsp.Types.Range.t] [@@deriving eq, ord, sexp]
+type t = [%import: Linol.Lsp.Types.Range.t] [@@deriving eq, ord, sexp]
 
 let pp = Helpers_pretty.pp_with_yojson yojson_of_t
 let testable = Alcotest.testable pp equal

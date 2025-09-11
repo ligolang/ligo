@@ -975,7 +975,7 @@ let init
     (* TODO: Add other parameters? *)
     Block.genesis
       ?commitments
-      ~consensus_threshold
+      ~consensus_threshold_size:consensus_threshold
       ?min_proposal_quorum
       ?bootstrap_contracts
       ?level

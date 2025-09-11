@@ -17,14 +17,14 @@ let error_yojson_format format =
   Error
     ("Invalid JSON value.\n\
      \          An object with the following specification is expected:"
-    ^ format)
+     ^ format)
 
 let of_yojson = function
   | `List [ `String "File"; reg ] ->
     let reg = Region.of_yojson reg in
     (match reg with
-    | Ok reg -> Ok (File reg)
-    | _ -> error_yojson_format "File Region.t")
+     | Ok reg -> Ok (File reg)
+     | _ -> error_yojson_format "File Region.t")
   | `List [ `String "Virtual"; `String v ] -> Ok (Virtual v)
   | _ -> error_yojson_format "File Region.t | Virtual String"
 
@@ -83,13 +83,13 @@ type 'a wrap =
 [@@deriving eq, compare, yojson, hash, iter, map, fold, sexp, bin_io]
 
 let sexp_of_wrap : ('a -> Sexp.t) -> 'a wrap -> Sexp.t =
- fun sexp_of_content ({ wrap_content; location } as x) ->
+  fun sexp_of_content ({ wrap_content; location } as x) ->
   match location with
   | Virtual _ -> sexp_of_content wrap_content
   | _ -> sexp_of_wrap sexp_of_content x
 
 let wrap_of_sexp : (Sexp.t -> 'a) -> Sexp.t -> 'a wrap =
- fun content_of_sexp sexp -> { wrap_content = content_of_sexp sexp; location = dummy }
+  fun content_of_sexp sexp -> { wrap_content = content_of_sexp sexp; location = dummy }
 
 let wrap_to_yojson f { wrap_content; location } =
   `Assoc [ "wrap_content", f wrap_content; "location", to_yojson location ]
@@ -99,14 +99,14 @@ let wrap_of_yojson f = function
     let wrap_content = f wrap_content in
     let location = of_yojson location in
     (match wrap_content, location with
-    | Ok wrap_content, Ok location -> Ok { wrap_content; location }
-    | _ -> error_yojson_format "{wrap_content: 'a; location: location}")
+     | Ok wrap_content, Ok location -> Ok { wrap_content; location }
+     | _ -> error_yojson_format "{wrap_content: 'a; location: location}")
   | _ -> error_yojson_format "{wrap_content: 'a; location: location}"
 
 let compare_wrap
-    compare_content
-    { wrap_content = wca; location = la }
-    { wrap_content = wcb; location = lb }
+      compare_content
+      { wrap_content = wca; location = la }
+      { wrap_content = wcb; location = lb }
   =
   match compare_content wca wcb with
   | 0 -> compare la lb
@@ -136,7 +136,7 @@ let r_extract : 'a Region.reg -> t = fun x -> File x.region
 let r_split : 'a Region.reg -> 'a * t = fun x -> x.value, File x.region
 
 let cover : t -> t -> t =
- fun a b ->
+  fun a b ->
   match a, b with
   | File _, Virtual _ -> a
   | Virtual _, _ -> b
@@ -147,7 +147,7 @@ let get_file : t -> Region.t option = function
   | _ -> None
 
 let cover_until_file_change : t -> t -> t =
- fun a b ->
+  fun a b ->
   match a, b with
   | File _, Virtual _ -> a
   | Virtual _, _ -> b
@@ -156,7 +156,7 @@ let cover_until_file_change : t -> t -> t =
   | File _, File _ -> a
 
 let order : t -> t -> int =
- fun a b ->
+  fun a b ->
   match a, b with
   | File a, File b -> if Region.lt a b then 1 else -1
   | File a, _ -> 1

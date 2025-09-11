@@ -1,5 +1,6 @@
 (* Helpers provided by this lib *)
-
+module Lsp = Linol.Lsp
+module Jsonrpc = Linol.Jsonrpc
 module Directive = Directive
 module Files = Files
 module Graph = Graph
@@ -54,8 +55,12 @@ module Diagnostic = struct
   let remove_underscore_numeration s =
     { s with
       message =
-        "(* This is a testable_pp. The actual result might be slightly different. *) "
-        ^ Str.global_replace (Str.regexp {|_#[0-9][0-9]*|}) "_#N" s.message
+        (* TODO: this is not handling MarkupContent *)
+        match s.message with
+        | `MarkupContent _ -> assert false
+        | `String s_message ->
+          `String ("(* This is a testable_pp. The actual result might be slightly different. *) "
+          ^ Str.global_replace (Str.regexp {|_#[0-9][0-9]*|}) "_#N" s_message)
     }
 
   let testable_pp fmt a = pp fmt (remove_underscore_numeration a)
@@ -220,7 +225,7 @@ module SemanticTokensRegistrationOptions = Lsp.Types.SemanticTokensRegistrationO
 module SemanticTokenModifiers = struct
   include Lsp.Types.SemanticTokenModifiers
 
-  type t = [%import: Lsp.Types.SemanticTokenModifiers.t] [@@deriving eq, ord, sexp]
+  type t = [%import: Linol.Lsp.Types.SemanticTokenModifiers.t] [@@deriving eq, ord, sexp]
 end
 
 module SemanticTokenTypes = Lsp.Types.SemanticTokenTypes

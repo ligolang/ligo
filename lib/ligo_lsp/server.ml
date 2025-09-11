@@ -860,29 +860,34 @@ class lsp_server
                   -> server_request:Linol_lwt.Jsonrpc2.send_request
                   -> id:Req_id.t
                   -> r Client_request.t
-                  -> r IO.t =
+                  -> (r, string) result IO.t =
       fun ~notify_back ~server_request ~id (r : r Client_request.t) ->
         let open Handler.Let_syntax in
         let normalize = self#normalize in
         let method_ = (Client_request.to_jsonrpc_request r ~id).method_ in
-        let run_handler ?(uri : DocumentUri.t option) : r Handler.t -> r IO.t =
-          self#run_handler
-            ~method_name:(Some method_)
-            (Normal
-               (new Linol_lwt.Jsonrpc2.notify_back
-                  ~notify_back
-                  ~server_request
-                  ~workDoneToken:None
-                  ~partialResultToken:None
-                  ?uri
-                  ()))
+        let run_handler ?(uri : DocumentUri.t option)
+          (handler : r Handler.t) : (r, string) result IO.t =
+          let open IO in
+          let+ result =
+            self#run_handler
+              ~method_name:(Some method_)
+              (Normal
+                (new Linol_lwt.Jsonrpc2.notify_back
+                    ~notify_back
+                    ~server_request
+                    ~workDoneToken:None
+                    ~partialResultToken:None
+                    ?uri
+                    ()))
+              handler in
+            Ok result
         in
         let run
             ?(allowed_modes : capability_mode list = default_modes)
             ~(uri : DocumentUri.t)
             ~(default : r)
             (handler : r Handler.t)
-            : r IO.t
+            : (r, string) result IO.t
           =
           (* If the project root changed, let's repopulate the cache by deleting existing info and
              running [Requests.on_doc] again. *)
@@ -915,7 +920,7 @@ class lsp_server
                    self#inc_number_of_crashes_on_keystrokes exn;
                    default)
             @@ Handler.(repopulate_cache >>= fun () -> handler)
-          else IO.return default
+          else IO.return (Ok default)
         in
         match r with
         | Client_request.DocumentSymbol { textDocument; _ } ->
@@ -985,7 +990,7 @@ class lsp_server
           @@ Requests.on_req_completion position (DocumentUri.to_path ~normalize uri)
         | Client_request.UnknownRequest { meth = "DebugEcho"; _ } ->
           (* Used in tools/lsp-bench *)
-          IO.return @@ `String "DebugEchoResponse"
+          IO.return @@ Ok (`String "DebugEchoResponse")
         | Client_request.SemanticTokensFull { textDocument; _ } ->
           let uri = textDocument.uri in
           run ~allowed_modes:[ All_capabilities; Only_semantic_tokens ] ~uri ~default:None

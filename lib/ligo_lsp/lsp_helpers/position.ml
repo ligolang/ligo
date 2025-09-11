@@ -1,11 +1,12 @@
 (** Position in file: line and column  *)
 
 open Core
+open Linol
 module Loc = Simple_utils.Location
 module Pos = Simple_utils.Pos
 include Lsp.Types.Position
 
-type t = [%import: Lsp.Types.Position.t] [@@deriving eq, sexp]
+type t = [%import: Linol.Lsp.Types.Position.t] [@@deriving eq, sexp]
 (* Derive for compare gives wrong result! *)
 
 (** Lexicographical less or equal than. *)

@@ -57,8 +57,7 @@
               (import ./nix/overlay.nix)
               (_: prev:
                 with prev; {
-                  ocamlPackages = ocaml-ng.ocamlPackages_4_14;
-                  ocamlformat = ocaml-ng.ocamlPackages_4_14.ocamlformat_0_21_0;
+                  ocamlPackages = ocaml-ng.ocamlPackages_5_2;
                 })
               rust-overlay.overlays.default
             ];
@@ -121,6 +120,7 @@
             inherit ligo-debugger;
             ligo = ligo;
             default = ligo;
+            octez-rust-deps = pkgs.ocamlPackages.octez-rust-deps;
           };
 
           devShells = with ligo-webide; rec {
