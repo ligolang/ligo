@@ -94,9 +94,7 @@ with prev; {
                   ledgerwallet-tezos
                 ]
                 ++ propagatedBuildInputs
-                ++ lib.optionals stdenv.isDarwin [
-                  darwin.apple_sdk.frameworks.Security
-                ];
+                ++ lib.optionals stdenv.isDarwin [ apple-sdk ];
             };
           cohttp = buildDunePackage rec {
             pname = "cohttp";
@@ -278,9 +276,7 @@ with prev; {
             '';
             propagatedBuildInputs =
               [libiconv]
-              ++ lib.optionals stdenv.isDarwin [
-                darwin.apple_sdk.frameworks.Security
-              ];
+              ++ lib.optionals stdenv.isDarwin [ apple-sdk ];
             nativeBuildInputs = [
               rustc
               cargo
@@ -307,9 +303,7 @@ with prev; {
             '';
             propagatedBuildInputs =
               [libiconv]
-              ++ lib.optionals stdenv.isDarwin [
-                darwin.apple_sdk.frameworks.Security
-              ];
+              ++ lib.optionals stdenv.isDarwin [ apple-sdk ];
             nativeBuildInputs = [
               rustc
               cargo
