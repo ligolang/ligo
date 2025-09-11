@@ -29,7 +29,6 @@ in
       nativeBuildInputs = [
         menhir
         ocaml-recovery-parser
-        coq_8_13
         crunch
         odoc
         python3Packages.jsonschema
@@ -100,7 +99,6 @@ in
           linol
           linol-lwt
           dune-configurator # ???
-          coq_8_13 # ???
           alcotest # with-test
           ppx_expect # with-test
           ppx_inline_test # with-test

@@ -3,4 +3,4 @@
  (public_name ligo.predefined)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils ast_core ast_typed mini_c stacking ligo_coq_ocaml))
+ (libraries simple-utils ast_core ast_typed mini_c stacking))

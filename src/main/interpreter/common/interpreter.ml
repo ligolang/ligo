@@ -1849,12 +1849,11 @@ and eval_ligo ~(raise : _ Trace.raise) ~steps ~options
           let* v = eval_ligo e calltrace env in
           return
             ( v
-            , Stacking.To_micheline.translate_type
-                (Scoping.translate_type
-                   (Trace.trace ~raise Main_errors.spilling_tracer
-                   @@ Spilling.compile_type
-                   @@ Trace.trace ~raise Main_errors.expansion_tracer
-                   @@ Expansion.compile_type_expression e.type_expression)) ))
+            , Ligo_compile.Of_mini_c.compile_type
+                (Trace.trace ~raise Main_errors.spilling_tracer
+                @@ Spilling.compile_type
+                @@ Trace.trace ~raise Main_errors.expansion_tracer
+                @@ Expansion.compile_type_expression e.type_expression) ))
         args
     in
     (match code.expression_content with

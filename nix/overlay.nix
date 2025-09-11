@@ -353,10 +353,6 @@ with prev; {
           };
         });
     });
-  coq_8_13 = coq_8_13.override {
-    customOCamlPackages = final.ocaml-ng.ocamlPackages_4_14;
-    buildIde = false;
-  };
   tree-sitter = tree-sitter.override (
     # override for getting tree-sitter version 0.25.3
     let
