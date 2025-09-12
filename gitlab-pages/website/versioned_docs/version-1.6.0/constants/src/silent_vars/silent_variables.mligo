@@ -1,1 +1,0 @@
-let f _x = 0 // _x is silent

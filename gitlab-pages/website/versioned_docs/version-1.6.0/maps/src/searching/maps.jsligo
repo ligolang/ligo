@@ -1,6 +1,0 @@
-let force_access = (key, map) => {
-  return match(Map.find_opt (key, map)) {
-    when(Some(value)): value;
-    when(None): failwith("No value.")
-  };
-};

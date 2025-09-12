@@ -1,0 +1,6 @@
+@entry
+const emitEvents = (_: unit, storage: int): [list<operation>, int] => {
+  const event1: operation = Tezos.Next.Operation.emit("%emitEvents", "hi");
+  const event2: operation = Tezos.Next.Operation.emit("%emitEvents", 6);
+  return [[event1, event2], storage];
+}

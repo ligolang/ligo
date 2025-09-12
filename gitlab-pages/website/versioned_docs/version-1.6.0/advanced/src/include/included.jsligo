@@ -1,4 +1,0 @@
-// This is "included.jsligo"
-// Demonstrate JsLIGO inclusion statements, see includer.jsligo
-
-export const foo = 144;

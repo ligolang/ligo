@@ -1,0 +1,15 @@
+type returnType = [list<operation>, int];
+
+type contractParam =
+  | ["Reset", unit]
+  | ["Decrement", int]
+  | ["Increment", int];
+
+@entry
+const callContract = (_: unit, storage: int): returnType => {
+  const contractAddress: address = ("KT1FpuaoBHwXMXJ6zn3F4ZhpjpPZV28MAinz" as address);
+  const myContract: contract<contractParam> = Tezos.get_contract(contractAddress);
+  const contractArg: contractParam = Increment(4);
+  const operation = Tezos.transaction(contractArg, 0tez, myContract);
+  return [list([operation]), storage + 1]
+}

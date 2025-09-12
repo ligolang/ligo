@@ -1,0 +1,9 @@
+// This is mycontract.jsligo
+export namespace MyContract {
+  export type storage = int;
+  export type result = [list<operation>, storage];
+
+  @entry const increment = (delta : int, storage : storage) : result => [[], storage + delta];
+  @entry const decrement = (delta : int, storage : storage) : result => [[], storage - delta];
+  @entry const reset = (_u : unit, _storage : storage) : result => [[], 0];
+}
