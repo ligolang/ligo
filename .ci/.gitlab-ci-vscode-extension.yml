@@ -74,7 +74,7 @@ vscode-extension:
   needs: [debugger-build, debugger-build-macos]
   tags:
     - gcp-docker
-  image: node:18-buster
+  image: node:20-trixie
   script:
     - mkdir -p tools/vscode/bin
     - cp -r Linux tools/vscode/bin
@@ -93,7 +93,7 @@ vscode-extension-publish:
   needs: [vscode-extension]
   tags:
     - gcp-docker
-  image: node:20-buster
+  image: node:20-trixie
   when: manual
   script:
     - yarn global add @vscode/vsce ovsx

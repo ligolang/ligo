@@ -242,7 +242,7 @@ xrefcheck:
   stage: push
   tags:
     - gcp-docker
-  image: node:20.2.0-buster
+  image: node:20-trixie
   needs:
     - job: changelog
       artifacts: true
@@ -306,7 +306,7 @@ algolia-crawl:
 
 deploy_website_preview:
   stage: deploy
-  image: node:20.2.0-buster
+  image: node:20-trixie
   tags:
     - gcp-docker
   needs:
