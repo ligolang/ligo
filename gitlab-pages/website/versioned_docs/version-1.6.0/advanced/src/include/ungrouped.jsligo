@@ -1,0 +1,3 @@
+#include "gitlab-pages/docs/advanced/src/include/included.jsligo"
+
+const bar = foo;

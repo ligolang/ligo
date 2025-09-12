@@ -1,7 +1,0 @@
-namespace Foo {
-    export namespace Bar {
-        export const x = 1
-    }
-}
-
-const y = Foo.Bar.x

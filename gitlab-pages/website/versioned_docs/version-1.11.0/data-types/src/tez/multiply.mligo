@@ -1,1 +1,0 @@
-let mult : tez = 5n * 5mutez

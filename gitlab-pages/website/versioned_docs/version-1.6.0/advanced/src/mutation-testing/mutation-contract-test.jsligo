@@ -1,0 +1,47 @@
+// This is mutation-contract-test.jsligo
+
+#import "gitlab-pages/docs/advanced/src/mutation-testing/mutation-contract.jsligo" "MutationContract"
+type storage = int;
+type param = parameter_of MutationContract.C;
+const initial_storage = 7;
+
+const tester = (taddr : typed_address<param, storage>, _c : michelson_contract<param, storage> , _ : int) : unit => {
+  let _xfer = Test.transfer_exn(taddr, Add(7), 1mutez);
+  assert(Test.get_storage(taddr) == initial_storage + 7);
+}
+
+const test_original = (() => {
+  let orig = Test.originate(contract_of(MutationContract.C), initial_storage, 0tez);
+  return tester(orig.addr);
+})();
+const test_mutation =
+  match(Test.originate_module_and_mutate(contract_of(MutationContract.C), initial_storage, 0tez, tester)) {
+    when(None()): unit;
+    when(Some(pmutation)): do {
+      let _l = Test.log(pmutation[1]);
+      // In a real program, one would write `failwith "A mutation passes"`
+      // Since we want to demonstrate the issue without an actual error
+      // a milder println is used in this document.
+      let _p = Test.println("A mutation of the contract still passes the tests!");
+    }
+  };
+const tester_add_and_sub = (taddr : typed_address<param, storage>, _c : michelson_contract<param, storage>, _i : int) : unit => {
+  let _xfer1 = Test.transfer_exn(taddr, Add(7), 1mutez);
+  assert(Test.get_storage(taddr) == initial_storage + 7);
+  let _xfer2 = Test.transfer_exn(taddr, Sub(3), 1mutez);
+  assert(Test.get_storage(taddr) == initial_storage + 4);
+}
+const test_mutation_all =
+  match(Test.originate_and_mutate_all(contract_of(MutationContract.C), initial_storage, 0tez, tester_add_and_sub)) {
+    when([]): unit;
+    when([hd,...tl]): do {
+      let ms = list([hd,...tl]);
+      let _p = Test.println("Some mutations also pass the tests!");
+      for (const m of ms) {
+        let [_, mutation] = m;
+        let path = Test.save_mutation(".", mutation);
+        let _l = Test.log("saved at:");
+        let _p = Test.log(path);
+      };
+    }
+  };

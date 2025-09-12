@@ -1,1 +1,0 @@
-const check = () => Tezos.self("%default");

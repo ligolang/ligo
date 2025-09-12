@@ -1,1 +1,0 @@
-let drop (x : int) (_y : int) : int = x // _y silently ignored

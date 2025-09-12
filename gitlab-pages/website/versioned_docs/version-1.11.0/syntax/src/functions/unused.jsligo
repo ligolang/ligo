@@ -1,1 +1,0 @@
-const drop = (x, _y) => x; // _y silently ignored

@@ -1,0 +1,34 @@
+type move = [int, int];
+type register = map<address, move>;
+
+let empty: register = Map.empty;
+let moves: register =
+  Map.literal(list([
+    [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), [1, 2]],
+    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0, 3]]]));
+let my_balance: option<move> =
+  Map.find_opt(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
+let updated_map : register =
+  Map.update
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), Some ([4, 9]), moves);
+let [old_move, updated_map2] : [option<move>, register] =
+  Map.get_and_update (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), (Some([24, 48] as move)), moves);
+let add = (m: register): register =>
+  Map.add
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [4, 9], m);
+let updated_map3 : register =
+  Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
+let iter_op = (m : register) : unit => {
+  let predicate = ([i, j]: [address, move]): unit => assert (j[0] > 3);
+  Map.iter (predicate, m);
+};
+let map_op = (m : register) : register => {
+  let increment = ([_i, j]: [address, move]) : move => [j[0], j[1] + 1];
+  return Map.map (increment, m);
+};
+let fold_op = (m : register): int => {
+  let folded = ([i, j]: [int, [address, move]]):int => i + j[1][1];
+  return Map.fold (folded, m, 5);
+};
+let _ : nat = Map.size(moves);
+let found : bool = Map.mem (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address),  moves);

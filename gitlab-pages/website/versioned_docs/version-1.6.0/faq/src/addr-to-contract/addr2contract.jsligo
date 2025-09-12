@@ -1,0 +1,6 @@
+const test = do {
+  const addr = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
+  const taddr : typed_address<unit,unit> = Test.cast_address(addr);
+  const contract : contract<unit> = Test.to_contract(taddr);
+  return contract;
+};

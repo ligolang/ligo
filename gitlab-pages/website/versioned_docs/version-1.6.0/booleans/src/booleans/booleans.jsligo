@@ -1,0 +1,2 @@
+const a : bool = true;
+const b : bool = false;

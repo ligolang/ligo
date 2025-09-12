@@ -1,0 +1,5 @@
+type storage = unit;
+
+@entry
+const main = (param: [int, int], storage: unit) : [list<operation>, storage] =>
+  [[Tezos.emit("%foo", param), Tezos.emit("%bar", param[0])], storage];
