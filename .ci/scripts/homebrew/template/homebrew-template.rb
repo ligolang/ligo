@@ -19,7 +19,7 @@ class LIGO_CLASS_PLACEHOLDER < Formula
     depends_on dependency => :build
   end
 
-  dependencies = %w[gmp libev libffi]
+  dependencies = %w[gmp libev libffi openssl]
   dependencies.each do |dependency|
     depends_on dependency
   end
