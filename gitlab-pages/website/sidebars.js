@@ -12,15 +12,10 @@ const sidebars = {
       "intro/template",
       "intro/upgrade-v1",
     ],
-    "Writing a Contract": [
-      {
-        "type": "category",
-        "label": "First contract",
-        "items": [
-          "tutorials/taco-shop/tezos-taco-shop-smart-contract",
-          "tutorials/taco-shop/tezos-taco-shop-payout"
-        ]
-      },
+    "Tutorial": [
+      "tutorials/taco-shop/selling-tacos",
+      "tutorials/taco-shop/testing-contract",
+      "tutorials/taco-shop/getting-payouts",
     ],
     "Syntax": [
       "syntax/comments",
