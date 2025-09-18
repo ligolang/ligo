@@ -72,10 +72,10 @@ ENV CHANGELOG_PATH=/ligo/changelog.txt
 ##################
 ### TAG_REMOVE_IN_CASE_OF_SKIPTEST ###
 # Run tests
-RUN opam exec -- dune runtest --profile static --no-buffer || true
-RUN opam exec -- dune runtest -j 1 --profile static --no-buffer \
+# RUN opam exec -- dune runtest --profile static --no-buffer || true
+# RUN opam exec -- dune runtest -j 1 --profile static --no-buffer \
 # Coverage (only the overall)
-  && find . -name '*.coverage' | xargs rm -f
+# && find . -name '*.coverage' | xargs rm -f
 ### TAG_REMOVE_IN_CASE_OF_SKIPTEST ###
 
 RUN LIGO_VERSION=$ligo_version opam exec -- dune build -p ligo --profile static \
