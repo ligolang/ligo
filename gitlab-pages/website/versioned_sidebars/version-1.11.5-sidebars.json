@@ -1,8 +1,4 @@
-/**
-// @ts-check
-
-/** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
-const sidebars = {
+{
   "docs": {
     "Getting started": [
       "intro/introduction",
@@ -369,6 +365,4 @@ const sidebars = {
       "faq/tezos-now-advance-time"
     ]
   }
-};
-
-module.exports = sidebars;
+}
