@@ -352,7 +352,11 @@ update-bottle-reference:
 update-ligo-bin-PKGBUILD:
   stage: pretooling
   tags:
-    - gcp-ubuntu
+    - gcp-docker
+  image: node:20-trixie
+  before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends yq
   script:
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
     - ./.ci/scripts/AUR/create_new_pkgbuild_version.sh https://gitlab.com/ligolang/ligo/-/jobs/$LAST_TAG_JOB_ID/artifacts/raw/ligo.deb $RELEASE_VERSION
@@ -426,7 +430,7 @@ update-repository-status:
     - git config --global user.name 'InfraBot'
     - git config --global user.email 'infra@trili.tech'
     - apt-get update
-    - apt-get install -y --no-install-recommends jq
+    - apt-get install -y --no-install-recommends jq yq
     - wget https://github.com/mikefarah/yq/releases/download/v4.18.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
   script:
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git"
