@@ -1,0 +1,3 @@
+(library
+ (name michelson_of_ocaml)
+ (libraries compiler-libs.common))
