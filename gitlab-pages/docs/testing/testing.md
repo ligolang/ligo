@@ -3,6 +3,12 @@ id: testing
 title: Testing
 ---
 
+```bash
+octez-client config show
+```
+
+![whatever](no.png)
+
 import Syntax from '@theme/Syntax';
 
 The LIGO command-line interpreter provides commands to test your LIGO code.
