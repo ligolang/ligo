@@ -257,7 +257,7 @@ LIGO 1.0 | LIGO 2.0
 
 ### Records (now called objects)
 
-To be closer to JavaScript, JslIGO now refers to the record data type as an object.
+To be closer to JavaScript, JsLIGO now refers to the record data type as an object.
 JsLIGO objects are similar to JavaScript objects, but they have some limitations that JavaScript objects don't have.
 
 To specify the type of an object, use commas to separate the fields, not semicolons as in the previous version of JsLIGO.
