@@ -222,21 +222,66 @@ docker_push_ligo_ci:
   after_script:
     - docker image rm "${LIGO_CI_IMAGE_TAG}" >/dev/null 2>&1 || true
 
-xrefcheck:
+doctests:
   stage: tooling
-  tags:
-    - gcp-ubuntu
+  allow_failure: true
   needs:
     - job: changelog
       artifacts: true
-  script:
-    - wget https://github.com/serokell/xrefcheck/releases/download/v0.2.2/xrefcheck-x86_64-linux --no-verbose -O xrefcheck
-    - chmod 777 ./xrefcheck
-    - ./xrefcheck
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      when: always
-  allow_failure: true
+  image: node:22
+
+    script:
+
+  # Get comma-separated list of changed files
+  - apt update && apt install -y jq
+  # Call gitlab API to get MR metadata
+  - curl "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/changes" > results.json
+  # Get all changed files
+  - jq -r '.changes[].new_path' results.json > all_changed_files.txt
+  # Filter to MD/MDX files
+  - touch changed_md_files.txt
+  - grep -E '^.*\.mdx?$' all_changed_files.txt > changed_md_files.txt || echo "NULL" > changed_md_files.txt
+  # Change to comma-separated list
+  - tr < changed_md_files.txt '\n' ',' > comma_separated.txt
+  # Remove trailing comma (important, or else it shows up as a blank item at the end of the list and includes every file)
+  - sed -i 's/,$//' comma_separated.txt
+  # Set an environment variable to use later
+  - export CHANGED_FILES=$(cat comma_separated.txt)
+  - echo "MD(X) files changed:" $CHANGED_FILES
+  - if [ "$CHANGED_FILES" = "NULL" ] ; then echo "No tests needed, stopping here" && exit 0 ; fi
+
+  # We're still running, so there must be changed files
+  - git clone https://gitlab.com/nomadic-labs/doclib.git
+  - cd doclib
+  - npm i
+
+  # Tests:
+  # - Run tests from the doclib repo
+  # - Pass the changed files as a comma-separated list
+  # - Pass --reporter to output the results as a JUnit file for reporting on the MR
+
+  # Image links check
+  - npm run imageLinks -- --baseFolder=../gitlab-pages --imageFolder=website/static --docFiles=$CHANGED_FILES --reporter mocha-junit-reporter --reporter-options mochaFile=../imageLinks.xml || true
+
+  # Unused images check
+  - npm run usedImages -- --baseFolder=../gitlab-pages --docFiles=docs --imageFolder=website/static --ignoreImages=img/socials,img/tezos-social-card.png,img/logo-tezos.svg,img/external_link.svg,img/cover.png --reporter mocha-junit-reporter --reporter-options mochaFile=../usedImages.xml || true
+
+  # Dependency proposer
+  - npm run proposeDependencies -- --baseFolder=../gitlab-pages --docFiles=$CHANGED_FILES --major --reporter mocha-junit-reporter --reporter-options mochaFile=../proposedDependencies.xml || true
+
+  # Show test results on the MR by passing the JUnit test output files
+  artifacts:
+    when: always
+    paths:
+      - imageLinks.xml
+      - usedImages.xml
+      - proposedDependencies.xml
+    reports:
+      junit:
+        - imageLinks.xml
+        - usedImages.xml
+        - proposedDependencies.xml
+
 
 .website:
   stage: push
