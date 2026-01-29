@@ -6,6 +6,17 @@ import Syntax from '@theme/Syntax';
 
 Version 2.0 of LIGO includes breaking changes, so you must update your code when you upgrade your installation of LIGO as described in [Installation](./installation).
 
+<Syntax syntax="jsligo">
+
+:::tip
+
+LIGO 2.0 includes a migration tool that can make some of the necessary changes to JsLIGO code.
+See [Using the upgrade tool](#using-the-upgrade-tool).
+
+:::
+
+</Syntax>
+
 ## Promotion of `Test.Next`
 
 The `Test.Next` library is now the `Test` library, replacing the old `Test` library.
@@ -618,5 +629,161 @@ For example, this command calls an entrypoint named `add` that accepts an intege
 ```bash
 ligo run dry-run counter.jsligo -m "Counter" '["Add" as "Add", 1]' 5
 ```
+
+## Using the upgrade tool
+
+The upgrade tool makes some changes to JsLIGO files to upgrade them to version 2.0 but cannot make all of the necessary changes.
+
+:::caution
+
+After using the tool, you must manually verify that your code works as expected.
+
+:::
+
+Follow these steps to run the upgrade tool:
+
+1. Verify that your code compiles and your tests pass with JsLIGO 1.x.
+
+1. TODO how to build or install the tool.
+
+1. Run the tool on your files by running this command, where the variable `<JSLIGO_FILE>` is the file to convert:
+
+   ```bash
+   TODO_COMMANDNAME --upgrade --namespaces -- <JSLIGO_FILE>
+   ```
+
+   In most cases, include the `--namespaces` switch to convert namespaces to classes.
+   For more information, see [Converting namespaces to classes](#converting-namespaces-to-classes).
+
+   :::tip
+
+   Run the upgrade tool on files that are imported before running it on files that import those files.
+
+   :::
+
+1. (Optional): Run a linter or formatter on the code to update its style to meet your preferences.
+
+1. Make the manual changes described in [Changes that you must make manually](#changes-that-you-must-make-manually).
+
+1. Verify that your code compiles and tests pass.
+
+### Changes that the tool makes
+
+The tool makes these changes:
+
+- It updates literal definitions to the new syntax, such as `const one = 1n` to `const one = 1 as nat`.
+
+- It updates the syntax for variant and option types.
+
+- It updates parameter types, such as changing `const parameter = MyEntrypoint(value) as parameter_of MyContract;` to `const parameter = MyEntrypoint(value) as parameter_of<MyContract>;`.
+
+- It makes punning explicit in record/object types, both in type and value definitions.
+
+- It attempts to convert pattern matching to the new syntax but cannot do so in all cases, such as deep or complex match cases or default cases.
+
+- It changes variables that use escaped keyword names such as `@return` to include two underscores, such as `return__`.
+
+- It converts `do` blocks into `(() => {})` lambdas.
+In this case, sometimes you must manually add variables to the scope of the lambda, as described below.
+
+- It updates the syntax of imports to use the `import` keyword instead of the `#import` preprocessor directive, as described in [Imports](#imports).
+
+- The tool may change line breaks where they do not affect the syntax.
+
+### Converting namespaces to classes
+
+As described in [Contract syntax](#contract-syntax), JsLIGO now allows you to define contracts in classes as well as namespaces.
+If you include the `--namespace` option, the tool attempts to convert namespaces to classes.
+
+Converting namespaces to classes is required only if the namespace implements an interface because namespaces can no longer implement interfaces in JsLIGO 2.0.
+
+If you include the `--namespace` option, the tool makes these changes:
+
+- Converting the namespace declaration to a class.
+
+- Moving any type declarations in the namespace outside of the class.
+
+- Labeling entrypoints and views as `static`.
+
+The tool does not convert namespaces into classes in these cases:
+
+- The namespace contains no entrypoints or views.
+
+- Moving the types out of the namespace would leave the namespace empty, because empty namespaces are not supported.
+
+- The namespace has nested namespaces.
+In this case the tool adds the comment `// UPGRADE: Nested namespaces need to be handled by hand.`.
+
+See the next section for changes that you must make manually after using the `--namespace` option.
+
+### Changes that you must make manually
+
+After you run the upgrade tool, you must make these changes manually:
+
+- Comment out decorators such as `@entry` in namespaces.
+
+- Convert pattern matching to the new syntax where the tool could not do so automatically, including removing the default case if it exists.
+
+  Also, in some cases, you may need to adjust the parameters of pattern matching cases.
+  For example,
+
+- Look for scoping errors, such as places where the tool moved a type out of a namespace where the type now conflicts with another type with the same name.
+
+- Convert preprocessor directives manually or change your toolchain to handle them with a different preprocessor as described in [Preprocessor directives](#preprocessor-directives).
+
+- If you aliased the module `Test.Next` to `Test` or the module `Tezos.Next` to `Tezos`, you can remove those aliases because the `*.Next` libraries have been promoted.
+
+- Convert uses of `Test.Next.failwith` in tests to simply `failwith`.
+
+- Correct interfaces that have abstract types because they are no longer supported, as described in [Interfaces](#interfaces).
+
+- Correct instances where the updated syntax is not able to capture variables.
+For example, assume this JsLIGO v1 code:
+
+   ```jsligo skip
+   function match_with_block() {
+     let x = 1;
+     return $match(["Some" as "Some", 1], {
+       "None": () =>
+         failwith(1),
+       "Some": (org) =>
+         (() =>
+         { let y = x + 1; return y })(),
+     });
+   };
+   ```
+
+   The tool upgrades that function to the following code:
+
+   ```jsligo skip
+   function match_with_block() {
+     let x = 1;
+     return $match(["Some" as "Some", 1], {
+       "None": () =>
+         failwith(1),
+       "Some": (org) =>
+         (() =>
+         { let y = x + 1; return y })(),
+     });
+   };
+   ```
+
+   The compiler throws the error `Invalid capture of mutable variable "x"` on this code because the variable `x` is not in scope of the lambda `(() => { let y = x + 1; return y })()`.
+   To bring the variable into scope, add it as a parameter of the lambda, as in this example:
+
+   ```jsligo group=lambda_scope
+   function match_with_block() {
+     let x = 1;
+     return $match(["Some" as "Some", 1], {
+       "None": () =>
+         failwith(1),
+       "Some": (org) =>
+         ((x) =>
+         { let y = x + 1; return y })(x),
+     });
+   };
+   ```
+
+Also, if you used the `--namespace` option, check for references to types that the tool moved out of namespaces to ensure that the paths are correct.
 
 </Syntax>
