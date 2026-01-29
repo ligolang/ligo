@@ -1,15 +1,18 @@
-type storage = int;
-type ret = [list<operation>, storage];
+namespace Counter {
+  type storage_type = int;
+  type return_type = [list<operation>, storage_type];
 
-// Three entrypoints
+  // Three entrypoints
 
-// @entry
-const increment = (delta: int, store: storage): ret =>
-  [[], store + delta];
+  // @entry
+  const add = (value: int, store: storage_type): return_type =>
+    [[], store + value];
 
-// @entry
-const decrement = (delta: int, store: storage): ret =>
-  [[], store - delta];
+  // @entry
+  const sub = (value: int, store: storage_type): return_type =>
+    [[], store - value];
 
-// @entry
-const reset = (_p: unit, _s: storage): ret => [[], 0]
+  // @entry
+  const reset = (_p: unit, _s: storage_type): return_type =>
+    [[], 0];
+}

@@ -1,15 +1,18 @@
-type storage = int
+module Counter = struct
+  type storage_type = int
+  type return_type = operation list * storage_type
 
-type ret = operation list * storage
+  (* Three entrypoints *)
 
-(* Three entrypoints *)
+  [@entry]
+  let add (value : int) (store : storage_type) : return_type =
+    [], store + value
 
-[@entry]
-let increment (delta : int) (store : storage) : ret = [], store + delta
+  [@entry]
+  let sub (value : int) (store : storage_type) : return_type =
+    [], store - value
 
-[@entry]
-let decrement (delta : int) (store : storage) : ret = [], store - delta
-
-[@entry]
-let reset (() : unit) (_ : storage) : ret = [], 0
-
+  [@entry]
+  let reset (_p : unit) (_s : storage_type) : return_type =
+    [], 0
+end
