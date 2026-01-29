@@ -603,6 +603,7 @@ const test = (() => {
 
 Escaping keywords is no longer supported; keywords cannot be used as variable names or object fields, even if you prefix the names with the `@` symbol.
 For example, you can add an underscore as a suffix, creating variables with names such as `return_` or `entry_`.
+See [Keywords](../syntax/keywords).
 
 ## Decorators
 
