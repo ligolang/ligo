@@ -49,7 +49,7 @@ A significant advantage of the multi-syntax feature is to share knowledge, tooli
 Unlike desktop, mobile, or web application development, smart
 contracts cannot rely on cheap CPU time and memory.  All resources
 contracts use are expensive and tracked as
-['gas costs'](../tutorials/optimisation/#tezos-gas-model).
+['gas costs'](../advanced/optimisation/#tezos-gas-model).
 
 The LIGO compiler generates optimised Michelson code, which will
 be cost-effective on Tezos.

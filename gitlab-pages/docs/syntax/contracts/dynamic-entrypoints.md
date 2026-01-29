@@ -16,6 +16,8 @@ If you want a client or other contract to be able to call a dynamic entrypoint, 
 
 :::
 
+As described in [Optimisation](../../advanced/optimisation.md), using dynamic entrypoints can help reduce gas costs by storing complex code where it is not loaded every time the contract is called.
+
 A contract with dynamic entrypoints must have at least one non-dynamic entrypoint with the `@entry` declaration, like any other contract.
 They must also obey the following convention on storage type definition and have at least one function with the `@dyn_entry` declaration.
 

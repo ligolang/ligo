@@ -1,0 +1,4 @@
+const sum = (x: int, y: int) => x + y;
+
+const main = (parameter: int, storage: int): [list<operation>, int] =>
+  [[], sum(parameter, storage)]

@@ -1,0 +1,40 @@
+type big_lambda = (p: int) => int;
+type storage_type = {
+    large_entrypoint_map: big_map<bool, big_lambda>;
+    value: int
+  }
+type return_type = [list<operation>, storage_type];
+
+class LazyEntrypoint {
+
+  // Get the code from the big-map
+  static load_large_ep = (storage: storage_type): big_lambda => {
+    const large_entrypoint_opt =
+      Big_map.find_opt(true, storage.large_entrypoint_map);
+    return $match(large_entrypoint_opt, {
+      "Some": ep => ep,
+      "None": () => failwith("Internal error"),
+    });
+  }
+
+  // Run the code from the big-map
+  @entry
+  static large_entry_point = (param: int, storage: storage_type): return_type => {
+    const newValue = load_large_ep(storage)(param);
+    return [[], {
+      large_entrypoint_map: storage.large_entrypoint_map,
+      value: newValue,
+      }];
+  }
+
+  // Do something that doesn't require the large code
+  @entry
+  static sub = (value: int, storage: storage_type): return_type =>
+    [[], {
+      large_entrypoint_map: storage.large_entrypoint_map,
+      value: value,
+      }];
+
+  // Other entrypoints...
+
+}
