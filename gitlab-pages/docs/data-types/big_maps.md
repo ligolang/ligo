@@ -127,6 +127,13 @@ const value = $match(value_option, {
 As shorthand, you can use the function `Big_map.find`.
 This function behaves like the previous example: it returns the value for a key if it exists or fails with the message `MAP FIND` if the value does not exist.
 
+:::note
+
+You cannot retrieve tickets from a big-map with the functions `Big_map.find_opt` or `Big_map.find`.
+See [Updating elements](#updating-elements).
+
+:::
+
 ## Adding elements
 
 To add an element to a big-map, pass the key and value to the `Big_map.add` function.
@@ -235,6 +242,67 @@ let three, map_without_3 = Big_map.get_and_update 3 None map_with_3
 // three == ["Some" as "Some", "three"]
 const [three, map_without_3] =
   Big_map.get_and_update(3, ["None" as "None"], map_with_3);
+```
+
+</Syntax>
+
+The function `Big_map.get_and_update` is useful for dealing with big-maps that contain tickets.
+As described in [Tickets](../data-types/tickets), you cannot use the functions `Big_map.find_opt` or `Big_map.find` to get tickets from big-maps because doing so would allow you to duplicate tickets.
+Instead, to get a ticket from a big-map, use `Big_map.get_and_update` and pass a None option to remove it from the big-map:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=tickets
+type ticket_type = nat ticket
+type ticket_map = (string, ticket_type) big_map
+
+(* Create a big-map of tickets *)
+let ticket_1 : ticket_type = Option.value_with_error "Failed to create ticket_1" (Tezos.Ticket.create 1n 1n)
+let ticket_2 : ticket_type = Option.value_with_error "Failed to create ticket_2" (Tezos.Ticket.create 2n 1n)
+
+let ticket_map : ticket_map =
+  Big_map.literal [
+    ("one", ticket_1);
+    ("two", ticket_2)]
+
+let ticket_sum = 0n
+
+(* Get the tickets from the big-map, removing them *)
+let (extracted_ticket_1, map_minus_ticket_1) = Big_map.get_and_update "one" None ticket_map
+let (_address_1, (payload_1, _amount_1)), _ticket_1 = (Tezos.Ticket.read (Option.value_with_error "ticket_1 retrieve failed" extracted_ticket_1))
+let ticket_sum = ticket_sum + payload_1
+
+let (extracted_ticket_2, map_minus_ticket2) = Big_map.get_and_update "two" None map_minus_ticket_1
+let (_address_2, (payload_2, _amount_2)), _ticket_2 = (Tezos.Ticket.read (Option.value_with_error "ticket2 retrieve failed" extracted_ticket_2))
+let ticket_sum = ticket_sum + payload_2
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=tickets
+type ticket_type = ticket<nat>;
+type ticket_map = big_map<string, ticket_type>;
+
+// Create a big-map of tickets
+const ticket_1: ticket_type = Option.value_with_error("Failed to create ticket_1", Tezos.Ticket.create(1 as nat, 1 as nat));
+const ticket_2: ticket_type = Option.value_with_error("Failed to create ticket_2", Tezos.Ticket.create(2 as nat, 1 as nat));
+
+const ticket_map: ticket_map = Big_map.literal([
+  ["one", ticket_1],
+  ["two", ticket_2],
+]);
+
+
+// Get the tickets from the big-map, removing them
+const [extracted_ticket_1, map_minus_ticket_1] = Big_map.get_and_update("one", ["None" as "None"], ticket_map);
+const [[_address_1, [payload_1, _amount_1]], _ticket_1] = Tezos.Ticket.read(Option.value_with_error("ticket_1 retrieve failed", extracted_ticket_1));
+
+const [extracted_ticket_2, map_minus_ticket2] = Big_map.get_and_update("two", ["None" as "None"], map_minus_ticket_1);
+const [[_address_2, [payload_2, _amount_2]], _ticket_2] = Tezos.Ticket.read(Option.value_with_error("ticket2 retrieve failed", extracted_ticket_2));
+
+const ticket_sum = payload_1 + payload_2;
 ```
 
 </Syntax>

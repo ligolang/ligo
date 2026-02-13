@@ -13,25 +13,28 @@ A ticket of type `ticket` has three elements:
 
 - Its _contents_, also knowns as the wrapped value or payload, which can be any data type
 
-- Its _amount_ of type `nat`, which is an arbitrary number that represents a quantity or value for the ticket
+- Its _amount_ of type `nat`, which is an arbitrary natural number one or greater that represents a quantity or value for the ticket
 
 A ticket's ticketer and contents cannot be changed.
 
-Tickets themselves cannot be duplicated, but you can split one ticket
-into multiple tickets by creating duplicate tickets each with a
-portion of the original ticket's amount.  The new tickets have the
-same ticketer and contents, and the sum of their amounts is always the
-amount of the original ticket.  Similarly, you can join tickets with
-matching ticketers and contents into a single ticket with the sum of
-the joined tickets' amounts.
+Tickets are _linear_, which means that they must have a defined path of ownership from owner to owner.
+As a result, tickets cannot be duplicated.
+
+Because tickets are linear, they have some limitations on how they can be used.
+For example, if you store tickets in a map, you must use `Map.get_and_update` or `Big_map.get_and_update` to access the tickets by removing them from the map.
+LIGO and Tezos do not allow you to get a ticket from a map with `Map.find_opt` or `Map.find` because doing so would allow you to copy the ticket, breaking its linearity.
+Tickets also have specific behavior in tests; see [Testing tickets](../testing/testing-tickets).
+
+Tickets cannot be duplicated, but they can be split into multiple tickets.
+The new tickets have the same ticketer and contents and they each have a portion of the original ticket's amount.
+The sum of their amounts is always the amount of the original ticket.
+Similarly, you can join tickets with matching ticketers and contents into a single ticket with the sum of the joined tickets' amounts.
 
 ## Creating tickets
 
-To create a ticket, pass the contents and the amount to
-`Tezos.Ticket.create` function.  The function returns an
-option that contains the ticket or `None` if the amount of the ticket
-is zero.  The contract's address automatically becomes the ticketer
-value.
+To create a ticket, pass the contents and the amount of the ticket to the `Tezos.Ticket.create` function.
+The function returns an option that contains the ticket or `None` if the amount of the ticket is zero, because tickets must have a value greater than zero.
+The contract's address automatically becomes the ticketer value.
 
 <SyntaxTitle syntax="cameligo">
 val create : 'value -> nat -> ('value ticket) option
@@ -67,15 +70,15 @@ const my_ticket2 =
 
 ## Reading tickets
 
-You cannot read the contents of a ticket directly; you must use the
-`Tezos.Ticket.read` function to access it.  This function
-destroys the ticket and returns the ticketer, contents, amount, and a
-copy of the original ticket.
+You cannot read the contents of a ticket directly; you must use the `Tezos.Ticket.read` function to access it.
+This function destroys the ticket and returns the ticketer, contents, amount, and a copy of the original ticket.
 
-Note that reading a ticket with the `Tezos.Ticket.read`
-function consumes it, destroying the original ticket.  To preserve the
-ticket, you must use the copy that the function returns, or else the
-ticket is destroyed.
+:::warning
+
+Reading a ticket with the `Tezos.Ticket.read` function consumes it, destroying the original ticket.
+To preserve the ticket, you must use the copy that the function returns, such as saving it in storage, or else the ticket is destroyed.
+
+:::
 
 <SyntaxTitle syntax="cameligo">
 val read : 'value ticket -> (address * ('value * nat)) * 'value ticket
@@ -87,8 +90,7 @@ read: ticket&lt;'value&gt; => &lt;&lt;address, &lt;'value , nat&gt;&gt; , ticket
 
 <Syntax syntax="cameligo">
 
-To read the content of a ticket, you can either use tuple
-destructuring or pattern matching:
+To read the contents of a ticket, you can either use tuple destructuring or pattern matching:
 
 ```cameligo group=manip_ticket
 let v =
@@ -100,7 +102,7 @@ let v =
 
 <Syntax syntax="jsligo">
 
-To read the content of a ticket, you need to use tuple destructuring:
+To read the contents of a ticket, use tuple destructuring:
 
 ```jsligo group=manip_ticket
 const v2 = (() => {
@@ -113,13 +115,10 @@ const v2 = (() => {
 
 ## Splitting tickets
 
-Splitting a ticket creates two tickets that have the same ticketer and
-contents as the original and have amounts that add up to the amount of
-the original To split a ticket, pass the ticket and two nats to the
-`Tezos.Ticket.split` function.  It returns an option that is
-`None` if the sum of the two nats does not equal the amount of the
-original ticket.  If the sum is equal, it returns `Some` with two
-tickets with the two nats as their amounts.
+Splitting a ticket creates two tickets that have the same ticketer and contents as the original and have amounts that add up to the amount of the original ticket.
+To split a ticket, pass the ticket and two nats to the `Tezos.Ticket.split` function.
+This function returns an option that is `None` if the sum of the two nats does not equal the amount of the original ticket.
+If the sum is equal, it returns `Some` with two tickets with the two nats as their amounts.
 
 You can split tickets to divide a ticket to send to multiple sources or to consume only part of a ticket's amount.
 
@@ -156,11 +155,9 @@ const [ta, tb] =
 
 ## Joining tickets
 
-You can join tickets that have identical ticketers and contents.  The
-`Tezos.Ticket.join` function joins tickets and returns an
-option with `Some` with a single ticket that has an amount that equals
-the sum of the amounts of the original tickets.  If the ticketer or
-contents don't match, it returns `None`.
+You can join tickets that have identical ticketers and contents.
+The `Tezos.Ticket.join` function joins tickets and returns an option with `Some` with a single ticket that has an amount that equals the sum of the amounts of the original tickets.
+If the ticketer or contents don't match, it returns `None`.
 
 <SyntaxTitle syntax="cameligo">
 val join : 'value ticket * 'value ticket -> ('value ticket) option
@@ -199,8 +196,6 @@ const tc = Ticket.join([ta, tb]);
 
 ## Transferring tickets
 
-You can send tickets to other contracts by passing them with the
-`Tezos.Operation.transaction` function, just like passing any other
-value to a contract.
+You can send tickets to other contracts by passing them with the `Tezos.Operation.transaction` function, just like passing any other value to a contract.
 
 <!-- updated use of entry -->
